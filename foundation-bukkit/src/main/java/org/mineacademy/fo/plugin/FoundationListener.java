@@ -20,6 +20,7 @@ import org.mineacademy.fo.MathUtilCore;
 import org.mineacademy.fo.Messenger;
 import org.mineacademy.fo.MinecraftVersion;
 import org.mineacademy.fo.MinecraftVersion.V;
+import org.mineacademy.fo.ReflectionUtilCore;
 import org.mineacademy.fo.model.ChatPaginator;
 import org.mineacademy.fo.model.HookManager;
 import org.mineacademy.fo.model.SimpleComponentCore;
@@ -35,6 +36,11 @@ import net.kyori.adventure.text.Component;
  * Listens for some events we handle for you automatically
  */
 final class FoundationListener implements Listener {
+
+	FoundationListener() {
+		if (ReflectionUtilCore.isClassAvailable("org.bukkit.event.inventory.PrepareAnvilEvent"))
+			Platform.registerEvents(new CompPrepareAnvilEvent());
+	}
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onQuit(PlayerQuitEvent event) {
@@ -193,15 +199,19 @@ final class FoundationListener implements Listener {
 		}
 	}
 
+}
+
+final class CompPrepareAnvilEvent {
+
 	@EventHandler(priority = EventPriority.MONITOR)
-	public void onAnvilPrepareItem(PrepareAnvilEvent e) {
+	public void onAnvilPrepareItem(PrepareAnvilEvent event) {
+
 		// A Weird visual bug where the anvil displays none
 		// tested on 1.20.4 -> If you:
 		// 1. Put an undamaged item with custom enchantment
 		// 2. Put another item with a custom enchantment By using a shift click (Or swapping items by picking it up)
 		// the anvil output flashes then empties
-		if (HookManager.isProtocolLibLoaded() && e.getResult() != null && !CompMaterial.isAir(e.getResult().getType()))
-			Bukkit.getScheduler().runTask(SimplePlugin.getInstance(), () -> ((Player) e.getViewers().getFirst())
-					.updateInventory());
+		if (HookManager.isProtocolLibLoaded() && event.getResult() != null && !CompMaterial.isAir(event.getResult().getType()))
+			Platform.runTask(0, () -> ((Player) event.getViewers().get(0)).updateInventory());
 	}
 }

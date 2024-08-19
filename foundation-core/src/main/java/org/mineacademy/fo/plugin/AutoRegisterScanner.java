@@ -54,20 +54,27 @@ final class AutoRegisterScanner {
 	 * An extension for platform-specific implementation
 	 */
 	@Setter
-	private static AutoRegisterHandler customRegisterHandler;
+	private static AutoRegisterHandler customRegisterHandler = new AutoRegisterHandler() {
 
-	interface AutoRegisterHandler {
-
-		void onPreScan();
-
-		boolean autoRegister(Class<?> clazz, boolean printWarnings, Tuple<FindInstance, Object> tuple);
-
-		boolean canAutoRegister(Class<?> clazz);
-
-		default void enforceModeFor(Class<?> clazz, FindInstance actual, FindInstance required) {
-			AutoRegisterScanner.enforceModeFor(clazz, actual, required);
+		@Override
+		public void onPreScan() {
 		}
-	}
+
+		@Override
+		public boolean isIgnored(Class<?> clazz, boolean printWarnings) {
+			return false;
+		}
+
+		@Override
+		public boolean canAutoRegister(Class<?> clazz) {
+			return false;
+		}
+
+		@Override
+		public boolean autoRegister(Class<?> clazz, Tuple<FindInstance, Object> tuple) {
+			return false;
+		}
+	};
 
 	/**
 	 * Scans your plugin and if your Tool or SimpleEnchantment class implements Listener
@@ -81,8 +88,7 @@ final class AutoRegisterScanner {
 		proxyListenerRegistered = false;
 		registeredCommandGroups.clear();
 
-		if (customRegisterHandler != null)
-			customRegisterHandler.onPreScan();
+		customRegisterHandler.onPreScan();
 
 		// Find all plugin classes that can be autoregistered
 		final List<Class<?>> classes = findValidClasses();
@@ -112,24 +118,22 @@ final class AutoRegisterScanner {
 
 				// Auto register classes
 				final AutoRegister autoRegister = clazz.getAnnotation(AutoRegister.class);
+				final boolean printWarnings = autoRegister == null || !autoRegister.hideIncompatibilityWarnings();
 
 				// Require our annotation to be used
-				if (autoRegister != null
-						|| ProxyListener.class.isAssignableFrom(clazz)
-						|| SimpleExpansion.class.isAssignableFrom(clazz)
-						|| (customRegisterHandler != null && customRegisterHandler.canAutoRegister(clazz))) {
+				if (autoRegister != null || ProxyListener.class.isAssignableFrom(clazz) || SimpleExpansion.class.isAssignableFrom(clazz) || customRegisterHandler.canAutoRegister(clazz)) {
 
+					if (customRegisterHandler.isIgnored(clazz, printWarnings))
+						continue;
+
+					ValidCore.checkBoolean(Modifier.isFinal(clazz.getModifiers()), "Please make " + clazz + " final for it to be registered automatically (or via @AutoRegister)");
 					ValidCore.checkBoolean(!SimpleSubCommandCore.class.isAssignableFrom(clazz), "@AutoRegister cannot be used on sub command class: " + clazz + "! Rather write registerSubcommand(Class) in registerSubcommands()"
 							+ " method where Class is your own middle-men abstract class extending SimpleSubCommand that all of your subcommands extend.");
 
-					ValidCore.checkBoolean(Modifier.isFinal(clazz.getModifiers()), "Please make " + clazz + " final for it to be registered automatically (or via @AutoRegister)");
-
 					try {
-						autoRegister(clazz, autoRegister == null || !autoRegister.hideIncompatibilityWarnings());
+						autoRegister(clazz);
 
 					} catch (final NoClassDefFoundError | NoSuchFieldError ex) {
-						ex.printStackTrace();
-
 						CommonCore.warning("Failed to auto register " + clazz + " due to it requesting missing fields/classes: " + ex.getMessage());
 
 					} catch (final Throwable t) {
@@ -161,6 +165,7 @@ final class AutoRegisterScanner {
 	}
 
 	public static void reloadSettings() {
+
 		// Find all plugin classes that can be autoregistered
 		final List<Class<?>> classes = findValidClasses();
 
@@ -275,8 +280,7 @@ final class AutoRegisterScanner {
 			// Register if main command or there is only one command group, then assume main
 			if (group.getLabel().equals(SimpleSettings.MAIN_COMMAND_ALIASES.first()) || registeredCommandGroups.size() == 1) {
 				ValidCore.checkBoolean(!mainCommandGroupFound, "Found 2 or more command groups that do not specify label in their constructor."
-						+ " (We can only automatically use one of such groups as the main one using Command_Aliases as command label(s)"
-						+ " from settings.yml but not more.");
+						+ " We can only automatically register 1 command group using Command_Aliases from settings.yml but not more. Use the other constructor for your other groups.");
 
 				Platform.getPlugin().setDefaultCommandGroup(group);
 				mainCommandGroupFound = true;
@@ -289,16 +293,12 @@ final class AutoRegisterScanner {
 	/*
 	 * Automatically registers the given class, printing console warnings
 	 */
-	private static void autoRegister(Class<?> clazz, boolean printWarnings) {
-
+	private static void autoRegister(Class<?> clazz) {
 		final FoundationPlugin plugin = Platform.getPlugin();
 		final Tuple<FindInstance, Object> tuple = findInstance(clazz);
 
 		final FindInstance mode = tuple.getKey();
 		final Object instance = tuple.getValue();
-
-		if (customRegisterHandler != null && customRegisterHandler.autoRegister(clazz, printWarnings, tuple))
-			return;
 
 		if (ProxyListener.class.isAssignableFrom(clazz)) {
 			enforceModeFor(clazz, mode, FindInstance.SINGLETON);
@@ -309,26 +309,27 @@ final class AutoRegisterScanner {
 				plugin.setDefaultProxyListener((ProxyListener) instance);
 			}
 
-		} else if (SimpleCommandCore.class.isAssignableFrom(clazz))
+		} else if (SimpleCommandCore.class.isAssignableFrom(clazz)) {
 			plugin.registerCommand((SimpleCommandCore) instance);
 
-		else if (SimpleCommandGroup.class.isAssignableFrom(clazz)) {
+		} else if (SimpleCommandGroup.class.isAssignableFrom(clazz)) {
 			final SimpleCommandGroup group = (SimpleCommandGroup) instance;
 
 			// Special case, do it at the end
 			registeredCommandGroups.add(group);
-		}
 
-		else if (SimpleExpansion.class.isAssignableFrom(clazz)) {
+		} else if (SimpleExpansion.class.isAssignableFrom(clazz)) {
 			enforceModeFor(clazz, mode, FindInstance.SINGLETON);
 
 			Variables.addExpansion((SimpleExpansion) instance);
-		}
 
-		else if (YamlConfig.class.isAssignableFrom(clazz)) {
+		} else if (YamlConfig.class.isAssignableFrom(clazz)) {
 
 			// Automatically called onLoadFinish when getting instance
 			enforceModeFor(clazz, mode, FindInstance.SINGLETON);
+
+		} else if (customRegisterHandler.autoRegister(clazz, tuple)) {
+			// Handled by custom handler
 
 		} else
 			throw new FoException("@AutoRegister cannot be used on " + clazz);
@@ -443,5 +444,20 @@ final class AutoRegisterScanner {
 	public enum FindInstance {
 		NEW_FROM_CONSTRUCTOR,
 		SINGLETON
+	}
+
+	public interface AutoRegisterHandler {
+
+		void onPreScan();
+
+		boolean isIgnored(Class<?> clazz, boolean printWarnings);
+
+		boolean autoRegister(Class<?> clazz, Tuple<FindInstance, Object> tuple);
+
+		boolean canAutoRegister(Class<?> clazz);
+
+		default void enforceModeFor(Class<?> clazz, FindInstance actual, FindInstance required) {
+			AutoRegisterScanner.enforceModeFor(clazz, actual, required);
+		}
 	}
 }

@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.function.BiFunction;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.PluginCommand;
@@ -209,7 +208,7 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 
 		if (!ReflectionUtil.isClassAvailable("net.kyori.adventure.text.event.HoverEventSource")) {
 			this.loadLibrary("net.kyori", "adventure-api", "4.17.0");
-			this.loadLibrary("net.kyori", "adventure-platform-bukkit", "4.3.3");
+			this.loadLibrary("net.kyori", "adventure-platform-bukkit", "4.3.4");
 		}
 
 		if (!ReflectionUtil.isClassAvailable("net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer"))
@@ -302,22 +301,7 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 				}
 
 				@Override
-				public boolean canAutoRegister(Class<?> clazz) {
-					if (clazz == RegionTool.class && (!areRegionsEnabled() || !areToolsEnabled()))
-						return false;
-
-					return Tool.class.isAssignableFrom(clazz)
-							|| SimpleEnchantment.class.isAssignableFrom(clazz)
-							|| PacketListener.class.isAssignableFrom(clazz)
-							|| DiscordListener.class.isAssignableFrom(clazz);
-				}
-
-				@Override
-				public boolean autoRegister(Class<?> clazz, boolean printWarnings, Tuple<FindInstance, Object> tuple) {
-
-					final FindInstance mode = tuple.getKey();
-					final Object instance = tuple.getValue();
-
+				public boolean isIgnored(Class<?> clazz, boolean printWarnings) {
 					if (DiscordListener.class.isAssignableFrom(clazz) && !HookManager.isDiscordSRVLoaded()) {
 						if (printWarnings) {
 							CommonCore.warning("**** WARNING ****");
@@ -348,6 +332,23 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 
 						return true;
 					}
+
+					if (clazz == RegionTool.class && (!areRegionsEnabled() || !areToolsEnabled()))
+						return true;
+
+					return false;
+				}
+
+				@Override
+				public boolean canAutoRegister(Class<?> clazz) {
+					return Tool.class.isAssignableFrom(clazz) || SimpleEnchantment.class.isAssignableFrom(clazz) || PacketListener.class.isAssignableFrom(clazz) || DiscordListener.class.isAssignableFrom(clazz);
+				}
+
+				@Override
+				public boolean autoRegister(Class<?> clazz, Tuple<FindInstance, Object> tuple) {
+
+					final FindInstance mode = tuple.getKey();
+					final Object instance = tuple.getValue();
 
 					// TODO check if proxy listener still works
 
@@ -412,32 +413,6 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 
 			// Add platform-specific helpers to translate values to a config and back
 
-			SerializeUtil.addCustomSerializer(ChatColor.class, new Serializer<ChatColor>() {
-
-				@Override
-				public Object serialize(Mode mode, ChatColor object) {
-					return object.name();
-				}
-
-				@Override
-				public ChatColor deserialize(Mode mode, String object) {
-					return ChatColor.valueOf(object);
-				}
-			});
-
-			SerializeUtil.addCustomSerializer(net.md_5.bungee.api.ChatColor.class, new Serializer<net.md_5.bungee.api.ChatColor>() {
-
-				@Override
-				public Object serialize(Mode mode, net.md_5.bungee.api.ChatColor object) {
-					return object.name();
-				}
-
-				@Override
-				public net.md_5.bungee.api.ChatColor deserialize(Mode mode, String object) {
-					return net.md_5.bungee.api.ChatColor.valueOf(object);
-				}
-			});
-
 			SerializeUtil.addCustomSerializer(Location.class, new Serializer<Location>() {
 
 				@Override
@@ -446,8 +421,8 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 				}
 
 				@Override
-				public Location deserialize(Mode mode, String object) {
-					return SerializeUtil.deserializeLocation(object);
+				public Location deserialize(Mode mode, Object object) {
+					return SerializeUtil.deserializeLocation((String) object);
 				}
 			});
 
@@ -459,8 +434,8 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 				}
 
 				@Override
-				public World deserialize(Mode mode, String object) {
-					final World world = Bukkit.getWorld(object);
+				public World deserialize(Mode mode, Object object) {
+					final World world = Bukkit.getWorld((String) object);
 					Valid.checkNotNull(world, "World " + object + " not found. Available: " + Bukkit.getWorlds());
 
 					return world;
@@ -475,8 +450,8 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 				}
 
 				@Override
-				public PotionEffectType deserialize(Mode mode, String object) {
-					final PotionEffectType type = CompPotionEffectType.getByName(object);
+				public PotionEffectType deserialize(Mode mode, Object object) {
+					final PotionEffectType type = CompPotionEffectType.getByName((String) object);
 					Valid.checkNotNull(type, "Potion effect type " + object + " not found. Available: " + CompPotionEffectType.getPotionNames());
 
 					return type;
@@ -491,7 +466,7 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 				}
 
 				@Override
-				public PotionEffect deserialize(Mode mode, String object) {
+				public PotionEffect deserialize(Mode mode, Object object) {
 					final String[] parts = object.toString().split(" ");
 					ValidCore.checkBoolean(parts.length == 3, "Expected PotionEffect (String) but got " + object.getClass().getSimpleName() + ": " + object);
 
@@ -513,8 +488,8 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 				}
 
 				@Override
-				public Enchantment deserialize(Mode mode, String object) {
-					final Enchantment enchant = CompEnchantment.getByName(object);
+				public Enchantment deserialize(Mode mode, Object object) {
+					final Enchantment enchant = CompEnchantment.getByName((String) object);
 					Valid.checkNotNull(enchant, "Enchantment " + object + " not found. Available: " + CompEnchantment.getEnchantmentNames());
 
 					return enchant;
@@ -529,8 +504,8 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 				}
 
 				@Override
-				public SimpleSound deserialize(Mode mode, String object) {
-					return new SimpleSound(object);
+				public SimpleSound deserialize(Mode mode, Object object) {
+					return new SimpleSound((String) object);
 				}
 			});
 
@@ -545,7 +520,7 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 				}
 
 				@Override
-				public ItemStack deserialize(Mode mode, String object) {
+				public ItemStack deserialize(Mode mode, Object object) {
 					if (mode == Mode.JSON)
 						return JsonItemStack.fromJson(object.toString());
 
@@ -626,7 +601,7 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 				}
 
 				@Override
-				public ItemStack[] deserialize(Mode mode, String object) {
+				public ItemStack[] deserialize(Mode mode, Object object) {
 					final List<ItemStack> list = new ArrayList<>();
 
 					if (mode == SerializeUtil.Mode.JSON) {

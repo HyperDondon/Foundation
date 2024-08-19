@@ -184,7 +184,6 @@ public final class Remain extends RemainCore {
 	private static Method runDelayed;
 	private static Method execute;
 	private static Method cancel;
-	private static Method cancelTasks;
 
 	// ----------------------------------------------------------------------------------------------------
 	// Flags
@@ -406,7 +405,6 @@ public final class Remain extends RemainCore {
 			runAtFixedRate = ReflectionUtil.getMethod(foliaScheduler.getClass(), "runAtFixedRate", Plugin.class, Consumer.class, long.class, long.class);
 			execute = ReflectionUtil.getMethod(foliaScheduler.getClass(), "run", Plugin.class, Consumer.class);
 			runDelayed = ReflectionUtil.getMethod(foliaScheduler.getClass(), "runDelayed", Plugin.class, Consumer.class, long.class);
-			cancelTasks = ReflectionUtil.getMethod(foliaScheduler.getClass(), "cancelTasks", Plugin.class);
 			cancel = ReflectionUtil.getMethod(ReflectionUtil.lookupClass("io.papermc.paper.threadedregions.scheduler.ScheduledTask"), "cancel");
 		}
 	}

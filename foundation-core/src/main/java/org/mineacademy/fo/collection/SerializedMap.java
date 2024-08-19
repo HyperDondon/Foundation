@@ -1080,10 +1080,6 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 		if (object instanceof String && object.toString().equals("{}"))
 			return new SerializedMap(mode);
 
-		//if (ReflectionUtilCore.isClassAvailable("org.bukkit.configuration.MemorySection") // TODO check
-		//		&& object.getClass().isAssignableFrom(ReflectionUtilCore.lookupClass("org.bukkit.configuration.MemorySection")))
-		//	return of(CommonCore.getMapFromSection(object));
-
 		if (object instanceof ConfigSection)
 			return of(((ConfigSection) object).getValues(false));
 
@@ -1125,7 +1121,7 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 		if (object instanceof List && ((List<?>) object).isEmpty())
 			return new SerializedMap(mode);
 
-		throw new FoException("Cannot instantiate SerializedMap(" + mode + ") from " + object.getClass().getSimpleName() + ": " + object);
+		throw new FoException("Cannot instantiate SerializedMap(mode=" + mode + ") from " + object.getClass().getSimpleName() + ": " + object);
 	}
 
 	/**

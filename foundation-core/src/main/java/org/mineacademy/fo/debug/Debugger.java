@@ -122,6 +122,11 @@ public final class Debugger {
 	 */
 	public static void saveError(Throwable t, String... messages) {
 
+		System.out.println("============================================================================");
+		System.out.println("SAVING ERROR FROM:");
+		new Throwable().printStackTrace();
+		System.out.println("============================================================================");
+
 		final String systemInfo = "Running " + Platform.getServerName() + " " + Platform.getServerVersion() + " and Java " + System.getProperty("java.version");
 
 		try {

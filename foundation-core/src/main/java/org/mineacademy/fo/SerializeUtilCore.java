@@ -77,7 +77,7 @@ public abstract class SerializeUtilCore {
 			return object.toString();
 
 		else if (object instanceof Enum<?>)
-			return object.toString();
+			return object.getClass().getSimpleName().equals("ChatColor") ? ((Enum<?>) object).name() : object.toString();
 
 		else if (object instanceof SimpleTime)
 			return ((SimpleTime) object).getRaw();
@@ -299,7 +299,7 @@ public abstract class SerializeUtilCore {
 		final boolean isJson = mode == Mode.JSON;
 
 		if (customSerializers.containsKey(classOf))
-			object = customSerializers.get(classOf).deserialize(mode, object.toString());
+			object = customSerializers.get(classOf).deserialize(mode, object);
 
 		else if (classOf == String.class)
 			object = object.toString();
@@ -352,6 +352,7 @@ public abstract class SerializeUtilCore {
 
 		else if (Color.class.isAssignableFrom(classOf))
 			object = CompChatColor.of(object.toString()).getColor();
+
 		else if (List.class.isAssignableFrom(classOf) && object instanceof List) {
 			// Good
 
@@ -480,7 +481,7 @@ public abstract class SerializeUtilCore {
 	public interface Serializer<T> {
 		Object serialize(Mode mode, T object);
 
-		T deserialize(Mode mode, String object);
+		T deserialize(Mode mode, Object object);
 	}
 
 	/**
