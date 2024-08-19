@@ -22,7 +22,6 @@ import org.mineacademy.fo.jsonsimple.JSONObject;
 import org.mineacademy.fo.jsonsimple.JSONParser;
 import org.mineacademy.fo.model.IsInList;
 import org.mineacademy.fo.model.Tuple;
-import org.mineacademy.fo.remain.RemainCore;
 import org.mineacademy.fo.settings.ConfigSection;
 
 import lombok.Getter;
@@ -616,7 +615,7 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 		if (!this.map.containsKey(key))
 			return list;
 
-		final Object rawList = RemainCore.getRootOfSectionPathData(this.removeOnGet ? this.map.removeWeak(key) : this.map.get(key));
+		final Object rawList = this.removeOnGet ? this.map.removeWeak(key) : this.map.get(key);
 
 		// Forgive if string used instead of string list
 		if (type == String.class && rawList instanceof String)

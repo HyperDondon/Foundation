@@ -8,10 +8,7 @@ import org.mineacademy.fo.MessengerCore;
 import org.mineacademy.fo.SerializeUtilCore;
 import org.mineacademy.fo.SerializeUtilCore.Mode;
 import org.mineacademy.fo.ValidCore;
-import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.exception.FoException;
-import org.mineacademy.fo.exception.FoScriptException;
-import org.mineacademy.fo.model.JavaScriptExecutor;
 import org.mineacademy.fo.model.Variables;
 import org.mineacademy.fo.remain.RemainCore;
 
@@ -37,8 +34,6 @@ public final class Lang extends YamlConfig {
 	 */
 	private Lang(String filePath) {
 		this.loadConfiguration(filePath);
-
-		this.setFastMode(true);
 	}
 
 	// ------------------------------------------------------------------------------------------------------------
@@ -182,7 +177,7 @@ public final class Lang extends YamlConfig {
 	 * @return
 	 */
 	public static String ofCaseNoAmount(long amount, String path) {
-		final String key = RemainCore.convertAdventureToLegacy(of(path));
+		final String key = ofLegacy(path);
 		final String[] split = key.split(", ");
 
 		ValidCore.checkBoolean(split.length == 1 || split.length == 2, "Invalid syntax of key at '" + path + "', this key is a special one and "
@@ -192,46 +187,6 @@ public final class Lang extends YamlConfig {
 		final String plural = split[split.length == 2 ? 1 : 0];
 
 		return amount == 0 || amount > 1 ? plural : singular;
-	}
-
-	/**
-	 * Return an array from the localization file with {0} {1} etc. variables replaced.
-	 * and script variables parsed. We treat the locale key as a valid JavaScript
-	 *
-	 * @param path
-	 * @param scriptVariables
-	 * @param stringVariables
-	 * @deprecated unstable, JavaScript executor might desynchronize and break scriptVariables
-	 *
-	 * @return
-	 */
-	@Deprecated
-	public static String ofScript(String path, SerializedMap scriptVariables, Object... stringVariables) {
-		String script = RemainCore.convertAdventureToLegacy(of(path, stringVariables));
-		Object result;
-
-		// Our best guess is that the user has removed the script completely but forgot to put the entire message in '',
-		// so we attempt to do so
-		if (!script.contains("?") && !script.contains(":") && !script.contains("+") && !script.startsWith("'") && !script.endsWith("'"))
-			script = "'" + script + "'";
-
-		try {
-			result = JavaScriptExecutor.run(script, scriptVariables.asMap());
-
-		} catch (final FoScriptException ex) {
-			CommonCore.logFramed("Failed to compile localization key!",
-					"It must be a valid JavaScript code, if you modified it, check the syntax!",
-					"",
-					"Locale path: '" + path + "'",
-					"Variables: " + scriptVariables,
-					"String variables: " + CommonCore.join(stringVariables),
-					"Script: " + script,
-					"Error: %error%");
-
-			throw ex;
-		}
-
-		return result.toString();
 	}
 
 	/**
@@ -281,9 +236,7 @@ public final class Lang extends YamlConfig {
 
 		final List<Component> components = new ArrayList<>();
 
-		for (final String line : instance.getStringList(path)) {
-			Component component = CommonCore.colorize(line);
-
+		for (Component component : instance.getList(path, Component.class)) {
 			component = Variables.replace(component, null);
 			component = translate(component, variables);
 
@@ -311,7 +264,7 @@ public final class Lang extends YamlConfig {
 					variable = variable.toString();
 
 				else
-					variable = CommonCore.getOrDefaultStrict(SerializeUtilCore.serialize(Mode.YAML /* ĺocale is always .yml */, variable), SimpleLocalization.NONE);
+					variable = SerializeUtilCore.serialize(Mode.YAML, variable);
 
 				ValidCore.checkNotNull(variable, "Failed to replace {" + i + "} as " + variable + " (raw = " + variables[i] + ")");
 				component = component.replaceText(TextReplacementConfig.builder().matchLiteral("{" + i + "}").replacement(CommonCore.colorize(variable.toString())).build());

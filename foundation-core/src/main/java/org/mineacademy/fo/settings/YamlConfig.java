@@ -343,28 +343,6 @@ public class YamlConfig extends FileConfig {
 	}
 
 	/**
-	 * Loads configuration from the internal JAR path without setting the file,
-	 * without extracting it and without defaults.
-	 *
-	 * @param path
-	 * @return
-	 */
-	@NonNull
-	public static final YamlConfig fromInternalPathFast(@NonNull String path) {
-
-		final YamlConfig config = new YamlConfig();
-
-		try {
-			config.loadInternal(path);
-
-		} catch (final Exception ex) {
-			CommonCore.error(ex, "Cannot load config from internal path " + path);
-		}
-
-		return config;
-	}
-
-	/**
 	 * Loads configuration from the file in your plugin's folder.
 	 *
 	 * @param file
@@ -377,27 +355,6 @@ public class YamlConfig extends FileConfig {
 
 		try {
 			config.load(file);
-		} catch (final Exception ex) {
-			CommonCore.error(ex, "Cannot load config from file " + file);
-		}
-
-		return config;
-	}
-
-	/**
-	 * Loads configuration from the file in your plugin's folder.
-	 *
-	 * @param file
-	 * @return
-	 */
-	@NonNull
-	public static final YamlConfig fromFileFast(@NonNull File file) {
-		final YamlConfig config = new YamlConfig();
-
-		try {
-			final List<String> content = FileUtil.readLines(file);
-			config.loadFromString(String.join("\n", content));
-
 		} catch (final Exception ex) {
 			CommonCore.error(ex, "Cannot load config from file " + file);
 		}

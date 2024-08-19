@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 
-import org.mineacademy.fo.ReflectionUtilCore;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.platform.Platform;
 
@@ -45,22 +44,6 @@ public abstract class RemainCore {
 	 */
 	private static String serverName;
 
-	/**
-	 * The internal private section path data class
-	 */
-	private static Class<?> sectionPathDataClass = null;
-
-	/**
-	 * Initialize all fields and methods automatically when we set the plugin
-	 */
-	static void init() {
-		try {
-			sectionPathDataClass = ReflectionUtilCore.lookupClass("org.bukkit.configuration.SectionPathData");
-		} catch (final Throwable ex) {
-			// Unavailable
-		}
-	}
-
 	// ----------------------------------------------------------------------------------------------------
 	// Server name
 	// ----------------------------------------------------------------------------------------------------
@@ -93,37 +76,6 @@ public abstract class RemainCore {
 	 */
 	public static void setServerName(String serverName) {
 		RemainCore.serverName = serverName;
-	}
-
-	// ----------------------------------------------------------------------------------------------------
-	// Section path data
-	// ----------------------------------------------------------------------------------------------------
-
-	/**
-	 * Converts the given object that may be a SectionPathData for MC 1.18 back into its root data
-	 * such as MemorySection
-	 *
-	 * @param objectOrSectionPathData
-	 * @return
-	 *
-	 * @deprecated legacy code, will be removed
-	 */
-	@Deprecated // TODO remove
-	public static Object getRootOfSectionPathData(Object objectOrSectionPathData) {
-		if (objectOrSectionPathData != null && objectOrSectionPathData.getClass() == sectionPathDataClass)
-			objectOrSectionPathData = ReflectionUtilCore.invoke("getData", objectOrSectionPathData);
-
-		return objectOrSectionPathData;
-	}
-
-	/**
-	 * Return true if the given object is a memory section
-	 *
-	 * @param obj
-	 * @return
-	 */
-	public static boolean isMemorySection(Object obj) {
-		return obj != null && sectionPathDataClass == obj.getClass();
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -374,16 +326,16 @@ public abstract class RemainCore {
 		final Pattern pattern = Pattern.compile("#[0-9a-fA-F]{8}");
 		final Matcher matcher = pattern.matcher(RemainCore.convertAdventureToJson(component));
 		final StringBuffer builder = new StringBuffer();
-
+	
 		while (matcher.find()) {
 			final String hex = matcher.group();
 			final String editedHex = "#" + hex.substring(3);
-
+	
 			matcher.appendReplacement(builder, editedHex);
 		}
-
+	
 		matcher.appendTail(builder);
-
+	
 		return RemainCore.convertJsonToAdventure(builder.toString());
 	}*/
 

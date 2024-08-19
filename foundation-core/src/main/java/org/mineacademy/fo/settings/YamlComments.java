@@ -48,7 +48,7 @@ final class YamlComments {
 
 		final List<String> newLines = FileUtil.getInternalFileContent(resourceName);
 
-		final YamlConfig currentConfig = YamlConfig.fromFileFast(toUpdate);
+		final YamlConfig currentConfig = YamlConfig.fromFile(toUpdate);
 		final YamlConfig defaultConfig = new YamlConfig();
 
 		defaultConfig.loadFromString(String.join("\n", newLines));
@@ -80,7 +80,7 @@ final class YamlComments {
 		// Move to unused/ folder and retain old path
 		if (!removedKeys.isEmpty()) {
 			final File backupFile = FileUtil.createIfNotExists("unused/" + toUpdate.getName());
-			final YamlConfig backupConfig = YamlConfig.fromFileFast(backupFile);
+			final YamlConfig backupConfig = YamlConfig.fromFile(backupFile);
 
 			for (final Map.Entry<String, Object> entry : removedKeys.entrySet())
 				backupConfig.set(entry.getKey(), entry.getValue());

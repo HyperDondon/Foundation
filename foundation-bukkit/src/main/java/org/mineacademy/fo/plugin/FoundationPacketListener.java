@@ -7,6 +7,7 @@ import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.MetadataValue;
+import org.mineacademy.fo.annotation.AutoRegister;
 import org.mineacademy.fo.constants.FoConstants;
 import org.mineacademy.fo.enchant.SimpleEnchantment;
 import org.mineacademy.fo.model.PacketListener;
@@ -26,6 +27,7 @@ import lombok.NoArgsConstructor;
 /**
  * Listens to and intercepts packets using Foundation inbuilt features
  */
+@AutoRegister(hideIncompatibilityWarnings = false)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 final class FoundationPacketListener extends PacketListener {
 

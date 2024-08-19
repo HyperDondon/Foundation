@@ -12,7 +12,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -48,35 +47,28 @@ import net.kyori.adventure.text.Component;
 public abstract class FileConfig {
 
 	/**
-	 * Used to synchronize loading/saving and forces multiple instances that all
-	 * use the same file use the same content to set/save it.
-	 */
-	private static final Map<String, ConfigSection> loadedSections = new HashMap<>();
-
-	/**
 	 * Represents "null" which you can use as convenience shortcut in loading config
 	 * that has no internal from path.
 	 */
 	public static final String NO_DEFAULT = null;
 
-	/*
+	/**
 	 * The file that is being used
 	 */
 	@Setter(value = AccessLevel.PROTECTED)
 	File file;
 
-	/*
+	/**
 	 * The main config section, overridden in load(File)
 	 */
 	ConfigSection section = new ConfigSection();
 
-	/*
+	/**
 	 * Optional defaults section to copy values from
 	 */
-
 	ConfigSection defaults;
 
-	/*
+	/**
 	 * Defaults path in your JAR file, if any
 	 */
 	String defaultsPath;
@@ -91,14 +83,6 @@ public abstract class FileConfig {
 	 * to save your time.
 	 */
 	private String pathPrefix = null;
-
-	/**
-	 * Should we always reload the file even if it was loaded previously when calling {@link #load(File)}?
-	 *
-	 * Defaults to true
-	 */
-	@Setter(value = AccessLevel.PROTECTED)
-	private boolean alwaysLoad = true;
 
 	/*
 	 * Internal flag to only save once during loading and save automatically
@@ -115,12 +99,6 @@ public abstract class FileConfig {
 	 * Internal flag to avoid race condition when calling save() in onSave().
 	 */
 	private boolean saving = false;
-
-	/**
-	 * @deprecated draft API
-	 */
-	@Deprecated
-	private boolean fastMode = false;
 
 	protected FileConfig() {
 	}
@@ -190,9 +168,7 @@ public abstract class FileConfig {
 	 * @return
 	 */
 	public final <T> T get(@NonNull String path, Class<T> type, T def, Object... deserializeParams) {
-
-		if (!this.fastMode)
-			path = this.buildPathPrefix(path);
+		path = this.buildPathPrefix(path);
 
 		Object raw = this.section.retrieve(path);
 
@@ -204,9 +180,8 @@ public abstract class FileConfig {
 			raw = this.section.retrieve(path);
 		}
 
-		if (!this.fastMode)
-			if (this.defaults != null && def == null)
-				ValidCore.checkNotNull(raw, "Failed to set '" + path + "' to " + type.getSimpleName() + " from default config's value: " + this.defaults.retrieve(path));
+		if (this.defaults != null && def == null)
+			ValidCore.checkNotNull(raw, "Failed to set '" + path + "' to " + type.getSimpleName() + " from default config's value: " + this.defaults.retrieve(path));
 
 		if (raw != null) {
 
@@ -218,11 +193,9 @@ public abstract class FileConfig {
 			if (type == Long.class && raw instanceof Integer)
 				raw = ((Integer) raw).longValue();
 
-			if (!this.fastMode) {
-				raw = SerializeUtilCore.deserialize(Mode.YAML, type, raw, deserializeParams);
+			raw = SerializeUtilCore.deserialize(Mode.YAML, type, raw, deserializeParams);
 
-				this.checkAssignable(path, raw, type);
-			}
+			this.checkAssignable(path, raw, type);
 
 			return (T) raw;
 		}
@@ -1004,9 +977,7 @@ public abstract class FileConfig {
 	 * @return
 	 */
 	public final boolean isSet(String path) {
-
-		if (!this.fastMode)
-			path = this.buildPathPrefix(path);
+		path = this.buildPathPrefix(path);
 
 		return this.section.isStored(path);
 	}
@@ -1070,33 +1041,18 @@ public abstract class FileConfig {
 			this.loading = true;
 
 			final FileInputStream stream = new FileInputStream(file);
-			final String path = file.getAbsolutePath();
-			boolean loadedBefore = false;
-			ConfigSection section = loadedSections.get(path);
-
-			if (section == null) {
-				section = new ConfigSection();
-
-				loadedSections.put(path, section);
-			}
-
-			else
-				loadedBefore = true;
+			final ConfigSection section = new ConfigSection();
 
 			this.section = section;
 			this.file = file;
 
-			if (loadedBefore && !this.alwaysLoad) {
-				// Do not load
-			} else
-				this.load(new InputStreamReader(stream, StandardCharsets.UTF_8));
+			this.load(new InputStreamReader(stream, StandardCharsets.UTF_8));
 
 			try {
 				this.onLoad();
-				this.onLoadFinish();
 
 			} catch (final EventHandledException ex) {
-				// Handled successfully in the polymorphism pipeline
+				// Handled successfully in the pipeline
 			}
 
 			if (this.shouldSave || this.alwaysSaveOnLoad()) {
@@ -1155,15 +1111,6 @@ public abstract class FileConfig {
 	 * You can throw {@link EventHandledException} here to indicate to your child class to interrupt loading
 	 */
 	protected void onLoad() {
-	}
-
-	/**
-	 * @see #onLoad()
-	 *
-	 * @deprecated Renamed to {@link #onLoad()}, use that instead.
-	 */
-	@Deprecated
-	protected void onLoadFinish() {
 	}
 
 	/**
@@ -1256,10 +1203,6 @@ public abstract class FileConfig {
 	 */
 	protected void onSave() {
 		final SerializedMap map = this.saveToMap();
-		final SerializedMap legacy = this.serialize();
-
-		if (legacy != null)
-			map.put(legacy);
 
 		if (map != null)
 			for (final Map.Entry<String, Object> entry : map.entrySet())
@@ -1306,17 +1249,6 @@ public abstract class FileConfig {
 	}
 
 	/**
-	 * @see #saveToMap()
-	 * @deprecated renamed, override {@link #saveToMap()} instead
-	 *
-	 * @return
-	 */
-	@Deprecated
-	protected SerializedMap serialize() {
-		return null;
-	}
-
-	/**
 	 * Removes the loaded file configuration from the disk.
 	 */
 	public final void deleteFile() {
@@ -1324,8 +1256,6 @@ public abstract class FileConfig {
 
 		if (this.file.exists())
 			this.file.delete();
-
-		loadedSections.remove(this.file.getAbsolutePath());
 	}
 
 	// ------------------------------------------------------------------------------------
@@ -1455,33 +1385,6 @@ public abstract class FileConfig {
 	 */
 	public final boolean isEmpty() {
 		return this.section.isEmpty();
-	}
-
-	/**
-	 * @deprecated draft api
-	 * @return
-	 */
-	@Deprecated
-	public final boolean isFastMode() {
-		return fastMode;
-	}
-
-	/**
-	 * @deprecated draft api
-	 * @param fastMode
-	 */
-	@Deprecated
-	public final void setFastMode(boolean fastMode) {
-		this.fastMode = fastMode;
-	}
-
-	// ------------------------------------------------------------------------------------
-	// Static
-	// ------------------------------------------------------------------------------------
-
-	@Deprecated // internal use only
-	public static final void clearLoadedSections() {
-		loadedSections.clear();
 	}
 
 	// ------------------------------------------------------------------------------------

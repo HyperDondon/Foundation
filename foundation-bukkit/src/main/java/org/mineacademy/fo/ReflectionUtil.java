@@ -51,7 +51,6 @@ public final class ReflectionUtil extends ReflectionUtilCore {
 	private static final Map<Class<? extends Enum<?>>, Map<String, V>> legacyEnumTypes;
 
 	static {
-
 		final Map<Class<? extends Enum<?>>, Map<String, V>> legacyEnums = new HashMap<>();
 
 		final Map<String, V> entities = new HashMap<>();
@@ -257,6 +256,7 @@ public final class ReflectionUtil extends ReflectionUtilCore {
 	 *
 	 * @return the enum or error with exceptions, see above
 	 */
+	// TODO Merge with ReflectionUtilCore
 	public static <E extends Enum<E>> E lookupEnum(final Class<E> enumType, String name, final String errMessage) {
 		ValidCore.checkNotNull(enumType, "Type missing for " + name);
 		ValidCore.checkNotNull(name, "Name missing for " + enumType);

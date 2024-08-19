@@ -1719,9 +1719,7 @@ public enum CompMaterial {
 	static {
 		for (final CompMaterial material : VALUES)
 			NAMES.put(material.name(), material);
-	}
 
-	static {
 		if (Data.ISFLAT)
 			// It's not needed at all if it's the newer version. We can save some memory.
 			DUPLICATED = null;
@@ -2385,7 +2383,6 @@ public enum CompMaterial {
 	 * @return an optional that can be empty.
 	 * @since 5.1.0
 	 */
-
 	private static CompMaterial getIfPresent(String name) {
 		return NAMES.get(name);
 	}
@@ -2397,7 +2394,6 @@ public enum CompMaterial {
 	 * @see #matchDefinedCompMaterial(String, byte)
 	 * @since 1.0.0
 	 */
-
 	private static CompMaterial requestOldMaterial(String name, int data) {
 
 		for (final CompMaterial material : VALUES)

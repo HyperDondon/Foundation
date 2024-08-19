@@ -169,7 +169,7 @@ public final class MinecraftVersion {
 		final String bukkitVersion = Platform.getServerVersion(); // 1.20.6-R0.1-SNAPSHOT
 		final String versionString = bukkitVersion.split("\\-")[0]; // 1.20.6
 		final String[] versions = versionString.split("\\.");
-		ValidCore.checkBoolean(versions.length == 2 || versions.length == 3, "Foundation cannot read Bukkit version: " + versionString + ", expected 2 or 3 parts separated by dots, got " + versions.length + " parts");
+		ValidCore.checkBoolean(versions.length == 2 || versions.length == 3, "Foundation cannot read Bukkit version '" + bukkitVersion + "', expected '-' and a version number");
 
 		final int version = Integer.parseInt(versions[1]); // 20
 

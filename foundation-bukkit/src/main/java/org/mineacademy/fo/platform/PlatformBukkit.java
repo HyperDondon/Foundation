@@ -111,7 +111,7 @@ public class PlatformBukkit implements FoundationPlatform {
 
 	@Override
 	public String getServerVersion() {
-		return Bukkit.getVersion();
+		return Bukkit.getBukkitVersion();
 	}
 
 	@Override

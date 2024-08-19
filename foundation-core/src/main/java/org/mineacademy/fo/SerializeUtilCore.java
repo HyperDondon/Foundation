@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +24,6 @@ import org.mineacademy.fo.jsonsimple.JSONObject;
 import org.mineacademy.fo.jsonsimple.JSONParseException;
 import org.mineacademy.fo.jsonsimple.JSONParser;
 import org.mineacademy.fo.jsonsimple.Jsonable;
-import org.mineacademy.fo.model.BoxedMessage;
 import org.mineacademy.fo.model.ConfigSerializable;
 import org.mineacademy.fo.model.IsInList;
 import org.mineacademy.fo.model.RangedSimpleTime;
@@ -47,7 +47,8 @@ public abstract class SerializeUtilCore {
 	/**
 	 * A custom serializer extending the serialize method
 	 */
-	private static final List<Serializer> customSerializers = new ArrayList<>();
+	@SuppressWarnings("rawtypes")
+	private static final Map<Class<?>, Serializer> customSerializers = new HashMap<>();
 
 	/**
 	 * Converts the given object into something you can safely save in file as a string
@@ -60,17 +61,10 @@ public abstract class SerializeUtilCore {
 		if (object == null)
 			return null;
 
-		final boolean isJson = mode == Mode.JSON;
-		object = RemainCore.getRootOfSectionPathData(object);
+		if (customSerializers.containsKey(object.getClass()))
+			return customSerializers.get(object.getClass()).serialize(mode, object);
 
-		for (final Serializer customSerializer : customSerializers) {
-			final Object result = customSerializer.serialize(mode, object);
-
-			if (result != null)
-				return result;
-		}
-
-		if (object instanceof ConfigSerializable)
+		else if (object instanceof ConfigSerializable)
 			return serialize(mode, ((ConfigSerializable) object).serialize().serialize());
 
 		else if (object instanceof StrictCollection)
@@ -79,12 +73,7 @@ public abstract class SerializeUtilCore {
 		else if (object instanceof CompChatColor)
 			return ((CompChatColor) object).toSaveableString();
 
-		else if (object instanceof BoxedMessage) {
-			final Component[] messages = ((BoxedMessage) object).getMessages();
-
-			return RemainCore.convertAdventureToMini(Component.textOfChildren(messages));
-
-		} else if (object instanceof UUID)
+		else if (object instanceof UUID)
 			return object.toString();
 
 		else if (object instanceof Enum<?>)
@@ -110,7 +99,7 @@ public abstract class SerializeUtilCore {
 
 		else if (object instanceof Iterable || object.getClass().isArray() || object instanceof IsInList) {
 
-			if (isJson) {
+			if (mode == Mode.JSON) {
 				final JSONArray jsonList = new JSONArray();
 
 				if (object instanceof Iterable || object instanceof IsInList) {
@@ -154,7 +143,7 @@ public abstract class SerializeUtilCore {
 		} else if (object instanceof Map || object instanceof StrictMap) {
 			final Map<Object, Object> oldMap = object instanceof StrictMap ? ((StrictMap<Object, Object>) object).getSource() : (Map<Object, Object>) object;
 
-			if (isJson) {
+			if (mode == Mode.JSON) {
 				final JSONObject json = new JSONObject();
 
 				for (final Map.Entry<Object, Object> entry : oldMap.entrySet()) {
@@ -188,7 +177,6 @@ public abstract class SerializeUtilCore {
 				}
 
 				return json;
-
 			}
 
 			else {
@@ -310,14 +298,10 @@ public abstract class SerializeUtilCore {
 
 		final boolean isJson = mode == Mode.JSON;
 
-		for (final Serializer customDeserializer : customSerializers) {
-			final T result = customDeserializer.deserialize(mode, classOf, object, parameters);
+		if (customSerializers.containsKey(classOf))
+			object = customSerializers.get(classOf).deserialize(mode, object.toString());
 
-			if (result != null)
-				return result;
-		}
-
-		if (classOf == String.class)
+		else if (classOf == String.class)
 			object = object.toString();
 
 		else if (classOf == Integer.class)
@@ -337,9 +321,6 @@ public abstract class SerializeUtilCore {
 
 		else if (classOf == SerializedMap.class)
 			object = isJson ? SerializedMap.fromJson(object.toString()) : SerializedMap.of(object);
-
-		else if (classOf == BoxedMessage.class)
-			object = new BoxedMessage(CommonCore.colorize(object.toString()));
 
 		else if (classOf == SimpleTime.class)
 			object = SimpleTime.from(object.toString());
@@ -362,8 +343,11 @@ public abstract class SerializeUtilCore {
 		else if (Enum.class.isAssignableFrom(classOf)) {
 			object = ReflectionUtilCore.lookupEnum((Class<Enum>) classOf, object.toString());
 
-			if (object == null)
+			if (object == null) {
+				System.out.println("RETURN NULL FOR " + classOf + " FROM " + object);
+
 				return null;
+			}
 		}
 
 		else if (Color.class.isAssignableFrom(classOf))
@@ -372,14 +356,23 @@ public abstract class SerializeUtilCore {
 			// Good
 
 		} else if (Map.class.isAssignableFrom(classOf)) {
-			if (object instanceof Map)
+			if (object instanceof Map) {
+				System.out.println("RETURN MAP FOR " + classOf + " FROM " + object);
+
 				return (T) object;
+			}
 
-			if (object instanceof ConfigSection)
+			if (object instanceof ConfigSection) {
+				System.out.println("RETURN CONFIG SECTION VALUES FOR " + classOf + " FROM " + object);
+
 				return (T) ((ConfigSection) object).getValues(false);
+			}
 
-			if (isJson)
+			if (isJson) {
+				System.out.println("RETURN FROM JSON MAP FOR " + classOf + " FROM " + object);
+
 				return (T) SerializedMap.fromJson(object.toString()).asMap();
+			}
 
 			throw new SerializeFailedException("Does not know how to turn " + object.getClass().getSimpleName() + " into a Map! (Keep in mind we can only serialize into Map<String, Object> Data: " + object);
 
@@ -406,6 +399,7 @@ public abstract class SerializeUtilCore {
 					array[i] = rawArray[i] == null ? null : (T) deserialize(mode, classOf.getComponentType(), rawArray[i], (Object[]) null);
 			}
 
+			System.out.println("RETURN ARRAY FOR " + classOf + " FROM " + object);
 			return (T) array;
 		}
 
@@ -433,13 +427,17 @@ public abstract class SerializeUtilCore {
 				ValidCore.checkBoolean(argumentClasses.size() == arguments.size(),
 						classOf.getSimpleName() + "#deserialize(SerializedMap, " + argumentClasses.size() + " args) expected, " + arguments.size() + " given to deserialize: " + object);
 
+				System.out.println("RETURN DESERIALIZE() FOR " + classOf + " FROM " + object);
 				return ReflectionUtilCore.invokeStatic(deserialize, arguments.toArray());
 			}
 
 			final Method deserialize = ReflectionUtilCore.getMethod(classOf, "deserialize", SerializedMap.class);
 
-			if (deserialize != null)
+			if (deserialize != null) {
+				System.out.println("RETURN DESERIALIZE 2() FOR " + classOf + " FROM " + object);
+
 				return ReflectionUtilCore.invokeStatic(deserialize, isJson ? SerializedMap.fromJson(object.toString()) : SerializedMap.of(object));
+			}
 
 			throw new SerializeFailedException("Unable to deserialize " + classOf.getSimpleName()
 					+ ", please write 'public static deserialize(SerializedMap map) or deserialize(SerializedMap map, X arg1, Y arg2, etc.) method to deserialize: " + object);
@@ -449,8 +447,11 @@ public abstract class SerializeUtilCore {
 		else if (object instanceof String) {
 			final Method method = ReflectionUtilCore.getMethod(classOf, "getByName", String.class);
 
-			if (method != null)
+			if (method != null) {
+				System.out.println("RETURN GET BY NAME FOR " + classOf + " FROM " + object);
+
 				return ReflectionUtilCore.invokeStatic(method, object);
+			}
 		}
 
 		else if (classOf == Object.class) {
@@ -466,19 +467,20 @@ public abstract class SerializeUtilCore {
 	/**
 	 * Add a custom serializer to serialize objects into strings
 	 *
+	 * @param typeOf
 	 * @param serializer
 	 */
-	public static void addCustomSerializer(Serializer serializer) {
-		customSerializers.add(serializer);
+	public static <T> void addCustomSerializer(Class<T> typeOf, Serializer<T> serializer) {
+		customSerializers.put(typeOf, serializer);
 	}
 
 	/**
 	 * A custom serializer for serializing objects into strings
 	 */
-	public interface Serializer {
-		Object serialize(Mode mode, Object object);
+	public interface Serializer<T> {
+		Object serialize(Mode mode, T object);
 
-		<T> T deserialize(Mode mode, final Class<T> classOf, Object object, final Object... parameters);
+		T deserialize(Mode mode, String object);
 	}
 
 	/**

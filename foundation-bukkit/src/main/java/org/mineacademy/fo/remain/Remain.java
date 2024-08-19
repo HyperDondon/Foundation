@@ -409,8 +409,6 @@ public final class Remain extends RemainCore {
 			cancelTasks = ReflectionUtil.getMethod(foliaScheduler.getClass(), "cancelTasks", Plugin.class);
 			cancel = ReflectionUtil.getMethod(ReflectionUtil.lookupClass("io.papermc.paper.threadedregions.scheduler.ScheduledTask"), "cancel");
 		}
-
-		Remain.init();
 	}
 
 	// ----------------------------------------------------------------------------------------------------

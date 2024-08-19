@@ -28,7 +28,6 @@ import org.mineacademy.fo.platform.FoundationPlugin;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.proxy.ProxyListener;
 import org.mineacademy.fo.remain.RemainCore;
-import org.mineacademy.fo.settings.FileConfig;
 import org.mineacademy.fo.settings.SimpleLocalization;
 import org.mineacademy.fo.settings.SimpleSettings;
 import org.mineacademy.fo.settings.YamlConfig;
@@ -129,6 +128,8 @@ final class AutoRegisterScanner {
 						autoRegister(clazz, autoRegister == null || !autoRegister.hideIncompatibilityWarnings());
 
 					} catch (final NoClassDefFoundError | NoSuchFieldError ex) {
+						ex.printStackTrace();
+
 						CommonCore.warning("Failed to auto register " + clazz + " due to it requesting missing fields/classes: " + ex.getMessage());
 
 					} catch (final Throwable t) {
@@ -166,8 +167,6 @@ final class AutoRegisterScanner {
 		// Reset settings and localization
 		SimpleSettings.resetSettingsCall();
 		SimpleLocalization.resetLocalizationCall();
-
-		FileConfig.clearLoadedSections();
 
 		// Register settings early to be used later
 		registerSettings(classes);

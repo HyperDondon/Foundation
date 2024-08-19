@@ -122,13 +122,13 @@ public final class PermsCommand extends SimpleSubCommandCore {
 			final String info = String.join("\n", CommonCore.split(annotation.value(), 50));
 			final boolean def = annotation.def();
 
-			if (info.contains("{") && info.contains("}"))
-				throw new FoException("Forgotten unreplaced variable in " + info + " for field " + field + " in " + clazz);
+			if (info.contains("{plugin_name}") || info.contains("{plugin}"))
+				throw new FoException("Forgotten unsupported variable in " + info + " for field " + field + " in " + clazz);
 
 			final String node = (String) field.get(null);
 
-			if (node.contains("{") && node.contains("}"))
-				throw new FoException("Forgotten unreplaced variable in " + node + " for field " + field + " in " + clazz);
+			if (node.contains("{plugin_name}") || node.contains("{plugin}"))
+				throw new FoException("Forgotten unsupported variable in " + info + " for field " + field + " in " + clazz);
 
 			final boolean has = this.sender == null ? false : this.hasPerm(node);
 

@@ -381,7 +381,7 @@ public abstract class LibraryManager {
 	 */
 	protected byte[] downloadLibrary(String url) {
 		try {
-			System.out.println("Downloading library " + url);
+			System.out.println("Downloading library " + url); // Cannot use CommonCore since libraries were not loaded yet
 
 			final URLConnection connection = new URL(requireNonNull(url, "url")).openConnection();
 
