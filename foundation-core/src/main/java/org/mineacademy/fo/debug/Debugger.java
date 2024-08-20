@@ -117,21 +117,15 @@ public final class Debugger {
 	/**
 	 * Logs the error in the console and writes all details into the errors.log file
 	 *
-	 * @param t
+	 * @param throwable
 	 * @param messages
 	 */
-	public static void saveError(Throwable t, String... messages) {
-
-		System.out.println("============================================================================");
-		System.out.println("SAVING ERROR FROM:");
-		new Throwable().printStackTrace();
-		System.out.println("============================================================================");
-
+	public static void saveError(Throwable throwable, String... messages) {
 		final String systemInfo = "Running " + Platform.getServerName() + " " + Platform.getServerVersion() + " and Java " + System.getProperty("java.version");
 
 		try {
 			final List<String> lines = new ArrayList<>();
-			final String header = Platform.getPlugin().getName() + " " + Platform.getPlugin().getVersion() + " encountered " + CommonCore.article(t.getClass().getSimpleName());
+			final String header = Platform.getPlugin().getName() + " " + Platform.getPlugin().getVersion() + " encountered " + CommonCore.article(throwable.getClass().getSimpleName());
 
 			// Write out header and server info
 			fill(lines,
@@ -151,11 +145,11 @@ public final class Debugger {
 
 				do {
 					// Write the error header
-					fill(lines, t == null ? "Unknown error" : t.getClass().getSimpleName() + " " + CommonCore.getOrDefault(t.getMessage(), CommonCore.getOrDefault(t.getLocalizedMessage(), "(Unknown cause)")));
+					fill(lines, throwable == null ? "Unknown error" : throwable.getClass().getSimpleName() + " " + CommonCore.getOrDefault(throwable.getMessage(), "(Unknown cause)"));
 
 					int count = 0;
 
-					for (final StackTraceElement el : t.getStackTrace()) {
+					for (final StackTraceElement el : throwable.getStackTrace()) {
 						count++;
 
 						final String trace = el.toString();
@@ -168,7 +162,7 @@ public final class Debugger {
 
 						fill(lines, "\t at " + el.toString());
 					}
-				} while ((t = t.getCause()) != null);
+				} while ((throwable = throwable.getCause()) != null);
 			}
 
 			fill(lines, "----------------------------------------------------------------------------------------------", System.lineSeparator());
@@ -185,7 +179,7 @@ public final class Debugger {
 			System.out.println("Got error when saving another error! Saving error:" + secondError);
 			System.out.println("Original error that is not saved:");
 
-			t.printStackTrace();
+			throwable.printStackTrace();
 		}
 	}
 

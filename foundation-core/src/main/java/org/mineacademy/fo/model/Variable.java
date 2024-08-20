@@ -10,7 +10,6 @@ import java.util.regex.Pattern;
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.debug.Debugger;
-import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.exception.FoScriptException;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.settings.ConfigItems;
@@ -240,8 +239,7 @@ public final class Variable extends YamlConfig {
 					"",
 					"Please report this issue!");
 
-			if (FoException.isErrorSavedAutomatically())
-				Debugger.saveError(t, errorHeadline);
+			Debugger.saveError(t, errorHeadline);
 
 			return "";
 

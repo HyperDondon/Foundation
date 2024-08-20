@@ -516,7 +516,7 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 					if (mode == Mode.JSON)
 						return JsonItemStack.toJson(object);
 					else
-						return SerializeUtil.serialize(mode, object.serialize());
+						return object.serialize();
 				}
 
 				@Override

@@ -600,8 +600,6 @@ public final class CompChatColor {
 
 	/*
 	 * Get a hex color from the input string, copied from ChatColor class.
-	 *
-	 * @deprecated uses legacy hex color formatting
 	 */
 	private static String getHexColor(String input, int index) {
 		// Check for hex color with the format '§x§1§2§3§4§5§6'

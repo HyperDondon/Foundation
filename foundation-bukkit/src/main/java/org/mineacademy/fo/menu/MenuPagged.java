@@ -401,7 +401,7 @@ public abstract class MenuPagged<T> extends Menu {
 		this.restartMenu();
 
 		Menu.getSound().play(this.getViewer());
-		PlayerUtil.updateInventoryTitle(this.getViewer(), this.getTitleWithPageNumbers());
+		Remain.updateInventoryTitle(this.getViewer(), this.getTitleWithPageNumbers());
 	}
 
 	/**
@@ -560,7 +560,7 @@ public abstract class MenuPagged<T> extends Menu {
 	@Override
 	public final void animateTitle(final String title) {
 		if (Menu.isTitleAnimationEnabled())
-			PlayerUtil.updateInventoryTitle(this, this.getViewer(), title, this.getTitleWithPageNumbers(), Menu.getTitleAnimationDurationTicks());
+			PlayerUtil.setTemporaryInventoryTitle(this, this.getViewer(), title, this.getTitleWithPageNumbers(), Menu.getTitleAnimationDurationTicks());
 	}
 
 	// Do not allow override

@@ -702,7 +702,6 @@ public abstract class FileConfig {
 	 * @param path
 	 * @return
 	 */
-
 	public final StrictList<String> getCommandList(final String path) {
 		final List<String> list = this.getStringList(path);
 		ValidCore.checkBoolean(!list.isEmpty(), "Please set at least one command alias in '" + path + "' (" + this.getFileName() + ") for this will be used as your main command!");

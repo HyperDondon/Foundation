@@ -80,7 +80,7 @@ public class ButtonRemove extends Button {
 						"name", this.toRemoveName,
 						"type", this.toRemoveType))
 
-				.flags(CompItemFlag.HIDE_ATTRIBUTES)
+				.flag(CompItemFlag.HIDE_ATTRIBUTES)
 				.make();
 	}
 
@@ -101,7 +101,7 @@ public class ButtonRemove extends Button {
 						"&7be removed permanently.",
 						"&cCannot be undone."))
 
-				.flags(CompItemFlag.HIDE_ATTRIBUTES)
+				.flag(CompItemFlag.HIDE_ATTRIBUTES)
 				.make();
 	}
 

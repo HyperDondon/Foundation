@@ -388,14 +388,14 @@ public abstract class CommonCore {
 	/*public static List<String> colorize(final List<String> list) {
 		final List<String> copy = new ArrayList<>();
 		copy.addAll(list);
-
+	
 		for (int i = 0; i < copy.size(); i++) {
 			final String message = copy.get(i);
-
+	
 			if (message != null)
 				copy.set(i, colorize(message));
 		}
-
+	
 		return copy;
 	}*/
 
@@ -418,7 +418,7 @@ public abstract class CommonCore {
 	/*public static String[] colorizeArray(final String... messages) {
 		for (int i = 0; i < messages.length; i++)
 			messages[i] = colorize(messages[i]);
-
+	
 		return messages;
 	}*/
 
@@ -655,7 +655,7 @@ public abstract class CommonCore {
 	 * @return
 	 */
 	public static String plural(final long count, final String ofWhat) {
-		final String exception = getException(count, ofWhat);
+		final String exception = getPluralException(count, ofWhat);
 
 		return exception != null ? exception : count + " " + ofWhat + (count == 0 || count > 1 && !ofWhat.endsWith("s") ? "s" : "");
 	}
@@ -668,7 +668,7 @@ public abstract class CommonCore {
 	 * @return
 	 */
 	public static String pluralEs(final long count, final String ofWhat) {
-		final String exception = getException(count, ofWhat);
+		final String exception = getPluralException(count, ofWhat);
 
 		return exception != null ? exception : count + " " + ofWhat + (count == 0 || count > 1 && !ofWhat.endsWith("es") ? "es" : "");
 	}
@@ -681,7 +681,7 @@ public abstract class CommonCore {
 	 * @return
 	 */
 	public static String pluralIes(final long count, final String ofWhat) {
-		final String exception = getException(count, ofWhat);
+		final String exception = getPluralException(count, ofWhat);
 
 		return exception != null ? exception : count + " " + (count == 0 || count > 1 && !ofWhat.endsWith("ies") ? ofWhat.substring(0, ofWhat.length() - 1) + "ies" : ofWhat);
 	}
@@ -695,7 +695,7 @@ public abstract class CommonCore {
 	 * @deprecated contains a very limited list of most common used English plural irregularities
 	 */
 	@Deprecated
-	private static String getException(final long count, final String ofWhat) {
+	private static String getPluralException(final long count, final String ofWhat) {
 		final SerializedMap exceptions = SerializedMap.ofArray(
 				"life", "lives",
 				"class", "classes",
@@ -761,6 +761,12 @@ public abstract class CommonCore {
 		// Special cases
 		if ("hour".equals(ofWhat))
 			return "an hour";
+		else if ("user".equals(ofWhat))
+			return "a user";
+		else if ("unique".equals(ofWhat))
+			return "a unique";
+		else if ("universe".equals(ofWhat))
+			return "a universe";
 
 		return (syllables.contains(ofWhat.toLowerCase().trim().substring(0, 1)) ? "an" : "a") + " " + ofWhat;
 	}
@@ -1128,23 +1134,29 @@ public abstract class CommonCore {
 	 * <p>
 	 * Possible to use %error variable
 	 *
-	 * @param t
+	 * @param throwable
 	 * @param messages
 	 */
-	public static void throwError(Throwable t, final String... messages) {
+	public static void throwError(Throwable throwable, final String... messages) {
+		synchronized (logPrefix) {
+			Throwable cause = throwable;
 
-		// Delegate to only print out the relevant stuff
-		if (t instanceof FoException)
-			throw (FoException) t;
+			while (cause.getCause() != null)
+				cause = cause.getCause();
 
-		if (messages != null)
-			logFramed(false, replaceErrorVariable(t, messages));
+			// Delegate to only print out the relevant stuff
+			if (throwable instanceof FoException)
+				throw (FoException) throwable;
 
-		Debugger.saveError(t, messages);
+			if (messages != null)
+				logFramed(false, replaceErrorVariable(throwable, messages));
 
-		t.printStackTrace();
+			// Do not save FoException even at the case because it already was saved
+			if (!(cause instanceof FoException))
+				Debugger.saveError(throwable, messages);
 
-		RemainCore.sneaky(t);
+			RemainCore.sneaky(throwable);
+		}
 	}
 
 	/*

@@ -120,8 +120,11 @@ public abstract class SerializeUtilCore {
 				if (object instanceof Iterable || object instanceof IsInList) {
 					final List<Object> serialized = new ArrayList<>();
 
-					for (final Object element : object instanceof IsInList ? ((IsInList<?>) object).getList() : (Iterable<?>) object)
+					for (final Object element : object instanceof IsInList ? ((IsInList<?>) object).getList() : (Iterable<?>) object) {
+						System.out.println("Serializing list element (" + element.getClass().getSimpleName() + "): " + element);
+
 						serialized.add(serialize(mode, element));
+					}
 
 					return serialized;
 
@@ -297,6 +300,8 @@ public abstract class SerializeUtilCore {
 	public static <T> T deserialize(@NonNull Mode mode, @NonNull final Class<T> classOf, @NonNull Object object, final Object... parameters) {
 
 		final boolean isJson = mode == Mode.JSON;
+
+		//System.out.println("Attempting to deserialize " + classOf + " from '" + object + "'");
 
 		if (customSerializers.containsKey(classOf))
 			object = customSerializers.get(classOf).deserialize(mode, object);

@@ -826,7 +826,7 @@ public abstract class Menu {
 	 */
 	public void animateTitle(final String title) {
 		if (titleAnimationEnabled)
-			PlayerUtil.updateInventoryTitle(this, this.getViewer(), title, this.getTitle(), titleAnimationDurationTicks);
+			PlayerUtil.setTemporaryInventoryTitle(this, this.getViewer(), title, this.getTitle(), titleAnimationDurationTicks);
 	}
 
 	/**
@@ -1046,7 +1046,7 @@ public abstract class Menu {
 		this.title = title;
 
 		if (this.viewer != null && this.opened)
-			PlayerUtil.updateInventoryTitle(this.viewer, title);
+			Remain.updateInventoryTitle(this.viewer, title);
 	}
 
 	/**

@@ -51,6 +51,7 @@ import org.mineacademy.fo.remain.Remain;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 
 /**
  * Utility class for managing players.
@@ -798,14 +799,10 @@ public final class PlayerUtil {
 	 * @param oldTitle       the old title to revert to
 	 * @param duration       the duration in ticks
 	 */
-	public static void updateInventoryTitle(final Menu menu, final Player player, final String temporaryTitle, final String oldTitle, final int duration) {
-		Valid.checkNotNull(menu, "Menu == null");
-		Valid.checkNotNull(player, "Player == null");
-		Valid.checkNotNull(temporaryTitle, "Title == null");
-		Valid.checkNotNull(oldTitle, "Old Title == null");
+	public static void setTemporaryInventoryTitle(@NonNull final Menu menu, @NonNull final Player player, @NonNull final String temporaryTitle, @NonNull final String oldTitle, final int duration) {
 
 		// Send the packet
-		updateInventoryTitle(player, MinecraftVersion.atLeast(V.v1_13) ? temporaryTitle.replace("%", "%%") : temporaryTitle);
+		Remain.updateInventoryTitle(player, MinecraftVersion.atLeast(V.v1_13) ? temporaryTitle.replace("%", "%%") : temporaryTitle);
 
 		// Prevent flashing titles
 		Task pending = titleRestoreTasks.get(player.getUniqueId());
@@ -817,7 +814,7 @@ public final class PlayerUtil {
 			final Menu futureMenu = Menu.getMenu(player);
 
 			if (futureMenu != null && futureMenu.getClass().getName().equals(menu.getClass().getName()))
-				updateInventoryTitle(player, oldTitle);
+				Remain.updateInventoryTitle(player, oldTitle);
 		});
 
 		final UUID uid = player.getUniqueId();
@@ -829,16 +826,6 @@ public final class PlayerUtil {
 			if (titleRestoreTasks.containsKey(uid))
 				titleRestoreTasks.remove(uid);
 		});
-	}
-
-	/**
-	 * Update the player's inventory title without closing the window
-	 *
-	 * @param player the player
-	 * @param title  the new title
-	 */
-	public static void updateInventoryTitle(final Player player, final String title) {
-		Remain.updateInventoryTitle(player, title);
 	}
 
 	// ----------------------------------------------------------------------------------------------------

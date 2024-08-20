@@ -69,7 +69,6 @@ import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Score;
 import org.mineacademy.fo.Common;
 import org.mineacademy.fo.CommonCore;
-import org.mineacademy.fo.EntityUtil;
 import org.mineacademy.fo.ItemUtil;
 import org.mineacademy.fo.MathUtil;
 import org.mineacademy.fo.MinecraftVersion;
@@ -2335,9 +2334,7 @@ public final class Remain extends RemainCore {
 	 * @param item
 	 * @param modifier
 	 * @return the item
-	 * @deprecated use {@link EntityUtil#dropItem(Location, ItemStack, Consumer)}
 	 */
-	@Deprecated
 	public static Item spawnItem(final Location location, final ItemStack item, final Consumer<Item> modifier) {
 		try {
 
@@ -2572,9 +2569,7 @@ public final class Remain extends RemainCore {
 	 *
 	 * @param player the player
 	 * @param title  the new title
-	 * @deprecated use {@link PlayerUtil#updateInventoryTitle(Player, String)}
 	 */
-	@Deprecated
 	public static void updateInventoryTitle(final Player player, String title) {
 		try {
 			final Object view = ReflectionUtil.invoke("getOpenInventory", player);

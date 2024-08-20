@@ -4,7 +4,6 @@ import org.mineacademy.fo.SerializeUtilCore;
 import org.mineacademy.fo.SerializeUtilCore.Mode;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.collection.SerializedMap;
-import org.mineacademy.fo.exception.FoException;
 
 import lombok.Data;
 
@@ -31,7 +30,9 @@ public final class Tuple<K, V> implements ConfigSerializable {
 	 */
 	@Override
 	public SerializedMap serialize() {
-		return SerializedMap.ofArray("Key", this.key, "Value", this.value);
+		return SerializedMap.ofArray(
+				"Key", this.key,
+				"Value", this.value);
 	}
 
 	/**
@@ -62,7 +63,6 @@ public final class Tuple<K, V> implements ConfigSerializable {
 	 * @return
 	 */
 	public static <K, V> Tuple<K, V> deserialize(SerializedMap map, Class<K> keyType, Class<V> valueType) {
-
 		final K key = map.containsKey("Key") ? map.get("Key", keyType) : null;
 		final V value = map.containsKey("Value") ? map.get("Value", valueType) : null;
 
@@ -91,20 +91,5 @@ public final class Tuple<K, V> implements ConfigSerializable {
 		final V value = SerializeUtilCore.deserialize(Mode.YAML, valueType, split[1]);
 
 		return new Tuple<>(key, value);
-	}
-
-	/**
-	 * Do not use
-	 *
-	 * @param <K>
-	 * @param <V>
-	 * @param map
-	 *
-	 * @deprecated do not use
-	 * @return
-	 */
-	@Deprecated
-	public static <K, V> Tuple<K, V> deserialize(SerializedMap map) {
-		throw new FoException("Tuple cannot be deserialized automatically, call Tuple#deserialize(map, keyType, valueType)");
 	}
 }

@@ -27,7 +27,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.ProjectileHitEvent;
-import org.bukkit.inventory.ItemStack;
 import org.mineacademy.fo.collection.expiringmap.ExpiringMap;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.model.HookManager;
@@ -219,23 +218,6 @@ public final class EntityUtil {
 				entity instanceof Item ||
 				entity instanceof Projectile ||
 				entity instanceof ExperienceOrb;
-	}
-
-	// ----------------------------------------------------------------------------------------------------
-	// Dropping
-	// ----------------------------------------------------------------------------------------------------
-
-	/**
-	 * Attempts to drop the item allowing space for applying properties to the item
-	 * before it is spawned
-	 *
-	 * @param location
-	 * @param item
-	 * @param modifier
-	 * @return the item
-	 */
-	public static Item dropItem(Location location, ItemStack item, Consumer<Item> modifier) {
-		return Remain.spawnItem(location, item, modifier);
 	}
 
 	// ----------------------------------------------------------------------------------------------------

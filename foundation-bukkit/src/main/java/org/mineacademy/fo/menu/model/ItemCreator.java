@@ -354,23 +354,12 @@ public final class ItemCreator {
 	}
 
 	/**
-	 * @see #flags(CompItemFlag...)
-	 * @deprecated call {@link #flags(CompItemFlag...)} instead
-	 * @param flags
-	 * @return
-	 */
-	@Deprecated
-	public ItemCreator flag(CompItemFlag... flags) {
-		return this.flags(flags);
-	}
-
-	/**
 	 * Add the given flags to the item.
 	 *
 	 * @param flags
 	 * @return
 	 */
-	public ItemCreator flags(CompItemFlag... flags) {
+	public ItemCreator flag(CompItemFlag... flags) {
 		this.flags.addAll(Arrays.asList(flags));
 
 		return this;
@@ -558,25 +547,6 @@ public final class ItemCreator {
 	// ----------------------------------------------------------------------------------------
 	// Constructing items
 	// ----------------------------------------------------------------------------------------
-
-	/**
-	 * @deprecated no longer needed, will simply return itself. Instead of calling "built().make()", now simple call "make()"
-	 * @return
-	 */
-	@Deprecated
-	public ItemCreator build() {
-		return this;
-	}
-
-	/**
-	 *
-	 * @deprecated simply returns {@link #make()} now, call that instead
-	 * @return
-	 */
-	@Deprecated
-	public ItemStack makeSurvival() {
-		return this.make();
-	}
 
 	/**
 	 * Make an unbreakable item with all attributes hidden, suitable for menu use.

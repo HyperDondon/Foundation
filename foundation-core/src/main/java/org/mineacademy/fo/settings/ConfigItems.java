@@ -165,25 +165,20 @@ public final class ConfigItems<T extends YamlConfig> {
 
 				constructor.setAccessible(true);
 
-				try {
-					if (nameConstructor)
-						item = constructor.newInstance(name);
-					else
-						item = constructor.newInstance();
-
-				} catch (final InstantiationException ex) {
-					CommonCore.throwError(ex, "Failed to create new" + (this.type == null ? prototypeClass.getSimpleName() : " " + this.type) + " " + name + " from " + constructor);
-				}
+				if (nameConstructor)
+					item = constructor.newInstance(name);
+				else
+					item = constructor.newInstance();
 			}
 
 			// Register
 			this.loadedItemsMap.put(name, item);
 
-		} catch (final Throwable t) {
-			CommonCore.throwError(t, "Failed to load" + name + " from " + this.folder);
+		} catch (final Throwable throwable) {
+			CommonCore.throwError(throwable, "Failed to load" + (this.type == null ? "" : this.type + " ") + name + " from " + this.folder);
 		}
 
-		ValidCore.checkNotNull(item, "Failed to initiliaze " + name + " from " + this.folder);
+		ValidCore.checkNotNull(item, "Failed to initiliaze " + (this.type == null ? "" : this.type + " ") + name + " from " + this.folder);
 		return item;
 	}
 
