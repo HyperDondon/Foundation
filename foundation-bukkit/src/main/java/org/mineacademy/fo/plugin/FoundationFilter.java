@@ -14,7 +14,6 @@ import org.apache.logging.log4j.core.Logger;
 import org.apache.logging.log4j.message.Message;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
-import org.mineacademy.fo.Common;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -84,33 +83,15 @@ final class FoundationFilter {
 			return true;
 
 		// Disable some annoying hikaripool or discordsrv messages
-		if (message.contains("HikariPool-1 - Starting...")
-				|| message.contains("HikariPool-1 - Start completed.")
-				|| message.contains("[DiscordSRV] [JDA] Login Successful!")
-				|| message.contains("[DiscordSRV] [JDA] Connected to WebSocket"))
+		if (message.contains("HikariPool-1 - Starting...") || message.contains("HikariPool-1 - Start completed.")
+				|| message.contains("[DiscordSRV] [JDA] Login Successful!") || message.contains("[DiscordSRV] [JDA] Connected to WebSocket"))
 
 			return true;
-
-		final boolean hasInstance = SimplePlugin.hasInstance();
-
-		// Workaround for Spigot/Paper not removing [Not Secure] console misinformation
-		// The only thing that is insecure is Microsoft itself from it not being able to read your messages
-		if (hasInstance && SimplePlugin.getInstance().filterInsecureChat() && message.trim().startsWith("[Not Secure] ")) {
-			message = message.replace("[Not Secure] ", "");
-
-			// Color support
-			if (Bukkit.getConsoleSender() != null)
-				Bukkit.getConsoleSender().sendMessage(Common.colorizeLegacy(message));
-			else
-				System.out.println(message);
-
-			return true;
-		}
 
 		message = message.toLowerCase();
 
 		// Only filter this after plugin has been fully enabled
-		if (hasInstance && SimplePlugin.getInstance().getDefaultCommandGroup() != null) {
+		if (SimplePlugin.hasInstance() && SimplePlugin.getInstance().getDefaultCommandGroup() != null) {
 
 			// Filter inbuilt Foundation or ChatControl commands
 			if (message.contains("issued server command: /" + SimplePlugin.getInstance().getDefaultCommandGroup().getLabel() + " internal") || message.contains("issued server command: /#flp"))

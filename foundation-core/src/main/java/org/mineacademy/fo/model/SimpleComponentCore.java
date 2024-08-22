@@ -387,10 +387,10 @@ public class SimpleComponentCore implements ConfigSerializable {
 	 * @param sender
 	 * @return
 	 */
-	public final SimpleComponentCore setSender(final Audience sender) {
+	public final <T extends SimpleComponentCore> T setSender(final Audience sender) {
 		this.sender = sender;
 
-		return this;
+		return (T) this;
 	}
 
 	/**
@@ -399,10 +399,10 @@ public class SimpleComponentCore implements ConfigSerializable {
 	 * @param ignoreEmpty
 	 * @return
 	 */
-	public final SimpleComponentCore setIgnoreEmpty(final boolean ignoreEmpty) {
+	public final <T extends SimpleComponentCore> T setIgnoreEmpty(final boolean ignoreEmpty) {
 		this.ignoreEmpty = ignoreEmpty;
 
-		return this;
+		return (T) this;
 	}
 
 	/*

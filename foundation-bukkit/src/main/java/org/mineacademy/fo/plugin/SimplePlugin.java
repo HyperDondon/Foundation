@@ -1209,15 +1209,6 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 		return false;
 	}
 
-	/**
-	 * Remove [Not Secure] misinformation message from console chat.
-	 *
-	 * @return
-	 */
-	public boolean filterInsecureChat() {
-		return true;
-	}
-
 	// ----------------------------------------------------------------------------------------
 	// Overriding parent methods
 	// ----------------------------------------------------------------------------------------

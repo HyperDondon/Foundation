@@ -18,7 +18,7 @@ import org.mineacademy.fo.remain.CompMaterial;
 /**
  * The menu where players can select a region or create one.
  */
-public class SelectRegionMenu extends MenuPagged<String> {
+public class SelectRegionMenu extends MenuPaged<String> {
 
 	@Position(start = StartPosition.BOTTOM_LEFT)
 	private final Button createButton;
@@ -46,7 +46,7 @@ public class SelectRegionMenu extends MenuPagged<String> {
 	}
 
 	/**
-	 * @see org.mineacademy.fo.menu.MenuPagged#onPostDisplay(org.mineacademy.fo.menu.model.InventoryDrawer)
+	 * @see org.mineacademy.fo.menu.MenuPaged#onPostDisplay(org.mineacademy.fo.menu.model.InventoryDrawer)
 	 */
 	@Override
 	protected void onPostDisplay(InventoryDrawer drawer) {

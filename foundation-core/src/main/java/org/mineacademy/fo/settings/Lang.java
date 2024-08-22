@@ -1,19 +1,18 @@
 package org.mineacademy.fo.settings;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.MessengerCore;
-import org.mineacademy.fo.SerializeUtilCore;
-import org.mineacademy.fo.SerializeUtilCore.Mode;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.model.Variables;
 import org.mineacademy.fo.remain.RemainCore;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextReplacementConfig;
 
 /**
  * Represents the new way of internalization, with the greatest
@@ -190,45 +189,88 @@ public final class Lang extends YamlConfig {
 	}
 
 	/**
-	 * Return a key from the localization file with {0} {1} etc. variables replaced.
+	 * Return a key from the localization file
 	 *
 	 * @param path
-	 * @param variables
 	 * @return
 	 */
-	public static String ofLegacy(String path, Object... variables) {
-		return RemainCore.convertAdventureToLegacy(of(path, variables));
+	public static String ofLegacy(String path) {
+		return ofLegacyVars(path);
 	}
 
 	/**
-	 * Return a key from the localization file with {0} {1} etc. variables replaced.
+	 * Return a key from the localization file
 	 *
 	 * @param path
-	 * @param variables
+	 * @param replacements
 	 * @return
 	 */
-	public static Component of(String path, Object... variables) {
+	public static String ofLegacyVars(String path, Object... replacements) {
+		return RemainCore.convertAdventureToLegacy(ofVars(path, replacements));
+	}
+
+	/**
+	 * Return a key from the localization file, replacing variables
+	 * by their index, i.e. {0} is replaced from replacements[0], etc.
+	 *
+	 * @param path
+	 * @return
+	 */
+	public static Component ofNumericVars(String path, Object... replacements) {
+		final Map<String, Object> replacementMap = new HashMap<>();
+
+		for (int i = 0; i < replacements.length; i++)
+			replacementMap.put(String.valueOf(i), replacements[i]);
+
+		return ofVars(path, replacementMap);
+	}
+
+	/**
+	 * Return a key from the localization file
+	 *
+	 * @param path
+	 * @return
+	 */
+	public static Component of(String path) {
+		return ofVars(path);
+	}
+
+	/**
+	 * Return a key from the localization file
+	 *
+	 * @param path
+	 * @param replacements
+	 * @return
+	 */
+	public static Component ofVars(String path, Object... replacements) {
 		checkInit();
 
-		Component component = instance.getComponent(path);
+		final Component component = instance.getComponent(path);
 
 		if (component == null)
 			throw new FoException("Missing localization key '" + path + "' from " + instance.getFileName());
 
-		component = Variables.replace(component, null);
-		component = translate(component, variables);
-
-		return component;
+		return Variables.replace(component, null, CommonCore.newHashMap(replacements));
 	}
 
 	/**
 	 * Return an array from the localization file with {0} {1} etc. variables replaced.
 	 *
 	 * @param path
-	 * @param variables
 	 * @return
 	 */
-	public static Component[] ofArray(String path, Object... variables) {
+	public static Component[] ofArray(String path) {
+		return ofArrayVars(path);
+	}
+
+	/**
+	 * Return an array from the localization file with {0} {1} etc. variables replaced.
+	 *
+	 * @param path
+	 * @param replacements
+	 * @return
+	 */
+	public static Component[] ofArrayVars(String path, Object... replacements) {
 		checkInit();
 
 		if (!instance.isSet(path))
@@ -236,41 +278,10 @@ public final class Lang extends YamlConfig {
 
 		final List<Component> components = new ArrayList<>();
 
-		for (Component component : instance.getList(path, Component.class)) {
-			component = Variables.replace(component, null);
-			component = translate(component, variables);
-
-			components.add(component);
-		}
+		for (final Component component : instance.getList(path, Component.class))
+			components.add(Variables.replace(component, null, CommonCore.newHashMap(replacements)));
 
 		return components.toArray(new Component[components.size()]);
-	}
-
-	/*
-	 * Replace placeholders in the message
-	 */
-	// TODO knock to Variables for improved performance
-	private static Component translate(Component component, Object... variables) {
-		ValidCore.checkNotNull(component, "Cannot translate a null key with variables " + CommonCore.join(variables));
-
-		if (variables != null)
-			for (int i = 0; i < variables.length; i++) {
-				Object variable = variables[i];
-
-				if (variable == null)
-					variable = SimpleLocalization.NONE;
-
-				else if (variable instanceof String)
-					variable = variable.toString();
-
-				else
-					variable = SerializeUtilCore.serialize(Mode.YAML, variable);
-
-				ValidCore.checkNotNull(variable, "Failed to replace {" + i + "} as " + variable + " (raw = " + variables[i] + ")");
-				component = component.replaceText(TextReplacementConfig.builder().matchLiteral("{" + i + "}").replacement(CommonCore.colorize(variable.toString())).build());
-			}
-
-		return component;
 	}
 
 	/*
