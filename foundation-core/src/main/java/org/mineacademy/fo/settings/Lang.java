@@ -9,10 +9,8 @@ import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.MessengerCore;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.exception.FoException;
+import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.Variables;
-import org.mineacademy.fo.remain.RemainCore;
-
-import net.kyori.adventure.text.Component;
 
 /**
  * Represents the new way of internalization, with the greatest
@@ -206,7 +204,7 @@ public final class Lang extends YamlConfig {
 	 * @return
 	 */
 	public static String ofLegacyVars(String path, Object... replacements) {
-		return RemainCore.convertAdventureToLegacy(ofVars(path, replacements));
+		return ofVars(path, replacements).toLegacy();
 	}
 
 	/**
@@ -216,7 +214,7 @@ public final class Lang extends YamlConfig {
 	 * @param path
 	 * @return
 	 */
-	public static Component ofNumericVars(String path, Object... replacements) {
+	public static SimpleComponent ofNumericVars(String path, Object... replacements) {
 		final Map<String, Object> replacementMap = new HashMap<>();
 
 		for (int i = 0; i < replacements.length; i++)
@@ -231,7 +229,7 @@ public final class Lang extends YamlConfig {
 	 * @param path
 	 * @return
 	 */
-	public static Component of(String path) {
+	public static SimpleComponent of(String path) {
 		return ofVars(path);
 	}
 
@@ -242,10 +240,10 @@ public final class Lang extends YamlConfig {
 	 * @param replacements
 	 * @return
 	 */
-	public static Component ofVars(String path, Object... replacements) {
+	public static SimpleComponent ofVars(String path, Object... replacements) {
 		checkInit();
 
-		final Component component = instance.getComponent(path);
+		final SimpleComponent component = instance.getComponent(path);
 
 		if (component == null)
 			throw new FoException("Missing localization key '" + path + "' from " + instance.getFileName());
@@ -259,7 +257,7 @@ public final class Lang extends YamlConfig {
 	 * @param path
 	 * @return
 	 */
-	public static Component[] ofArray(String path) {
+	public static SimpleComponent[] ofArray(String path) {
 		return ofArrayVars(path);
 	}
 
@@ -270,18 +268,18 @@ public final class Lang extends YamlConfig {
 	 * @param replacements
 	 * @return
 	 */
-	public static Component[] ofArrayVars(String path, Object... replacements) {
+	public static SimpleComponent[] ofArrayVars(String path, Object... replacements) {
 		checkInit();
 
 		if (!instance.isSet(path))
 			throw new FoException("Missing localization key '" + path + "' from " + instance.getFileName());
 
-		final List<Component> components = new ArrayList<>();
+		final List<SimpleComponent> components = new ArrayList<>();
 
-		for (final Component component : instance.getList(path, Component.class))
+		for (final SimpleComponent component : instance.getList(path, SimpleComponent.class))
 			components.add(Variables.replace(component, null, CommonCore.newHashMap(replacements)));
 
-		return components.toArray(new Component[components.size()]);
+		return components.toArray(new SimpleComponent[components.size()]);
 	}
 
 	/*

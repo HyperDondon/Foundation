@@ -1,11 +1,10 @@
 package org.mineacademy.fo.model;
 
 import org.mineacademy.fo.collection.SerializedMap;
-import org.mineacademy.fo.remain.RemainCore;
+import org.mineacademy.fo.platform.FoundationPlayer;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.kyori.adventure.audience.Audience;
 
 /**
  * Represents a simple title message
@@ -43,10 +42,10 @@ public final class TitleMessage implements ConfigSerializable {
 	/**
 	 * Displays this title message to the given player
 	 *
-	 * @param audience
+	 * @param sender
 	 */
-	public void displayTo(Audience audience) {
-		RemainCore.sendTitle(audience, this.fadeIn, this.stay, this.fadeOut, RemainCore.convertLegacyToAdventure(this.titleMessage), RemainCore.convertLegacyToAdventure(this.subtitleMessage));
+	public void displayTo(FoundationPlayer sender) {
+		sender.sendTitle(this.fadeIn, this.stay, this.fadeOut, this.titleMessage, this.subtitleMessage);
 	}
 
 	/**

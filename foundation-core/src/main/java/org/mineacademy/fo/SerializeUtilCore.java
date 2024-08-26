@@ -28,15 +28,14 @@ import org.mineacademy.fo.model.ConfigSerializable;
 import org.mineacademy.fo.model.IsInList;
 import org.mineacademy.fo.model.RangedSimpleTime;
 import org.mineacademy.fo.model.RangedValue;
+import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.SimpleTime;
 import org.mineacademy.fo.remain.CompChatColor;
-import org.mineacademy.fo.remain.RemainCore;
 import org.mineacademy.fo.settings.ConfigSection;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import net.kyori.adventure.text.Component;
 
 /**
  * Utility class for serializing objects to writeable YAML data and back.
@@ -91,13 +90,16 @@ public abstract class SerializeUtilCore {
 		else if (object instanceof RangedSimpleTime)
 			return ((RangedSimpleTime) object).toLine();
 
-		else if (object instanceof Component)
-			return RemainCore.convertAdventureToMini((Component) object);
+		else if (object instanceof SimpleComponent)
+			return ((SimpleComponent) object).serialize().toJson();
 
 		else if (object instanceof Path)
 			throw new FoException("Cannot serialize Path " + object + ", did you mean to convert it into a name?");
 
-		else if (object instanceof Iterable || object.getClass().isArray() || object instanceof IsInList) {
+		else if (object instanceof ConfigSection) {
+			return ((ConfigSection) object).getValues(true);
+
+		} else if (object instanceof Iterable || object.getClass().isArray() || object instanceof IsInList) {
 
 			if (mode == Mode.JSON) {
 				final JSONArray jsonList = new JSONArray();
@@ -121,8 +123,6 @@ public abstract class SerializeUtilCore {
 					final List<Object> serialized = new ArrayList<>();
 
 					for (final Object element : object instanceof IsInList ? ((IsInList<?>) object).getList() : (Iterable<?>) object) {
-						System.out.println("Serializing list element (" + element.getClass().getSimpleName() + "): " + element);
-
 						serialized.add(serialize(mode, element));
 					}
 
@@ -301,8 +301,6 @@ public abstract class SerializeUtilCore {
 
 		final boolean isJson = mode == Mode.JSON;
 
-		//System.out.println("Attempting to deserialize " + classOf + " from '" + object + "'");
-
 		if (customSerializers.containsKey(classOf))
 			object = customSerializers.get(classOf).deserialize(mode, object);
 
@@ -342,17 +340,14 @@ public abstract class SerializeUtilCore {
 		else if (classOf == UUID.class)
 			object = UUID.fromString(object.toString());
 
-		else if (classOf == Component.class)
-			object = CommonCore.colorize(object.toString());
+		else if (classOf == SimpleComponent.class)
+			object = SimpleComponent.deserialize(SerializedMap.fromJson(object.toString()));
 
 		else if (Enum.class.isAssignableFrom(classOf)) {
 			object = ReflectionUtilCore.lookupEnum((Class<Enum>) classOf, object.toString());
 
-			if (object == null) {
-				System.out.println("RETURN NULL FOR " + classOf + " FROM " + object);
-
+			if (object == null)
 				return null;
-			}
 		}
 
 		else if (Color.class.isAssignableFrom(classOf))
@@ -362,23 +357,14 @@ public abstract class SerializeUtilCore {
 			// Good
 
 		} else if (Map.class.isAssignableFrom(classOf)) {
-			if (object instanceof Map) {
-				System.out.println("RETURN MAP FOR " + classOf + " FROM " + object);
-
+			if (object instanceof Map)
 				return (T) object;
-			}
 
-			if (object instanceof ConfigSection) {
-				System.out.println("RETURN CONFIG SECTION VALUES FOR " + classOf + " FROM " + object);
-
+			if (object instanceof ConfigSection)
 				return (T) ((ConfigSection) object).getValues(false);
-			}
 
-			if (isJson) {
-				System.out.println("RETURN FROM JSON MAP FOR " + classOf + " FROM " + object);
-
+			if (isJson)
 				return (T) SerializedMap.fromJson(object.toString()).asMap();
-			}
 
 			throw new SerializeFailedException("Does not know how to turn " + object.getClass().getSimpleName() + " into a Map! (Keep in mind we can only serialize into Map<String, Object> Data: " + object);
 
@@ -405,7 +391,6 @@ public abstract class SerializeUtilCore {
 					array[i] = rawArray[i] == null ? null : (T) deserialize(mode, classOf.getComponentType(), rawArray[i], (Object[]) null);
 			}
 
-			System.out.println("RETURN ARRAY FOR " + classOf + " FROM " + object);
 			return (T) array;
 		}
 
@@ -433,17 +418,13 @@ public abstract class SerializeUtilCore {
 				ValidCore.checkBoolean(argumentClasses.size() == arguments.size(),
 						classOf.getSimpleName() + "#deserialize(SerializedMap, " + argumentClasses.size() + " args) expected, " + arguments.size() + " given to deserialize: " + object);
 
-				System.out.println("RETURN DESERIALIZE() FOR " + classOf + " FROM " + object);
 				return ReflectionUtilCore.invokeStatic(deserialize, arguments.toArray());
 			}
 
 			final Method deserialize = ReflectionUtilCore.getMethod(classOf, "deserialize", SerializedMap.class);
 
-			if (deserialize != null) {
-				System.out.println("RETURN DESERIALIZE 2() FOR " + classOf + " FROM " + object);
-
+			if (deserialize != null)
 				return ReflectionUtilCore.invokeStatic(deserialize, isJson ? SerializedMap.fromJson(object.toString()) : SerializedMap.of(object));
-			}
 
 			throw new SerializeFailedException("Unable to deserialize " + classOf.getSimpleName()
 					+ ", please write 'public static deserialize(SerializedMap map) or deserialize(SerializedMap map, X arg1, Y arg2, etc.) method to deserialize: " + object);
@@ -453,16 +434,16 @@ public abstract class SerializeUtilCore {
 		else if (object instanceof String) {
 			final Method method = ReflectionUtilCore.getMethod(classOf, "getByName", String.class);
 
-			if (method != null) {
-				System.out.println("RETURN GET BY NAME FOR " + classOf + " FROM " + object);
-
+			if (method != null)
 				return ReflectionUtilCore.invokeStatic(method, object);
-			}
 		}
 
 		else if (classOf == Object.class) {
 			// Good
 		}
+
+		else if (ConfigSection.class.isAssignableFrom(classOf))
+			throw new FoException("Cannot deserialize a ConfigSection. Got object: " + object);
 
 		else
 			throw new SerializeFailedException("Does not know how to turn " + classOf + " into a serialized object from data: " + object);

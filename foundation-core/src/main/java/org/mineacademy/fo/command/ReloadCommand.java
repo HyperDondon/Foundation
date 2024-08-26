@@ -67,7 +67,7 @@ public final class ReloadCommand extends SimpleSubCommandCore {
 			this.tell(SimpleLocalization.Commands.RELOAD_SUCCESS);
 
 		} catch (final Throwable t) {
-			this.tell(SimpleLocalization.Commands.RELOAD_FAIL.replaceText(b -> b.matchLiteral("{error}").replacement(t.getMessage() != null ? t.getMessage() : "unknown")));
+			this.tell(SimpleLocalization.Commands.RELOAD_FAIL.replaceBracket("error", t.getMessage() != null ? t.getMessage() : "unknown"));
 
 			t.printStackTrace();
 		}

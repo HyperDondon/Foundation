@@ -4,13 +4,11 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.mineacademy.fo.CommonCore;
+import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
-import org.mineacademy.fo.remain.RemainCore;
 
 import lombok.Getter;
 import lombok.NonNull;
-import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.text.Component;
 
 /**
  * Represents a chat message surrounded by chat-wide line on the top and bottom:
@@ -26,23 +24,23 @@ public final class BoxedMessage {
 	/**
 	 * The top and bottom line itself
 	 */
-	public static Component LINE = RemainCore.convertLegacyToAdventure("&8" + CommonCore.chatLineSmooth());
+	private static final SimpleComponent LINE = SimpleComponent.fromAndCharacter("&8" + CommonCore.chatLineSmooth());
 
 	/**
 	 * All message recipients
 	 */
-	private final Iterable<Audience> recipients;
+	private final Iterable<FoundationPlayer> recipients;
 
 	/**
 	 * The sender of the message
 	 */
-	private final Audience sender;
+	private final FoundationPlayer sender;
 
 	/**
 	 * The messages to send
 	 */
 	@Getter
-	private final Component[] messages;
+	private final SimpleComponent[] messages;
 
 	/**
 	 * Create a new boxed message from the given messages
@@ -50,7 +48,7 @@ public final class BoxedMessage {
 	 *
 	 * @param messages
 	 */
-	public BoxedMessage(@NonNull Component... messages) {
+	public BoxedMessage(@NonNull SimpleComponent... messages) {
 		this(null, null, messages);
 	}
 
@@ -61,7 +59,7 @@ public final class BoxedMessage {
 	 * @param sender
 	 * @param messages
 	 */
-	private BoxedMessage(Iterable<Audience> recipients, Audience sender, @NonNull Component[] messages) {
+	private BoxedMessage(Iterable<FoundationPlayer> recipients, FoundationPlayer sender, @NonNull SimpleComponent[] messages) {
 		this.recipients = recipients == null ? null : CommonCore.toList(recipients); // Make a copy to prevent changes in the list on send
 		this.sender = sender;
 		this.messages = messages;
@@ -73,12 +71,7 @@ public final class BoxedMessage {
 
 	private void launch() {
 		Platform.runTask(2, () -> {
-			final Component oldPrefix = CommonCore.getTellPrefix();
-			CommonCore.setTellPrefix(Component.empty());
-
 			this.sendFrame();
-
-			CommonCore.setTellPrefix(oldPrefix);
 		});
 	}
 
@@ -86,13 +79,13 @@ public final class BoxedMessage {
 		this.send(LINE);
 
 		for (int i = 0; i < this.getTopLines(); i++)
-			this.send(Component.empty());
+			this.send(SimpleComponent.empty());
 
-		for (final Component message : this.messages)
+		for (final SimpleComponent message : this.messages)
 			this.send(message);
 
 		for (int i = 0; i < this.getBottomLines(); i++)
-			this.send(Component.empty());
+			this.send(SimpleComponent.empty());
 
 		this.send(LINE);
 	}
@@ -126,13 +119,13 @@ public final class BoxedMessage {
 	private int length() {
 		int length = 0;
 
-		for (final Component message : this.messages)
+		for (final SimpleComponent message : this.messages)
 			length++;
 
 		return length;
 	}
 
-	private void send(Component message) {
+	private void send(SimpleComponent message) {
 		if (this.recipients == null)
 			this.broadcast0(message);
 
@@ -140,23 +133,23 @@ public final class BoxedMessage {
 			this.tell0(message);
 	}
 
-	private void broadcast0(Component message) {
+	private void broadcast0(SimpleComponent message) {
 		if (this.sender != null)
 			CommonCore.broadcast(message, this.sender);
 		else
 			CommonCore.broadcastTo(Platform.getOnlinePlayers(), message);
 	}
 
-	private void tell0(Component message) {
+	private void tell0(SimpleComponent message) {
 		if (this.sender != null)
-			message = message.replaceText(b -> b.matchLiteral("{player}").replacement(Platform.resolveSenderName(this.sender)));
+			message = message.replaceBracket("player", this.sender.getName());
 
 		CommonCore.broadcastTo(this.recipients, message);
 	}
 
 	@Override
 	public String toString() {
-		return "Boxed{" + String.join(", ", RemainCore.convertAdventureToPlain(Component.textOfChildren(this.messages)).split("\n")) + "}";
+		return "Boxed{" + SimpleComponent.fromChildren(this.messages).toLegacy() + "}";
 	}
 
 	// ------------------------------------------------------------------------------------------------------------
@@ -169,9 +162,7 @@ public final class BoxedMessage {
 	 * @param messages
 	 */
 	public static void broadcast(String... messages) {
-		final List<Component> converted = CommonCore.convert(messages, CommonCore::colorize);
-
-		broadcast(null, converted.toArray(new Component[converted.size()]));
+		broadcast(null, messages);
 	}
 
 	/**
@@ -179,7 +170,7 @@ public final class BoxedMessage {
 	 *
 	 * @param messages
 	 */
-	public static void broadcast(Component... messages) {
+	public static void broadcast(SimpleComponent... messages) {
 		broadcast(null, messages);
 	}
 
@@ -189,10 +180,10 @@ public final class BoxedMessage {
 	 * @param sender
 	 * @param messages
 	 */
-	public static void broadcast(Audience sender, String... messages) {
-		final List<Component> converted = CommonCore.convert(messages, CommonCore::colorize);
+	public static void broadcast(FoundationPlayer sender, String... messages) {
+		final List<SimpleComponent> converted = CommonCore.convert(messages, SimpleComponent::fromMini);
 
-		broadcast(sender, converted.toArray(new Component[converted.size()]));
+		broadcast(sender, converted.toArray(new SimpleComponent[converted.size()]));
 	}
 
 	/**
@@ -201,7 +192,7 @@ public final class BoxedMessage {
 	 * @param sender
 	 * @param messages
 	 */
-	public static void broadcast(Audience sender, Component... messages) {
+	public static void broadcast(FoundationPlayer sender, SimpleComponent... messages) {
 		new BoxedMessage(null, sender, messages).launch();
 	}
 
@@ -211,10 +202,10 @@ public final class BoxedMessage {
 	 * @param recipient
 	 * @param messages
 	 */
-	public static void tell(Audience recipient, String... messages) {
-		final List<Component> converted = CommonCore.convert(messages, CommonCore::colorize);
+	public static void tell(FoundationPlayer recipient, String... messages) {
+		final List<SimpleComponent> converted = CommonCore.convert(messages, SimpleComponent::fromMini);
 
-		tell(recipient, converted.toArray(new Component[converted.size()]));
+		tell(recipient, converted.toArray(new SimpleComponent[converted.size()]));
 	}
 
 	/**
@@ -223,7 +214,7 @@ public final class BoxedMessage {
 	 * @param recipient
 	 * @param messages
 	 */
-	public static void tell(Audience recipient, Component... messages) {
+	public static void tell(FoundationPlayer recipient, SimpleComponent... messages) {
 		tell(null, Arrays.asList(recipient), messages);
 	}
 
@@ -233,7 +224,7 @@ public final class BoxedMessage {
 	 * @param recipients
 	 * @param messages
 	 */
-	public static void tell(Iterable<Audience> recipients, Component... messages) {
+	public static void tell(Iterable<FoundationPlayer> recipients, SimpleComponent... messages) {
 		tell(null, recipients, messages);
 	}
 
@@ -244,7 +235,7 @@ public final class BoxedMessage {
 	 * @param receiver
 	 * @param messages
 	 */
-	public static void tell(Audience sender, Audience receiver, Component... messages) {
+	public static void tell(FoundationPlayer sender, FoundationPlayer receiver, SimpleComponent... messages) {
 		tell(sender, Arrays.asList(receiver), messages);
 	}
 
@@ -255,7 +246,7 @@ public final class BoxedMessage {
 	 * @param receivers
 	 * @param messages
 	 */
-	public static void tell(Audience sender, Iterable<Audience> receivers, Component... messages) {
+	public static void tell(FoundationPlayer sender, Iterable<FoundationPlayer> receivers, SimpleComponent... messages) {
 		new BoxedMessage(receivers, sender, messages).launch();
 	}
 }

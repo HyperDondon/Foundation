@@ -6,12 +6,12 @@ import java.util.Set;
 
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.ValidCore;
+import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.proxy.message.IncomingMessage;
 
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
-import net.kyori.adventure.audience.Audience;
 
 /**
  * Represents a proxy listener using on which you can listen to receiving messages
@@ -88,7 +88,7 @@ public abstract class ProxyListener {
 	 * @param player
 	 * @param message
 	 */
-	public abstract void onMessageReceived(Audience player, IncomingMessage message);
+	public abstract void onMessageReceived(FoundationPlayer player, IncomingMessage message);
 
 	/**
 	 * @deprecated internal use only

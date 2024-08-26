@@ -1,14 +1,13 @@
 package org.mineacademy.fo;
 
+import org.mineacademy.fo.model.SimpleComponent;
+import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
-import org.mineacademy.fo.remain.RemainCore;
 
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.text.Component;
 
 /**
  * Streamlines the process of sending themed messages to players
@@ -25,44 +24,44 @@ public class MessengerCore {
 	 * The prefix send while sending info message
 	 */
 	@Getter
-	private static Component infoPrefix = RemainCore.convertLegacyToAdventure("&8[&9i&8]&7");
+	private static SimpleComponent infoPrefix = SimpleComponent.fromAndCharacter("&8[&9i&8]&7");
 
 	/**
 	 * The prefix send while sending success message
 	 */
 	@Getter
-	private static Component successPrefix = RemainCore.convertLegacyToAdventure("&8[&2\u2714&8]&7");
+	private static SimpleComponent successPrefix = SimpleComponent.fromAndCharacter("&8[&2\u2714&8]&7");
 
 	/**
 	 * The prefix send while sending warning message
 	 */
 	@Getter
-	private static Component warnPrefix = RemainCore.convertLegacyToAdventure("&8[&6!&8]&6");
+	private static SimpleComponent warnPrefix = SimpleComponent.fromAndCharacter("&8[&6!&8]&6");
 
 	/**
 	 * The prefix send while sending error message
 	 */
 	@Getter
-	private static Component errorPrefix = RemainCore.convertLegacyToAdventure("&8[&4\u2715&8]&c");
+	private static SimpleComponent errorPrefix = SimpleComponent.fromAndCharacter("&8[&4\u2715&8]&c");
 
 	/**
 	 * The prefix send while sending questions
 	 */
 	@Getter
-	private static Component questionPrefix = RemainCore.convertLegacyToAdventure("&8[&a?&8]&7");
+	private static SimpleComponent questionPrefix = SimpleComponent.fromAndCharacter("&8[&a?&8]&7");
 
 	/**
 	 * The prefix send while sending announcements
 	 */
 	@Getter
-	private static Component announcePrefix = RemainCore.convertLegacyToAdventure("&8[&5!&8]&d");
+	private static SimpleComponent announcePrefix = SimpleComponent.fromAndCharacter("&8[&5!&8]&d");
 
 	/**
 	 * Set the prefix for info messages
 	 *
 	 * @param infoPrefix
 	 */
-	public static void setInfoPrefix(Component infoPrefix) {
+	public static void setInfoPrefix(SimpleComponent infoPrefix) {
 		MessengerCore.infoPrefix = infoPrefix;
 	}
 
@@ -71,7 +70,7 @@ public class MessengerCore {
 	 *
 	 * @param successPrefix
 	 */
-	public static void setSuccessPrefix(Component successPrefix) {
+	public static void setSuccessPrefix(SimpleComponent successPrefix) {
 		MessengerCore.successPrefix = successPrefix;
 	}
 
@@ -80,7 +79,7 @@ public class MessengerCore {
 	 *
 	 * @param warnPrefix
 	 */
-	public static void setWarnPrefix(Component warnPrefix) {
+	public static void setWarnPrefix(SimpleComponent warnPrefix) {
 		MessengerCore.warnPrefix = warnPrefix;
 	}
 
@@ -89,7 +88,7 @@ public class MessengerCore {
 	 *
 	 * @param errorPrefix
 	 */
-	public static void setErrorPrefix(Component errorPrefix) {
+	public static void setErrorPrefix(SimpleComponent errorPrefix) {
 		MessengerCore.errorPrefix = errorPrefix;
 	}
 
@@ -98,7 +97,7 @@ public class MessengerCore {
 	 *
 	 * @param questionPrefix
 	 */
-	public static void setQuestionPrefix(Component questionPrefix) {
+	public static void setQuestionPrefix(SimpleComponent questionPrefix) {
 		MessengerCore.questionPrefix = questionPrefix;
 	}
 
@@ -107,7 +106,7 @@ public class MessengerCore {
 	 *
 	 * @param announcePrefix
 	 */
-	public static void setAnnouncePrefix(Component announcePrefix) {
+	public static void setAnnouncePrefix(SimpleComponent announcePrefix) {
 		MessengerCore.announcePrefix = announcePrefix;
 	}
 
@@ -117,7 +116,7 @@ public class MessengerCore {
 	 * @param message
 	 */
 	public static void broadcastInfo(final String message) {
-		for (final Audience online : Platform.getOnlinePlayers())
+		for (final FoundationPlayer online : Platform.getOnlinePlayers())
 			tell(online, infoPrefix, message);
 	}
 
@@ -126,8 +125,8 @@ public class MessengerCore {
 	 *
 	 * @param component
 	 */
-	public static void broadcastInfo(final Component component) {
-		for (final Audience online : Platform.getOnlinePlayers())
+	public static void broadcastInfo(final SimpleComponent component) {
+		for (final FoundationPlayer online : Platform.getOnlinePlayers())
 			tell(online, infoPrefix, component);
 	}
 
@@ -137,7 +136,7 @@ public class MessengerCore {
 	 * @param message
 	 */
 	public static void broadcastSuccess(final String message) {
-		for (final Audience online : Platform.getOnlinePlayers())
+		for (final FoundationPlayer online : Platform.getOnlinePlayers())
 			tell(online, successPrefix, message);
 	}
 
@@ -146,8 +145,8 @@ public class MessengerCore {
 	 *
 	 * @param component
 	 */
-	public static void broadcastSuccess(final Component component) {
-		for (final Audience online : Platform.getOnlinePlayers())
+	public static void broadcastSuccess(final SimpleComponent component) {
+		for (final FoundationPlayer online : Platform.getOnlinePlayers())
 			tell(online, successPrefix, component);
 	}
 
@@ -157,7 +156,7 @@ public class MessengerCore {
 	 * @param message
 	 */
 	public static void broadcastWarn(final String message) {
-		for (final Audience online : Platform.getOnlinePlayers())
+		for (final FoundationPlayer online : Platform.getOnlinePlayers())
 			tell(online, warnPrefix, message);
 	}
 
@@ -166,8 +165,8 @@ public class MessengerCore {
 	 *
 	 * @param component
 	 */
-	public static void broadcastWarn(final Component component) {
-		for (final Audience online : Platform.getOnlinePlayers())
+	public static void broadcastWarn(final SimpleComponent component) {
+		for (final FoundationPlayer online : Platform.getOnlinePlayers())
 			tell(online, warnPrefix, component);
 	}
 
@@ -177,7 +176,7 @@ public class MessengerCore {
 	 * @param message
 	 */
 	public static void broadcastError(final String message) {
-		for (final Audience online : Platform.getOnlinePlayers())
+		for (final FoundationPlayer online : Platform.getOnlinePlayers())
 			tell(online, errorPrefix, message);
 	}
 
@@ -186,8 +185,8 @@ public class MessengerCore {
 	 *
 	 * @param component
 	 */
-	public static void broadcastError(final Component component) {
-		for (final Audience online : Platform.getOnlinePlayers())
+	public static void broadcastError(final SimpleComponent component) {
+		for (final FoundationPlayer online : Platform.getOnlinePlayers())
 			tell(online, errorPrefix, component);
 	}
 
@@ -197,7 +196,7 @@ public class MessengerCore {
 	 * @param message
 	 */
 	public static void broadcastQuestion(final String message) {
-		for (final Audience online : Platform.getOnlinePlayers())
+		for (final FoundationPlayer online : Platform.getOnlinePlayers())
 			tell(online, questionPrefix, message);
 	}
 
@@ -206,8 +205,8 @@ public class MessengerCore {
 	 *
 	 * @param component
 	 */
-	public static void broadcastQuestion(final Component component) {
-		for (final Audience online : Platform.getOnlinePlayers())
+	public static void broadcastQuestion(final SimpleComponent component) {
+		for (final FoundationPlayer online : Platform.getOnlinePlayers())
 			tell(online, questionPrefix, component);
 	}
 
@@ -217,7 +216,7 @@ public class MessengerCore {
 	 * @param message
 	 */
 	public static void broadcastAnnounce(final String message) {
-		for (final Audience online : Platform.getOnlinePlayers())
+		for (final FoundationPlayer online : Platform.getOnlinePlayers())
 			tell(online, announcePrefix, message);
 	}
 
@@ -226,8 +225,8 @@ public class MessengerCore {
 	 *
 	 * @param component
 	 */
-	public static void broadcastAnnounce(final Component component) {
-		for (final Audience online : Platform.getOnlinePlayers())
+	public static void broadcastAnnounce(final SimpleComponent component) {
+		for (final FoundationPlayer online : Platform.getOnlinePlayers())
 			tell(online, announcePrefix, component);
 	}
 
@@ -237,7 +236,7 @@ public class MessengerCore {
 	 * @param player
 	 * @param message
 	 */
-	public static void info(final Audience player, final String message) {
+	public static void info(final FoundationPlayer player, final String message) {
 		tell(player, infoPrefix, message);
 	}
 
@@ -247,7 +246,7 @@ public class MessengerCore {
 	 * @param player
 	 * @param component
 	 */
-	public static void info(final Audience player, final Component component) {
+	public static void info(final FoundationPlayer player, final SimpleComponent component) {
 		tell(player, infoPrefix, component);
 	}
 
@@ -257,7 +256,7 @@ public class MessengerCore {
 	 * @param player
 	 * @param message
 	 */
-	public static void success(final Audience player, final String message) {
+	public static void success(final FoundationPlayer player, final String message) {
 		tell(player, successPrefix, message);
 	}
 
@@ -267,7 +266,7 @@ public class MessengerCore {
 	 * @param player
 	 * @param component
 	 */
-	public static void success(final Audience player, final Component component) {
+	public static void success(final FoundationPlayer player, final SimpleComponent component) {
 		tell(player, successPrefix, component);
 	}
 
@@ -277,7 +276,7 @@ public class MessengerCore {
 	 * @param player
 	 * @param message
 	 */
-	public static void warn(final Audience player, final String message) {
+	public static void warn(final FoundationPlayer player, final String message) {
 		tell(player, warnPrefix, message);
 	}
 
@@ -287,7 +286,7 @@ public class MessengerCore {
 	 * @param player
 	 * @param component
 	 */
-	public static void warn(final Audience player, final Component component) {
+	public static void warn(final FoundationPlayer player, final SimpleComponent component) {
 		tell(player, warnPrefix, component);
 	}
 
@@ -297,7 +296,7 @@ public class MessengerCore {
 	 * @param player
 	 * @param message
 	 */
-	public static void error(final Audience player, final String message) {
+	public static void error(final FoundationPlayer player, final String message) {
 		tell(player, errorPrefix, message);
 	}
 
@@ -307,7 +306,7 @@ public class MessengerCore {
 	 * @param player
 	 * @param component
 	 */
-	public static void error(final Audience player, final Component component) {
+	public static void error(final FoundationPlayer player, final SimpleComponent component) {
 		tell(player, errorPrefix, component);
 	}
 
@@ -317,7 +316,7 @@ public class MessengerCore {
 	 * @param player
 	 * @param message
 	 */
-	public static void question(final Audience player, final String message) {
+	public static void question(final FoundationPlayer player, final String message) {
 		tell(player, questionPrefix, message);
 	}
 
@@ -327,7 +326,7 @@ public class MessengerCore {
 	 * @param player
 	 * @param component
 	 */
-	public static void question(final Audience player, final Component component) {
+	public static void question(final FoundationPlayer player, final SimpleComponent component) {
 		tell(player, questionPrefix, component);
 	}
 
@@ -337,7 +336,7 @@ public class MessengerCore {
 	 * @param player
 	 * @param message
 	 */
-	public static void announce(final Audience player, final String message) {
+	public static void announce(final FoundationPlayer player, final String message) {
 		tell(player, announcePrefix, message);
 	}
 
@@ -347,21 +346,21 @@ public class MessengerCore {
 	 * @param player
 	 * @param component
 	 */
-	public static void announce(final Audience player, final Component component) {
+	public static void announce(final FoundationPlayer player, final SimpleComponent component) {
 		tell(player, announcePrefix, component);
 	}
 
 	/*
 	 * Internal method to perform the sending
 	 */
-	private static void tell(final Audience sender, final Component prefix, @NonNull String message) {
-		CommonCore.tellNoPrefix(sender, prefix.append(CommonCore.colorize(message)));
+	private static void tell(final FoundationPlayer sender, final SimpleComponent prefix, @NonNull String message) {
+		prefix.appendMini(message).send(sender);
 	}
 
 	/*
 	 * Internal method to perform the sending
 	 */
-	private static void tell(final Audience sender, final Component prefix, @NonNull Component component) {
-		CommonCore.tellNoPrefix(sender, prefix.append(component));
+	private static void tell(final FoundationPlayer sender, final SimpleComponent prefix, @NonNull SimpleComponent component) {
+		prefix.append(component).send(sender);
 	}
 }

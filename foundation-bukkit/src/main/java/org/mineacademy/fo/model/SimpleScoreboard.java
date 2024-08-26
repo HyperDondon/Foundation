@@ -16,7 +16,6 @@ import org.bukkit.scoreboard.Team;
 import org.mineacademy.fo.Common;
 import org.mineacademy.fo.MinecraftVersion;
 import org.mineacademy.fo.MinecraftVersion.V;
-import org.mineacademy.fo.SerializeUtil;
 import org.mineacademy.fo.Valid;
 import org.mineacademy.fo.plugin.SimplePlugin;
 import org.mineacademy.fo.remain.CompChatColor;
@@ -289,7 +288,7 @@ public class SimpleScoreboard {
 	 *
 	 * @param entries
 	 */
-	public final void addRows(final Object... entries) {
+	public final void addRows(final String... entries) {
 		this.addRows(Arrays.asList(entries));
 	}
 
@@ -298,12 +297,12 @@ public class SimpleScoreboard {
 	 *
 	 * @param entries
 	 */
-	public final void addRows(final List<Object> entries) {
+	public final void addRows(final List<String> entries) {
 		Valid.checkBoolean((this.rows.size() + entries.size()) <= 15, "You are trying to add too many rows (the limit is 15)");
 		final List<String> lines = new ArrayList<>();
 
-		for (final Object object : entries)
-			lines.add(object == null ? "" : Common.colorizeLegacy(SerializeUtil.serialize(SerializeUtil.Mode.YAML, object).toString()));
+		for (final String line : entries)
+			lines.add(line == null ? "" : SimpleComponent.fromMini(line).toLegacy());
 
 		this.rows.addAll(lines);
 	}
@@ -446,7 +445,7 @@ public class SimpleScoreboard {
 	 * @param player
 	 */
 	private void reloadEntries(Player player) throws IllegalArgumentException {
-		final String colorizedTitle = Common.colorizeLegacy(this.title);
+		final String colorizedTitle = SimpleComponent.fromMini(this.title).toLegacy();
 		final Scoreboard scoreboard = player.getScoreboard();
 		final List<String> rowsDone = new ArrayList<>();
 		Objective mainboard = scoreboard.getObjective("mainboard");
@@ -471,7 +470,7 @@ public class SimpleScoreboard {
 				final String scoreboardLineRaw = this.rows.get(lineNumber).replace("{player}", player.getName());
 				final boolean mc1_13 = MinecraftVersion.atLeast(MinecraftVersion.V.v1_13);
 				final boolean mc1_18 = MinecraftVersion.atLeast(MinecraftVersion.V.v1_18);
-				final String finishedRow = Common.colorizeLegacy(replaceTheme(this.replaceVariables(player, scoreboardLineRaw)));
+				final String finishedRow = SimpleComponent.fromMini(replaceTheme(this.replaceVariables(player, scoreboardLineRaw))).toLegacy();
 				final boolean rowUsed = rowsDone.contains(finishedRow);
 				final int[] splitPoints = { mc1_13 ? 64 : 16, mc1_18 ? 32767 : 40, mc1_13 ? 64 : 16 };
 

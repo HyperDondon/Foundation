@@ -1,94 +1,96 @@
 package org.mineacademy.fo.platform;
 
 import java.io.File;
-import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import org.mineacademy.fo.command.SimpleCommandCore;
 import org.mineacademy.fo.model.Task;
 
-import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.bossbar.BossBar;
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.HoverEventSource;
 
-public interface FoundationPlatform {
+public abstract class FoundationPlatform {
 
-	boolean callEvent(Object event);
+	/**
+	 * The server-name from server.properties (is lacking on new Minecraft version so we have to readd it back)
+	 */
+	private String serverName;
 
-	void checkCommandUse(SimpleCommandCore command);
+	// ----------------------------------------------------------------------------------------------------
+	// Server name
+	// ----------------------------------------------------------------------------------------------------
 
-	void closeAdventurePlatform();
+	/**
+	 * Return the server name identifier
+	 *
+	 * @return
+	 */
+	public final String getServerName() { // TODO check where this is called, was Bukkit#getName
+		if (!this.hasServerName())
+			throw new IllegalArgumentException("Please instruct developer of " + Platform.getPlugin().getName() + " to call Remain#setServerName");
 
-	HoverEventSource<?> convertItemStackToHoverEvent(Object itemStack);
+		return this.serverName;
+	}
 
-	void dispatchCommand(Audience sender, String command);
+	/**
+	 * Return true if the server-name property in server.properties got modified
+	 *
+	 * @return
+	 */
+	public final boolean hasServerName() {
+		return this.serverName != null && !this.serverName.isEmpty() && !this.serverName.contains("mineacademy.org/server-properties") && !"undefined".equals(this.serverName) && !"Unknown Server".equals(this.serverName);
+	}
 
-	void dispatchConsoleCommand(String command);
+	/**
+	 * Set the server name identifier
+	 *
+	 * @param serverName
+	 */
+	public final void setServerName(String serverName) {
+		this.serverName = serverName;
+	}
 
-	List<Audience> getOnlinePlayers();
+	public abstract FoundationPlayer toPlayer(Object sender);
 
-	FoundationPlugin getPlugin();
+	public abstract boolean callEvent(Object event);
 
-	File getPluginFile(String pluginName);
+	public abstract void checkCommandUse(SimpleCommandCore command);
 
-	String getServerName();
+	public abstract HoverEventSource<?> convertItemStackToHoverEvent(Object itemStack);
 
-	List<String> getServerPlugins();
+	public abstract void dispatchConsoleCommand(String command);
 
-	String getServerVersion();
+	public abstract List<FoundationPlayer> getOnlinePlayers();
 
-	String getNMSVersion();
+	public abstract FoundationPlugin getPlugin();
 
-	boolean hasHexColorSupport();
+	public abstract File getPluginFile(String pluginName);
 
-	boolean hasPermission(Audience audience, String permission);
+	public abstract List<String> getServerPlugins();
 
-	boolean isAsync();
+	public abstract String getServerVersion();
 
-	boolean isConsole(Object audience);
+	public abstract String getNMSVersion();
 
-	boolean isConversing(Audience audience);
+	public abstract boolean hasHexColorSupport();
 
-	boolean isDiscord(Object audience);
+	public abstract boolean isAsync();
 
-	boolean isOnline(Audience audience);
+	public abstract boolean isPlaceholderAPIHooked();
 
-	boolean isPlaceholderAPIHooked();
+	public abstract boolean isPluginInstalled(String name);
 
-	boolean isPluginInstalled(String name);
+	public abstract void logToConsole(String message);
 
-	void logToConsole(String message);
+	public abstract void registerCommand(SimpleCommandCore command, boolean unregisterOldCommand, boolean unregisterOldAliases);
 
-	void registerCommand(SimpleCommandCore command, boolean unregisterOldCommand, boolean unregisterOldAliases);
+	public abstract void registerEvents(Object listener);
 
-	void registerEvents(Object listener);
+	public abstract Task runTask(int delayTicks, Runnable runnable);
 
-	String resolveSenderName(Audience sender);
+	public abstract Task runTaskAsync(int delayTicks, Runnable runnable);
 
-	Task runTask(int delayTicks, Runnable runnable);
+	public abstract void sendPluginMessage(UUID senderUid, String channel, byte[] array);
 
-	Task runTaskAsync(int delayTicks, Runnable runnable);
-
-	void sendActionBar(Audience audience, Component message);
-
-	void sendBossbarPercent(final Audience audience, final Component message, final float progress, final BossBar.Color color, final BossBar.Overlay overlay);
-
-	void sendBossbarTimed(final Audience audience, final Component message, final int seconds, final float progress, final BossBar.Color color, final BossBar.Overlay overlay);
-
-	void sendConversingMessage(Object conversable, Component message);
-
-	void sendPluginMessage(UUID senderUid, String channel, byte[] array);
-
-	void sendToast(Audience audience, Component message);
-
-	void tell(Object sender, Component component, boolean skipEmpty);
-
-	Set<Audience> toAudience(Collection<Object> players, boolean addConsole);
-
-	Audience toAudience(Object sender);
-
-	void unregisterCommand(SimpleCommandCore command);
+	public abstract void unregisterCommand(SimpleCommandCore command);
 }

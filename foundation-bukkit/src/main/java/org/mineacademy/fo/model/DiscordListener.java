@@ -328,7 +328,7 @@ public abstract class DiscordListener implements Listener {
 	 * @param message
 	 */
 	public final void flashMessage(TextChannel channel, String message) {
-		final String finalMessage = Common.removeColors(message);
+		final String finalMessage = Common.stripColorCodes(message);
 
 		Common.runAsync(() -> {
 			final Message sentMessage = channel.sendMessage(finalMessage).complete();

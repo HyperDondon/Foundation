@@ -19,12 +19,12 @@ import org.mineacademy.fo.ReflectionUtil;
 import org.mineacademy.fo.Valid;
 import org.mineacademy.fo.debug.LagCatcher;
 import org.mineacademy.fo.exception.EventHandledException;
+import org.mineacademy.fo.model.SimpleComponent;
+import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.plugin.SimplePlugin;
 import org.mineacademy.fo.settings.SimpleLocalization;
 
 import lombok.RequiredArgsConstructor;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 
 /**
  * A simply way of allowing plugin to change the event listening priority
@@ -110,7 +110,7 @@ public abstract class SimpleListener<T extends Event> implements Listener, Event
 				if (Messenger.ENABLED)
 					Messenger.error(this.player, ex.getComponent());
 				else
-					Common.tell(this.player, Component.text("").color(NamedTextColor.RED).append(ex.getComponent()));
+					SimpleComponent.fromAndCharacter("&c").append(ex.getComponent()).send(Platform.toPlayer(this.player));
 
 			if (cancelled && event instanceof Cancellable)
 				((Cancellable) event).setCancelled(true);
@@ -160,7 +160,7 @@ public abstract class SimpleListener<T extends Event> implements Listener, Event
 	 * @param toCheck
 	 * @param falseMessages
 	 */
-	protected final void checkNotNull(Object toCheck, Component nullMessages) {
+	protected final void checkNotNull(Object toCheck, SimpleComponent nullMessages) {
 		this.checkBoolean(toCheck != null, nullMessages);
 	}
 
@@ -183,7 +183,7 @@ public abstract class SimpleListener<T extends Event> implements Listener, Event
 	 * @param condition
 	 * @param falseMessages
 	 */
-	protected final void checkBoolean(boolean condition, Component falseMessages) {
+	protected final void checkBoolean(boolean condition, SimpleComponent falseMessages) {
 		if (!condition)
 			throw new EventHandledException(true, falseMessages);
 	}
@@ -226,8 +226,8 @@ public abstract class SimpleListener<T extends Event> implements Listener, Event
 	 * @param permission
 	 * @param falseMessage
 	 */
-	protected final void checkPerm(String permission, Component falseMessage) {
-		this.checkBoolean(this.findPlayer().hasPermission(permission), falseMessage.replaceText(b -> b.matchLiteral("{permission}").replacement(permission)));
+	protected final void checkPerm(String permission, SimpleComponent falseMessage) {
+		this.checkBoolean(this.findPlayer().hasPermission(permission), falseMessage.replaceBracket("permission", SimpleComponent.fromPlain(permission)));
 	}
 
 	/**
@@ -235,7 +235,7 @@ public abstract class SimpleListener<T extends Event> implements Listener, Event
 	 *
 	 * @param messages
 	 */
-	protected final void cancel(Component messages) {
+	protected final void cancel(SimpleComponent messages) {
 		throw new EventHandledException(true, messages);
 	}
 
@@ -251,7 +251,7 @@ public abstract class SimpleListener<T extends Event> implements Listener, Event
 	 *
 	 * @param messages
 	 */
-	protected final void returnTell(Component messages) {
+	protected final void returnTell(SimpleComponent messages) {
 		throw new EventHandledException(false, messages);
 	}
 

@@ -1,15 +1,12 @@
 package org.mineacademy.fo.model;
 
 import org.mineacademy.fo.CommonCore;
-import org.mineacademy.fo.remain.CompMaterial;
-import org.mineacademy.fo.remain.Remain;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Represents the different first screens appearing in toast notifications,
- * you can use this in {@link Remain#sendToast(org.bukkit.entity.Player, String, CompMaterial, CompToastStyle)}
+ * Represents the different first screens appearing in toast notifications.
  */
 @RequiredArgsConstructor
 public enum CompToastStyle {

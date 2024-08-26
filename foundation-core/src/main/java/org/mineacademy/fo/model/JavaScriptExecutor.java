@@ -18,11 +18,11 @@ import org.mineacademy.fo.ReflectionUtilCore;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.exception.EventHandledException;
 import org.mineacademy.fo.exception.FoScriptException;
+import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.remain.RemainCore;
 
 import lombok.NonNull;
-import net.kyori.adventure.audience.Audience;
 
 /**
  * An engine that compiles and executes code on the fly.
@@ -108,7 +108,7 @@ public final class JavaScriptExecutor {
 	 * @return
 	 * @throws FoScriptException
 	 */
-	public static Object run(@NonNull String javascript, final Audience sender) throws FoScriptException {
+	public static Object run(@NonNull String javascript, final FoundationPlayer sender) throws FoScriptException {
 		return run(javascript, sender, new HashMap<>());
 	}
 
@@ -122,7 +122,7 @@ public final class JavaScriptExecutor {
 	 * @return
 	 * @throws FoScriptException
 	 */
-	public static Object run(@NonNull String javascript, final Audience sender, Map<String, Object> replacements) throws FoScriptException {
+	public static Object run(@NonNull String javascript, final FoundationPlayer sender, Map<String, Object> replacements) throws FoScriptException {
 		synchronized (engine) {
 
 			if (replacements == null)
@@ -134,13 +134,25 @@ public final class JavaScriptExecutor {
 
 			while (matcher.find()) {
 				final String permission = matcher.group(1);
-				final boolean hasPermission = sender == null ? false : Platform.hasPermission(sender, permission);
+				final boolean hasPermission = sender == null ? false : sender.hasPermission(permission);
 
 				javascript = javascript.replace(matcher.group(), String.valueOf(hasPermission));
 			}
 
+			if (sender == null && javascript.contains("player.")) {
+				CommonCore.warning("Not running JavaScript because it contains 'player' but player was not provided. Script: " + javascript);
+
+				return false;
+			}
+
+			if (sender.isDiscord() && javascript.contains("player.")) {
+				CommonCore.warning("Not running JavaScript because it contains 'player' but player was on Discord. Set Sender_Condition to '{sender_is_player}' to remove this warning next to your code. Script: " + javascript);
+
+				return false;
+			}
+
 			// Find and replace all %syntax% and {syntax} variables since they were not replaced for Discord
-			if (Platform.isDiscord(sender)) {
+			if (sender.isDiscord()) {
 
 				// Replace by line to avoid the {...} in "function() { return false; }" being replaced to "function() false"
 				final String[] copy = javascript.split("\n");
@@ -155,18 +167,6 @@ public final class JavaScriptExecutor {
 				}
 
 				javascript = String.join("\n", replaced);
-			}
-
-			if (sender == null && javascript.contains("player.")) {
-				CommonCore.warning("Not running JavaScript because it contains 'player' but player was not provided. Script: " + javascript);
-
-				return false;
-			}
-
-			if (Platform.isDiscord(sender) && javascript.contains("player.")) {
-				CommonCore.warning("Not running JavaScript because it contains 'player' but player was on Discord. Set Sender_Condition to '{sender_is_player}' to remove this warning next to your code. Script: " + javascript);
-
-				return false;
 			}
 
 			if (sender != null)
@@ -263,8 +263,8 @@ public final class JavaScriptExecutor {
 					final String[] errorMessageSplit = cause.contains("event handled: ") ? cause.split("event handled\\: ") : new String[0];
 					final Object sender = replacements.get("player");
 
-					if (errorMessageSplit.length == 2 && sender instanceof Audience)
-						CommonCore.tellNoPrefix((Audience) sender, RemainCore.convertLegacyToAdventure(errorMessageSplit[1]));
+					if (errorMessageSplit.length == 2 && sender instanceof FoundationPlayer)
+						((FoundationPlayer) sender).sendMessage(errorMessageSplit[1]);
 
 					throw new EventHandledException(true);
 				}

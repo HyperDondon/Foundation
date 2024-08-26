@@ -581,8 +581,6 @@ public abstract class LibraryManager {
 			this.relocator.relocate(in, tmpOut, relocations);
 			Files.move(tmpOut, file);
 
-			System.out.println("Relocations applied to " + in.getFileName());
-
 			return file;
 		} catch (final IOException e) {
 			throw new UncheckedIOException(e);

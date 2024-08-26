@@ -31,6 +31,7 @@ import org.mineacademy.fo.MinecraftVersion.V;
 import org.mineacademy.fo.ReflectionUtil;
 import org.mineacademy.fo.Valid;
 import org.mineacademy.fo.enchant.SimpleEnchantment;
+import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.remain.CompColor;
 import org.mineacademy.fo.remain.CompEnchantment;
 import org.mineacademy.fo.remain.CompItemFlag;
@@ -39,7 +40,6 @@ import org.mineacademy.fo.remain.CompMetadata;
 import org.mineacademy.fo.remain.CompMonsterEgg;
 import org.mineacademy.fo.remain.CompProperty;
 import org.mineacademy.fo.remain.Remain;
-import org.mineacademy.fo.remain.RemainCore;
 import org.mineacademy.fo.remain.nbt.NBTItem;
 
 import lombok.AccessLevel;
@@ -47,7 +47,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Setter;
-import net.kyori.adventure.text.Component;
 
 /**
  * ItemCreator allows you to create highly customized {@link ItemStack}
@@ -104,7 +103,7 @@ public final class ItemCreator {
 	/**
 	 * The lore for this item (& color codes are replaced automatically).
 	 */
-	private final List<String> lores = new ArrayList<>();
+	private final List<SimpleComponent> lores = new ArrayList<>();
 
 	/**
 	 * The enchants applied to the item.
@@ -290,8 +289,8 @@ public final class ItemCreator {
 	 * @param lore
 	 * @return
 	 */
-	public ItemCreator lore(Component... lore) {
-		return this.lore(Common.convert(lore, RemainCore::convertAdventureToLegacy));
+	public ItemCreator lore(List<String> lore) {
+		return this.loreComponent(Common.convert(lore, SimpleComponent::fromMini));
 	}
 
 	/**
@@ -300,7 +299,17 @@ public final class ItemCreator {
 	 * @param lore
 	 * @return
 	 */
-	public ItemCreator lore(List<String> lore) {
+	public ItemCreator loreComponent(SimpleComponent... lore) {
+		return this.loreComponent(Arrays.asList(lore));
+	}
+
+	/**
+	 * Append the given lore to the end of existing item lore.
+	 *
+	 * @param lore
+	 * @return
+	 */
+	public ItemCreator loreComponent(List<SimpleComponent> lore) {
 		this.lores.addAll(lore);
 
 		return this;
@@ -691,7 +700,7 @@ public final class ItemCreator {
 				final List<String> colorizedPages = new ArrayList<>();
 
 				for (final String page : this.bookPages)
-					colorizedPages.add(Common.colorizeLegacy(page));
+					colorizedPages.add(SimpleComponent.fromMini(page).toLegacy());
 
 				bookMeta.setPages(colorizedPages);
 			}
@@ -732,15 +741,13 @@ public final class ItemCreator {
 			}
 
 			if (this.name != null && !"".equals(this.name))
-				((ItemMeta) compiledMeta).setDisplayName(Common.colorizeLegacy("&r&f" + this.name));
+				((ItemMeta) compiledMeta).setDisplayName(SimpleComponent.fromAndCharacter("&r&f" + this.name).toLegacy());
 
 			if (!this.lores.isEmpty()) {
 				final List<String> coloredLores = new ArrayList<>();
 
-				for (final String lore : this.lores)
-					if (lore != null)
-						for (final String subLore : lore.split("\n"))
-							coloredLores.add(Common.colorizeLegacy((lorePrefix != null ? lorePrefix : "") + subLore));
+				for (final SimpleComponent lore : this.lores)
+					coloredLores.add((lorePrefix != null ? lorePrefix : "") + lore.toLegacy());
 
 				((ItemMeta) compiledMeta).setLore(coloredLores);
 			}

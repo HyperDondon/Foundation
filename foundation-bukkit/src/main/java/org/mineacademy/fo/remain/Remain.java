@@ -8,7 +8,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -34,10 +33,8 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
 import org.bukkit.block.Sign;
-import org.bukkit.block.data.type.Bed;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
-import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -68,7 +65,6 @@ import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Score;
 import org.mineacademy.fo.Common;
-import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.ItemUtil;
 import org.mineacademy.fo.MathUtil;
 import org.mineacademy.fo.MinecraftVersion;
@@ -83,33 +79,26 @@ import org.mineacademy.fo.collection.StrictMap;
 import org.mineacademy.fo.constants.FoConstants;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.model.CompToastStyle;
-import org.mineacademy.fo.model.SimpleComponentCore;
+import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.SimpleRunnable;
 import org.mineacademy.fo.model.SimpleTask;
 import org.mineacademy.fo.model.Task;
 import org.mineacademy.fo.model.UUIDToNameConverter;
-import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.plugin.SimplePlugin;
-import org.mineacademy.fo.remain.internal.BossBarInternals;
 import org.mineacademy.fo.remain.nbt.NBTEntity;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.nbt.api.BinaryTagHolder;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.event.HoverEventSource;
 import net.kyori.adventure.text.serializer.bungeecord.BungeeComponentSerializer;
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.md_5.bungee.api.chat.BaseComponent;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -173,6 +162,7 @@ public final class Remain extends RemainCore {
 	/**
 	 * Fields related to sending interactive chat components on legacy MC
 	 */
+	@Getter
 	private static Constructor<?> chatMessageConstructor;
 
 	/**
@@ -724,7 +714,7 @@ public final class Remain extends RemainCore {
 	 * @return
 	 */
 	public static Object convertAdventureToIChatBase(Component component) {
-		return convertJsonToIChatBase(convertAdventureToJson(component));
+		return convertJsonToIChatBase(SimpleComponent.fromAdventure(component).toAdventureJson());
 	}
 
 	/**
@@ -743,13 +733,33 @@ public final class Remain extends RemainCore {
 	}
 
 	/**
+	 * Converts the given json to a BungeeCord component
+	 *
+	 * @param json
+	 * @return
+	 */
+	public static BaseComponent[] convertJsonToBungee(String json) {
+		return net.md_5.bungee.chat.ComponentSerializer.parse(json);
+	}
+
+	/**
+	 * Converts the given Adventure component to a BungeeCord component
+	 *
+	 * @param component
+	 * @return
+	 */
+	public static BaseComponent[] convertAdventureToBungee(Component component) {
+		return BungeeComponentSerializer.get().serialize(component);
+	}
+
+	/**
 	 * Return IChatBaseComponent from legacy text
 	 *
 	 * @param legacyText
 	 * @return
 	 */
 	public static Object convertLegacyToIChatBase(String legacyText) {
-		final String json = convertLegacyToJson(legacyText);
+		final String json = SimpleComponent.fromSection(legacyText).toAdventureJson();
 
 		return convertJsonToIChatBase(json);
 	}
@@ -1241,7 +1251,7 @@ public final class Remain extends RemainCore {
 	public static Score getScore(final Objective obj, String entry) {
 		Valid.checkNotNull(obj, "Objective cannot be null");
 
-		entry = Common.colorizeLegacy(entry);
+		entry = SimpleComponent.fromMini(entry).toLegacy();
 
 		try {
 			return obj.getScore(entry);
@@ -1700,7 +1710,7 @@ public final class Remain extends RemainCore {
 					Common.sleep(100);
 
 					Common.runLater(() -> {
-						final String colorized = Common.colorizeLegacy(message.apply(receiver));
+						final String colorized = SimpleComponent.fromMini(message.apply(receiver)).toLegacy();
 
 						if (!colorized.isEmpty()) {
 							final AdvancementAccessor accessor = new AdvancementAccessor(colorized, icon.toString().toLowerCase(), style);
@@ -1713,29 +1723,12 @@ public final class Remain extends RemainCore {
 			});
 		else
 			for (final Player receiver : receivers) {
-				final String colorized = Common.colorizeLegacy(message.apply(receiver));
+				final String colorized = SimpleComponent.fromMini(message.apply(receiver)).toLegacy();
 
 				if (!colorized.isEmpty())
 					receiver.sendMessage(colorized);
 			}
 
-	}
-
-	/**
-	 * Send a "toast" notification. This is an advancement notification that cannot be
-	 * modified on its first screen. It imposes a slight performance penalty.
-	 *
-	 * @param audience
-	 * @param message
-	 */
-	public static void sendToast(Audience audience, Component message) {
-		if (audience instanceof Player) {
-			final String legacy = Remain.convertAdventureToLegacy(message);
-
-			Remain.sendToast((Player) audience, legacy);
-
-		} else
-			Remain.tell(audience, message);
 	}
 
 	/**
@@ -1777,7 +1770,7 @@ public final class Remain extends RemainCore {
 	 */
 	public static void sendToast(final Player receiver, final String message, final CompMaterial icon, final CompToastStyle toastStyle) {
 		if (message != null && !message.isEmpty()) {
-			final String colorized = Common.colorizeLegacy(message);
+			final String colorized = SimpleComponent.fromMini(message).toLegacy();
 
 			if (!colorized.isEmpty()) {
 				Valid.checkSync("Toasts may only be sent from the main thread");
@@ -1806,159 +1799,6 @@ public final class Remain extends RemainCore {
 	}
 
 	/**
-	 * Attempts to remove a boss bar from player.
-	 * <p>
-	 * Only works if you rendered it through methods in this class!
-	 *
-	 * @param player
-	 */
-	public static void removeBossbar(final Player player) {
-		BossBarInternals.getInstance().removeBar(player);
-	}
-
-	public static void resetTitle(final CommandSender sender) {
-		resetTitle(Platform.toAudience(sender));
-	}
-
-	public static void sendActionBar(final CommandSender player, final String text) {
-		sendActionBar(Platform.toAudience(player), CommonCore.colorize(text));
-	}
-
-	/**
-	 * Displays message above player's health and hunger bar. (1.8+) Text will be
-	 * colorized.
-	 *
-	 * @param audience the player
-	 * @param message   the text
-	 */
-	public static void sendActionBar(final Audience audience, Component message) {
-		if (MinecraftVersion.olderThan(V.v1_7)) {
-			audience.sendMessage(message);
-
-			return;
-		}
-
-		if (MinecraftVersion.equals(V.v1_7) && chatMessageConstructor != null && audience instanceof Player) {
-			try {
-				final Object iChatBaseComponent = Remain.convertAdventureToIChatBase(message);
-				final Object packet;
-				final byte type = 2;
-
-				if (MinecraftVersion.atLeast(V.v1_12)) {
-					final Class<?> chatMessageTypeEnum = ReflectionUtil.getNMSClass("ChatMessageType", "net.minecraft.network.chat.ChatMessageType");
-
-					packet = chatMessageConstructor.newInstance(iChatBaseComponent, chatMessageTypeEnum.getMethod("a", byte.class).invoke(null, type));
-
-				} else
-					packet = chatMessageConstructor.newInstance(iChatBaseComponent, type);
-
-				Remain.sendPacket((Player) audience, packet);
-
-			} catch (final ReflectiveOperationException ex) {
-				CommonCore.error(ex, "Failed to send action bar to " + ((Player) audience).getName() + ", message: " + message);
-			}
-
-		} else
-			audience.sendActionBar(message);
-	}
-
-	/**
-	 * Send the sender a component, ignoring it if it is empty
-	 *
-	 * @param sender
-	 * @param component
-	 */
-	public static void tell(Object sender, Component component) {
-		tell(sender, component, true);
-	}
-
-	/**
-	 * Send the sender a component, ignoring it if it is empty
-	 *
-	 * @param sender
-	 * @param component
-	 * @param skipEmpty
-	 */
-	public static void tell(@NonNull Object sender, Component component, boolean skipEmpty) {
-		ValidCore.checkBoolean(sender instanceof Audience || sender instanceof CommandSender, "Can only send components to Audience or CommandSender, not: " + sender);
-
-		final boolean is1_7 = MinecraftVersion.equals(V.v1_7);
-
-		if (RemainCore.convertAdventureToPlain(component).trim().isEmpty() && skipEmpty)
-			return;
-
-		if (MinecraftVersion.olderThan(V.v1_7) || (is1_7 && !(sender instanceof Player))) {
-			if (sender instanceof CommandSender)
-				CommonCore.tell(Platform.toAudience(sender), component);
-
-			return;
-		}
-
-		if (is1_7) {
-			final Player player = (Player) sender;
-			final JsonObject json = GsonComponentSerializer.gson().serializeToTree(component).getAsJsonObject();
-			convertHoverEvent(json);
-
-			if (json.toString().contains("{RIADOK}")) {
-				int count = 0;
-				final Map<Integer, JsonArray> split = new HashMap<>();
-
-				for (final JsonElement extraElement : json.get("extra").getAsJsonArray()) {
-					final JsonObject extra = extraElement.getAsJsonObject();
-					final String text = extra.get("text").getAsString();
-
-					if (text.equals("{RIADOK}"))
-						count++;
-					else {
-						if (!split.containsKey(count))
-							split.put(count, new JsonArray());
-
-						split.get(count).add(extra);
-					}
-				}
-
-				for (final JsonArray array : split.values())
-					player.spigot().sendMessage(net.md_5.bungee.chat.ComponentSerializer.parse(array.toString()));
-
-			} else
-				player.spigot().sendMessage(net.md_5.bungee.chat.ComponentSerializer.parse(json.toString()));
-
-		} else {
-			if (sender instanceof Audience)
-				((Audience) sender).sendMessage(component);
-
-			else
-				Platform.toAudience(sender).sendMessage(component);
-		}
-	}
-
-	/*
-	 * Helper method to rename the component's contents to value for legacy MC versions
-	 */
-	private static void convertHoverEvent(JsonObject map) {
-		if (map.has("hoverEvent")) {
-			final JsonObject hoverEvent = map.get("hoverEvent").getAsJsonObject();
-			JsonObject value = null;
-
-			if (hoverEvent.has("contents")) {
-				value = hoverEvent.get("contents").getAsJsonObject();
-
-				hoverEvent.remove("contents");
-			}
-
-			if (value != null)
-				hoverEvent.add("value", value);
-		}
-
-		if (map.has("extra")) {
-			final JsonArray extraArray = map.get("extra").getAsJsonArray();
-
-			for (final JsonElement key : extraArray)
-				convertHoverEvent(key.getAsJsonObject());
-		}
-	}
-
-	/**
 	 * This will attempt to place a bed block to the initial block and the other head block in the facing direction
 	 *
 	 * Use {@link PlayerUtil#getFacing(Player)} to get where a player is looking at
@@ -1969,10 +1809,10 @@ public final class Remain extends RemainCore {
 	public static void setBed(Block initialBlock, BlockFace facing) {
 
 		if (MinecraftVersion.atLeast(V.v1_13))
-			for (final Bed.Part part : Bed.Part.values()) {
+			for (final org.bukkit.block.data.type.Bed.Part part : org.bukkit.block.data.type.Bed.Part.values()) {
 				initialBlock.setBlockData(Bukkit.createBlockData(CompMaterial.WHITE_BED.getMaterial(), data -> {
-					((Bed) data).setPart(part);
-					((Bed) data).setFacing(facing);
+					((org.bukkit.block.data.type.Bed) data).setPart(part);
+					((org.bukkit.block.data.type.Bed) data).setFacing(facing);
 				}));
 
 				initialBlock = initialBlock.getRelative(facing.getOppositeFace());
@@ -2053,7 +1893,7 @@ public final class Remain extends RemainCore {
 			entity.setCustomNameVisible(visible);
 
 			if (name != null)
-				entity.setCustomName(Common.colorizeLegacy(name));
+				entity.setCustomName(SimpleComponent.fromMini(name).toLegacy());
 
 		} catch (final NoSuchMethodError er) {
 			Valid.checkBoolean(MinecraftVersion.atLeast(V.v1_7), "setCustomName requires Minecraft 1.7.10+");
@@ -2063,7 +1903,7 @@ public final class Remain extends RemainCore {
 			nbt.setInteger("CustomNameVisible", visible ? 1 : 0);
 
 			if (name != null)
-				nbt.setString("CustomName", Common.colorizeLegacy(name));
+				nbt.setString("CustomName", SimpleComponent.fromMini(name).toLegacy());
 		}
 	}
 
@@ -2148,15 +1988,15 @@ public final class Remain extends RemainCore {
 	 * @param metaObject
 	 * @param pages
 	 */
-	public static void setPages(Object metaObject, SimpleComponentCore... pages) {
+	public static void setPages(Object metaObject, SimpleComponent... pages) {
 		Valid.checkBoolean(hasItemMeta, "Cannot set pages without ItemMeta on this server version: " + MinecraftVersion.getFullVersion());
 		Valid.checkBoolean(metaObject instanceof org.bukkit.inventory.meta.BookMeta, "Object must be BookMeta, got: " + metaObject.getClass());
 
 		final org.bukkit.inventory.meta.BookMeta meta = (org.bukkit.inventory.meta.BookMeta) metaObject;
 
 		if (MinecraftVersion.olderThan(V.v1_8)) {
-			for (final SimpleComponentCore component : pages)
-				meta.addPage(component.getLegacyText());
+			for (final SimpleComponent component : pages)
+				meta.addPage(component.toLegacy());
 
 			return;
 		}
@@ -2165,9 +2005,9 @@ public final class Remain extends RemainCore {
 			final BungeeComponentSerializer serializer = BungeeComponentSerializer.get();
 			final List<BaseComponent[]> spigotPages = new ArrayList<>();
 
-			for (final SimpleComponentCore component : pages)
+			for (final SimpleComponent component : pages)
 				try {
-					spigotPages.add(serializer.serialize(component.getComponent()));
+					spigotPages.add(serializer.serialize(component.toAdventure()));
 
 				} catch (final Throwable t) {
 					Common.error(t, "Failed to turn simple component into bungee component: " + component);
@@ -2179,8 +2019,8 @@ public final class Remain extends RemainCore {
 			try {
 				final List<Object> chatComponentPages = (List<Object>) ReflectionUtil.getFieldContent(ReflectionUtil.getOBCClass("inventory.CraftMetaBook"), "pages", meta);
 
-				for (final SimpleComponentCore component : pages)
-					chatComponentPages.add(convertJsonToIChatBase(component.getJson()));
+				for (final SimpleComponent component : pages)
+					chatComponentPages.add(convertJsonToIChatBase(component.toAdventureJson()));
 
 			} catch (final Exception e) {
 				e.printStackTrace();
@@ -2578,7 +2418,7 @@ public final class Remain extends RemainCore {
 			if (setTitle == null)
 				throw new NoSuchMethodError();
 
-			ReflectionUtil.invoke(setTitle, view, Common.colorize(title));
+			ReflectionUtil.invoke(setTitle, view, SimpleComponent.fromMini(title).toLegacy());
 
 		} catch (final NoSuchMethodError err) {
 
@@ -2593,7 +2433,7 @@ public final class Remain extends RemainCore {
 					final boolean is1_19 = MinecraftVersion.equals(V.v1_19);
 
 					final Object nmsPlayer = Remain.getHandleEntity(player);
-					final Object chatComponent = convertAdventureToIChatBase(Common.colorize(title));
+					final Object chatComponent = convertAdventureToIChatBase(SimpleComponent.fromMini(title).toAdventure());
 
 					final int inventorySize = topInventory.getSize() / 9;
 					String containerName;
@@ -3234,7 +3074,7 @@ final class PotionSetter {
 		if (MinecraftVersion.olderThan(V.v1_9)) {
 			if (item.getData().getData() == 0) {
 				final List<String> lore = new ArrayList<>();
-				final String potionLine = Common.colorizeLegacy("&7" + ItemUtil.bountify(type) + " (" + TimeUtil.formatTimeColon(durationTicks / 20) + ")");
+				final String potionLine = SimpleComponent.fromAndCharacter("&7" + ItemUtil.bountify(type) + " (" + TimeUtil.formatTimeColon(durationTicks / 20) + ")").toLegacy();
 
 				lore.add(potionLine);
 
@@ -3245,7 +3085,7 @@ final class PotionSetter {
 
 				item.getData().setData((byte) 45);
 
-				meta.setDisplayName(Common.colorizeLegacy("&rPotion Of " + ItemUtil.bountify(type)));
+				meta.setDisplayName(SimpleComponent.fromAndCharacter("&rPotion Of " + ItemUtil.bountify(type)).toLegacy());
 				meta.setLore(lore);
 			}
 		}

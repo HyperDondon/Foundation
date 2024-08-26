@@ -24,7 +24,7 @@ public final class Valid extends ValidCore {
 	 */
 	public static boolean checkPermission(final CommandSender sender, final String permission) {
 		if (!sender.hasPermission(permission)) {
-			CommonCore.tell(Platform.toAudience(sender), SimpleLocalization.NO_PERMISSION.replaceText(b -> b.matchLiteral("{permission}").replacement(permission)));
+			SimpleLocalization.NO_PERMISSION.replaceBracket("permission", permission).send(Platform.toPlayer(sender));
 
 			return false;
 		}

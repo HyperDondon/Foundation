@@ -1,9 +1,8 @@
 package org.mineacademy.fo.exception;
 
-import org.mineacademy.fo.remain.RemainCore;
+import org.mineacademy.fo.model.SimpleComponent;
 
 import lombok.Getter;
-import net.kyori.adventure.text.Component;
 
 /**
  * Represents a silent exception thrown then handling commands,
@@ -17,7 +16,7 @@ public class CommandException extends RuntimeException {
 	 * The messages to send to the command sender, null if not set
 	 */
 	@Getter
-	private final Component component;
+	private final SimpleComponent component;
 
 	/**
 	 * Create a new command exception
@@ -31,7 +30,7 @@ public class CommandException extends RuntimeException {
 	 *
 	 * @param component
 	 */
-	public CommandException(Component component) {
+	public CommandException(SimpleComponent component) {
 		super("");
 
 		this.component = component;
@@ -39,6 +38,6 @@ public class CommandException extends RuntimeException {
 
 	@Override
 	public String getMessage() {
-		return this.component != null ? RemainCore.convertAdventureToLegacy(this.component) : "";
+		return this.component != null ? this.component.toLegacy() : "";
 	}
 }

@@ -16,12 +16,11 @@ import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.collection.StrictList;
 import org.mineacademy.fo.model.BoxedMessage;
 import org.mineacademy.fo.model.IsInList;
+import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.SimpleTime;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.remain.RemainCore;
 import org.mineacademy.fo.settings.FileConfig.AccusativeHelper;
-
-import net.kyori.adventure.text.Component;
 
 /**
  * A special case {@link YamlConfig} that allows static access to config.
@@ -320,7 +319,7 @@ public abstract class YamlStaticConfig {
 		return TEMPORARY_INSTANCE.getBoolean(path);
 	}
 
-	protected static final Component getComponent(final String path) {
+	protected static final SimpleComponent getComponent(final String path) {
 		return TEMPORARY_INSTANCE.getComponent(path);
 	}
 

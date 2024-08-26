@@ -19,19 +19,16 @@ import org.mineacademy.fo.debug.LagCatcher;
 import org.mineacademy.fo.exception.CommandException;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.exception.InvalidCommandArgException;
+import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.SimpleTime;
 import org.mineacademy.fo.model.Task;
 import org.mineacademy.fo.model.Variables;
+import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
-import org.mineacademy.fo.remain.RemainCore;
 import org.mineacademy.fo.settings.SimpleLocalization;
 
 import lombok.Getter;
 import lombok.NonNull;
-import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextReplacementConfig;
-import net.kyori.adventure.text.format.NamedTextColor;
 
 /**
  * A simple command used to replace all Bukkit/Spigot command functionality
@@ -45,33 +42,10 @@ public abstract class SimpleCommandCore {
 	protected static final List<String> NO_COMPLETE = Collections.unmodifiableList(new ArrayList<>());
 
 	/**
-	 * The default permission syntax, {pluginName}.command.{label}
-	 */
-	private static String defaultPermission = Platform.getPlugin().getName().toLowerCase() + ".command.{label}";
-
-	/**
-	 * Return the default permission syntax
-	 *
-	 * @return
-	 */
-	public static String getDefaultPermission() {
-		return defaultPermission;
-	}
-
-	/**
-	 * Set the default permission syntax
-	 *
-	 * @param permission
-	 */
-	public static void setDefaultPermission(final String permission) {
-		defaultPermission = permission;
-	}
-
-	/**
 	 * You can set the cooldown time before executing the command again. This map
 	 * stores the player uuid and his last execution of the command.
 	 */
-	private final ExpiringMap<Audience, Long> cooldownMap = ExpiringMap.builder().expiration(30, TimeUnit.MINUTES).build();
+	private final ExpiringMap<FoundationPlayer, Long> cooldownMap = ExpiringMap.builder().expiration(30, TimeUnit.MINUTES).build();
 
 	/**
 	 * The command label, eg. boss for /boss
@@ -95,12 +69,12 @@ public abstract class SimpleCommandCore {
 	/**
 	 * The command usage
 	 */
-	private Component usage = null;
+	private SimpleComponent usage = null;
 
 	/**
 	 * The command description
 	 */
-	private Component description = null;
+	private SimpleComponent description = null;
 
 	/**
 	 * Has this command been already registered?
@@ -111,7 +85,7 @@ public abstract class SimpleCommandCore {
 	 * The {@link CommonCore#getTellPrefix()} custom prefix only used for sending messages in {@link #onCommand()} method
 	 * for this command, null to use the one in Common#getTellPrefix or empty to force no prefix.
 	 */
-	private Component tellPrefix = null;
+	private SimpleComponent tellPrefix = null;
 
 	/**
 	 * Minimum arguments required to run this command
@@ -138,7 +112,7 @@ public abstract class SimpleCommandCore {
 	 * <p>
 	 * TIP: Use {duration} to replace the remaining time till next run
 	 */
-	private Component cooldownMessage = null;
+	private SimpleComponent cooldownMessage = null;
 
 	/**
 	 * The permission to run this command. Set to null to always allow.
@@ -151,7 +125,7 @@ public abstract class SimpleCommandCore {
 	 * The permission message to send when the player does not have the permission,
 	 * defaults to SimpleLocalization.Commands.NO_PERMISSION
 	 */
-	private Component permissionMessage = null;
+	private SimpleComponent permissionMessage = null;
 
 	/**
 	 * Should we automatically send usage message when the first argument
@@ -169,7 +143,7 @@ public abstract class SimpleCommandCore {
 	 * This variable is updated dynamically when the command is run with the
 	 * last known sender
 	 */
-	protected Audience sender;
+	protected FoundationPlayer sender;
 
 	/**
 	 * The arguments used when the command was last executed
@@ -218,7 +192,7 @@ public abstract class SimpleCommandCore {
 			this.aliases = aliases;
 
 		// Set a default permission for this command
-		this.permission = defaultPermission;
+		this.permission = Platform.getPlugin().getName().toLowerCase() + ".command." + label;
 	}
 
 	/*
@@ -334,10 +308,10 @@ public abstract class SimpleCommandCore {
 	 * @deprecated internal use only
 	 */
 	@Deprecated
-	public final boolean delegateExecute(final Audience sender, final String label, final String[] args) {
+	public final boolean delegateExecute(final FoundationPlayer sender, final String label, final String[] args) {
 
 		if (Platform.getPlugin().isReloading() || !Platform.getPlugin().isEnabled()) {
-			CommonCore.tell(sender, SimpleLocalization.Commands.CANNOT_USE_WHILE_NULL.replaceText(b -> b.matchLiteral("{state}").replacement(Platform.getPlugin().isReloading() ? SimpleLocalization.Commands.RELOADING : SimpleLocalization.Commands.DISABLED)));
+			sender.sendMessage(SimpleLocalization.Commands.CANNOT_USE_WHILE_NULL.replaceBracket("state", Platform.getPlugin().isReloading() ? SimpleLocalization.Commands.RELOADING : SimpleLocalization.Commands.DISABLED));
 
 			return false;
 		}
@@ -365,52 +339,40 @@ public abstract class SimpleCommandCore {
 
 			// Check for minimum required arguments and print help
 			if (args.length < this.getMinArguments() || this.autoHandleHelp && args.length == 1 && ("help".equals(args[0]) || "?".equals(args[0]))) {
-				final List<Component> messages = new ArrayList<>();
+				final List<SimpleComponent> messages = new ArrayList<>();
 
 				if (this.getDescription() != null) {
-					Component descriptionLabel = SimpleLocalization.Commands.LABEL_DESCRIPTION;
-					final String descriptionPlain = RemainCore.convertAdventureToPlain(descriptionLabel);
+					SimpleComponent descriptionLabel = SimpleLocalization.Commands.LABEL_DESCRIPTION;
+					final String descriptionPlain = descriptionLabel.toPlain();
 
-					Component description = this.getDescription();
-
-					if (description.color() == null)
-						description = description.color(NamedTextColor.RED);
+					final SimpleComponent description = this.getDescription();
 
 					if (!descriptionPlain.contains("{description}"))
 						descriptionLabel = descriptionLabel.append(description);
 					else
-						descriptionLabel = descriptionLabel.replaceText(TextReplacementConfig.builder().matchLiteral("{description}").replacement(description).build());
+						descriptionLabel = descriptionLabel.replaceBracket("description", description);
 
 					messages.add(descriptionLabel);
 				}
 
 				if (this.getMultilineUsage() != null) {
 					messages.add(SimpleLocalization.Commands.LABEL_USAGE);
-
-					Component usage = this.getMultilineUsage();
-
-					if (usage.color() == null)
-						usage = usage.color(NamedTextColor.RED);
-
-					messages.add(usage);
+					messages.add(this.getMultilineUsage());
 
 				} else if (this.getUsage() != null) {
-					Component usage = this.getUsage();
-					final String usagePlain = RemainCore.convertAdventureToPlain(usage);
-
-					if (usage.color() == null)
-						usage = usage.color(NamedTextColor.RED);
+					SimpleComponent usage = this.getUsage();
+					final String usagePlain = usage.toPlain();
 
 					if (!usagePlain.startsWith("/"))
-						usage = Component.text("/{label} " + (this instanceof SimpleSubCommandCore ? "{sublabel} " : "")).append(usage);
+						usage = SimpleComponent.fromPlain("/{label} " + (this instanceof SimpleSubCommandCore ? "{sublabel} " : "")).append(usage);
 
 					messages.add(usage);
 
 				} else
 					throw new FoException("Either getUsage() or getMultilineUsageMessage() must be implemented for '/" + this.getLabel() + sublabel + "' command!");
 
-				for (final Component message : messages)
-					CommonCore.tellNoPrefix(sender, this.replacePlaceholders(message));
+				for (final SimpleComponent message : messages)
+					this.replacePlaceholders(message).send(sender);
 
 				return true;
 			}
@@ -436,7 +398,7 @@ public abstract class SimpleCommandCore {
 				this.dynamicTellError(ex.getComponent());
 
 		} catch (final Throwable t) {
-			this.dynamicTellError(SimpleLocalization.Commands.ERROR.replaceText(b -> b.matchLiteral("{error}").replacement(t.toString())));
+			this.dynamicTellError(SimpleLocalization.Commands.ERROR.replaceBracket("error", t.toString()));
 
 			CommonCore.error(t, "Failed to execute command /" + this.getLabel() + sublabel + " " + String.join(" ", args));
 
@@ -455,22 +417,16 @@ public abstract class SimpleCommandCore {
 	 * otherwise we just send a normal message
 	 */
 	/*private void dynamicTellError(final String... messages) {
-		if (MessengerCore.ENABLED)
 			for (final String message : messages)
 				this.tellError(message);
-		else
-			this.tell(messages);
 	}*/
 
 	/*
 	 * If messenger is on, we send the message prefixed with Messenger.getErrorPrefix()
 	 * otherwise we just send a normal message
 	 */
-	private void dynamicTellError(final Component component) {
-		if (MessengerCore.ENABLED)
-			this.tellError(component);
-		else
-			this.tell(component);
+	private void dynamicTellError(final SimpleComponent component) {
+		this.tellError(component);
 	}
 
 	/**
@@ -490,7 +446,7 @@ public abstract class SimpleCommandCore {
 		// Check if the command was run earlier within the wait threshold
 		if (lastRun != 0)
 			this.checkBoolean(difference > this.cooldownSeconds, CommonCore.getOrDefault(this.cooldownMessage, SimpleLocalization.Commands.COOLDOWN_WAIT)
-					.replaceText(b -> b.matchLiteral("{duration}").replacement(String.valueOf(this.cooldownSeconds - difference + 1))));
+					.replaceBracket("duration", String.valueOf(this.cooldownSeconds - difference + 1)));
 
 		// Update the last try with the current time
 		this.cooldownMap.put(this.sender, System.currentTimeMillis());
@@ -503,7 +459,7 @@ public abstract class SimpleCommandCore {
 	 * @param audience
 	 * @return
 	 */
-	protected boolean isCooldownApplied(final Audience audience) {
+	protected boolean isCooldownApplied(final FoundationPlayer audience) {
 		return true;
 	}
 
@@ -519,17 +475,17 @@ public abstract class SimpleCommandCore {
 	 *
 	 * @return the multiline custom usage message, or null
 	 */
-	protected Component getMultilineUsage() {
+	protected SimpleComponent getMultilineUsage() {
 		final String[] legacy = this.getMultilineUsageMessage();
 
 		if (legacy != null) {
-			Component component = Component.empty();
+			final SimpleComponent component = SimpleComponent.empty();
 
 			for (int i = 0; i < legacy.length; i++) {
-				component = component.append(Component.text(legacy[i]));
+				component.appendMini(legacy[i]);
 
 				if (i < legacy.length - 1)
-					component = component.append(Component.newline());
+					component.appendNewLine();
 			}
 
 			return component;
@@ -568,7 +524,7 @@ public abstract class SimpleCommandCore {
 	 */
 	public final void checkPerm(@NonNull final String permission) throws CommandException {
 		if (!this.hasPerm(permission))
-			throw new CommandException(this.getPermissionMessage().replaceText(b -> b.matchLiteral("{permission}").replacement(permission)));
+			throw new CommandException(this.getPermissionMessage().replaceBracket("permission", permission));
 	}
 
 	/**
@@ -578,9 +534,9 @@ public abstract class SimpleCommandCore {
 	 * @param permission
 	 * @throws CommandException
 	 */
-	public final void checkPerm(@NonNull final Audience sender, @NonNull final String permission) throws CommandException {
+	public final void checkPerm(@NonNull final FoundationPlayer sender, @NonNull final String permission) throws CommandException {
 		if (!this.hasPerm(sender, permission))
-			throw new CommandException(this.getPermissionMessage().replaceText(b -> b.matchLiteral("{permission}").replacement(permission)));
+			throw new CommandException(this.getPermissionMessage().replaceBracket("permission", permission));
 	}
 
 	/**
@@ -591,7 +547,7 @@ public abstract class SimpleCommandCore {
 	 * @throws CommandException
 	 */
 	protected final void checkArgs(final int minimumLength, final String falseMessage) throws CommandException {
-		this.checkArgs(minimumLength, CommonCore.colorize(falseMessage));
+		this.checkArgs(minimumLength, SimpleComponent.fromMini(falseMessage));
 	}
 
 	/**
@@ -601,7 +557,7 @@ public abstract class SimpleCommandCore {
 	 * @param falseMessage
 	 * @throws CommandException
 	 */
-	protected final void checkArgs(final int minimumLength, final Component falseMessage) throws CommandException {
+	protected final void checkArgs(final int minimumLength, final SimpleComponent falseMessage) throws CommandException {
 		if (this.args.length < minimumLength)
 			this.returnTell(falseMessage);
 	}
@@ -611,7 +567,7 @@ public abstract class SimpleCommandCore {
 	 * message for player if the condition does not meet
 	 */
 	/*public final void checkArgs(final boolean condition) {
-		this.checkBoolean(condition, SimpleLocalization.Commands.INVALID_ARGUMENT.replaceText(b -> b.matchLiteral("{label}").replacement(this.getLabel())));
+		this.checkBoolean(condition, SimpleLocalization.Commands.INVALID_ARGUMENT.replaceBracket("label", this.getLabel())));
 	}*/
 
 	/**
@@ -622,7 +578,7 @@ public abstract class SimpleCommandCore {
 	 * @throws CommandException
 	 */
 	public final void checkBoolean(final boolean value, final String falseMessage) throws CommandException {
-		this.checkBoolean(value, CommonCore.colorize(falseMessage));
+		this.checkBoolean(value, SimpleComponent.fromMini(falseMessage));
 	}
 
 	/**
@@ -632,7 +588,7 @@ public abstract class SimpleCommandCore {
 	 * @param falseMessage
 	 * @throws CommandException
 	 */
-	public final void checkBoolean(final boolean value, final Component falseMessage) throws CommandException {
+	public final void checkBoolean(final boolean value, final SimpleComponent falseMessage) throws CommandException {
 		if (!value)
 			this.returnTell(falseMessage);
 	}
@@ -657,7 +613,7 @@ public abstract class SimpleCommandCore {
 	 * @throws CommandException
 	 */
 	public final void checkNotNull(final Object value, final String messageIfNull) throws CommandException {
-		this.checkNotNull(value, CommonCore.colorize(messageIfNull));
+		this.checkNotNull(value, SimpleComponent.fromMini(messageIfNull));
 	}
 
 	/**
@@ -667,7 +623,7 @@ public abstract class SimpleCommandCore {
 	 * @param messageIfNull
 	 * @throws CommandException
 	 */
-	public final void checkNotNull(final Object value, final Component messageIfNull) throws CommandException {
+	public final void checkNotNull(final Object value, final SimpleComponent messageIfNull) throws CommandException {
 		if (value == null)
 			this.returnTell(messageIfNull);
 	}
@@ -684,7 +640,7 @@ public abstract class SimpleCommandCore {
 			return SimpleTime.from(raw);
 
 		} catch (final IllegalArgumentException ex) {
-			this.returnTell(SimpleLocalization.Commands.INVALID_TIME.replaceText(b -> b.matchLiteral("{input}").replacement(raw)));
+			this.returnTell(SimpleLocalization.Commands.INVALID_TIME.replaceBracket("input", raw));
 
 			return null;
 		}
@@ -715,7 +671,7 @@ public abstract class SimpleCommandCore {
 	 * @param enumType
 	 * @param enumValue
 	 * @param condition
-
+	
 	 * @return
 	 * @throws CommandException
 	 */
@@ -733,9 +689,9 @@ public abstract class SimpleCommandCore {
 		}
 
 		this.checkNotNull(found, SimpleLocalization.Commands.INVALID_ENUM
-				.replaceText(b -> b.matchLiteral("{type}").replacement(enumType.getSimpleName().replaceAll("([a-z])([A-Z]+)", "$1 $2").toLowerCase()))
-				.replaceText(b -> b.matchLiteral("{value}").replacement(enumValue))
-				.replaceText(b -> b.matchLiteral("{available}").replacement(CommonCore.join(enumType.getEnumConstants(), constant -> constant.name().toLowerCase()))));
+				.replaceBracket("type", enumType.getSimpleName().replaceAll("([a-z])([A-Z]+)", "$1 $2").toLowerCase())
+				.replaceBracket("value", enumValue)
+				.replaceBracket("available", CommonCore.join(enumType.getEnumConstants(), constant -> constant.name().toLowerCase())));
 
 		return found;
 	}
@@ -748,7 +704,7 @@ public abstract class SimpleCommandCore {
 	 * @return
 	 */
 	protected final int findNumber(final int index, final String falseMessage) {
-		return this.findNumber(index, CommonCore.colorize(falseMessage));
+		return this.findNumber(index, SimpleComponent.fromMini(falseMessage));
 	}
 
 	/**
@@ -758,7 +714,7 @@ public abstract class SimpleCommandCore {
 	 * @param falseMessage
 	 * @return
 	 */
-	protected final int findNumber(final int index, final Component falseMessage) {
+	protected final int findNumber(final int index, final SimpleComponent falseMessage) {
 		return this.findNumber(Integer.class, index, falseMessage);
 	}
 
@@ -773,7 +729,7 @@ public abstract class SimpleCommandCore {
 	 * @return
 	 */
 	protected final int findNumber(final int index, final int min, final int max, final String falseMessage) {
-		return this.findNumber(index, min, max, CommonCore.colorize(falseMessage));
+		return this.findNumber(index, min, max, SimpleComponent.fromMini(falseMessage));
 	}
 
 	/**
@@ -786,7 +742,7 @@ public abstract class SimpleCommandCore {
 	 * @param falseMessage
 	 * @return
 	 */
-	protected final int findNumber(final int index, final int min, final int max, final Component falseMessage) {
+	protected final int findNumber(final int index, final int min, final int max, final SimpleComponent falseMessage) {
 		return this.findNumber(Integer.class, index, min, max, falseMessage);
 	}
 
@@ -795,10 +751,10 @@ public abstract class SimpleCommandCore {
 	 * Number can be of any type, that supports method valueOf(String)
 	 * You can use {min} and {max} in the message to be automatically replaced
 	 */
-	private final <T extends Number & Comparable<T>> T findNumber(final Class<T> numberType, final int index, final T min, final T max, Component falseMessage) {
+	private final <T extends Number & Comparable<T>> T findNumber(final Class<T> numberType, final int index, final T min, final T max, SimpleComponent falseMessage) {
 		falseMessage = falseMessage
-				.replaceText(b -> b.matchLiteral("{min}").replacement(String.valueOf(min)))
-				.replaceText(b -> b.matchLiteral("{max}").replacement(String.valueOf(max)));
+				.replaceBracket("min", String.valueOf(min))
+				.replaceBracket("max", String.valueOf(max));
 
 		final T number = this.findNumber(numberType, index, falseMessage);
 		this.checkBoolean(number.compareTo(min) >= 0 && number.compareTo(max) <= 0, falseMessage);
@@ -810,7 +766,7 @@ public abstract class SimpleCommandCore {
 	 * A convenience method for parsing any number type at the given args index
 	 * Number can be of any type, that supports method valueOf(String)
 	 */
-	private final <T extends Number> T findNumber(final Class<T> numberType, final int index, final Component falseMessage) {
+	private final <T extends Number> T findNumber(final Class<T> numberType, final int index, final SimpleComponent falseMessage) {
 		this.checkBoolean(index < this.args.length, falseMessage);
 
 		try {
@@ -828,7 +784,7 @@ public abstract class SimpleCommandCore {
 				e.printStackTrace();
 		}
 
-		throw new CommandException(this.replacePlaceholders(falseMessage.replaceText(b -> b.matchLiteral("{number}").replacement(this.args[index]))));
+		throw new CommandException(this.replacePlaceholders(falseMessage.replaceBracket("number", this.args[index])));
 	}
 
 	/**
@@ -839,7 +795,7 @@ public abstract class SimpleCommandCore {
 	 * @return
 	 */
 	protected final boolean findBoolean(final int index, final String invalidMessage) {
-		return this.findBoolean(index, CommonCore.colorize(invalidMessage));
+		return this.findBoolean(index, SimpleComponent.fromMini(invalidMessage));
 	}
 
 	/**
@@ -849,7 +805,7 @@ public abstract class SimpleCommandCore {
 	 * @param invalidMessage
 	 * @return
 	 */
-	protected final boolean findBoolean(final int index, final Component invalidMessage) {
+	protected final boolean findBoolean(final int index, final SimpleComponent invalidMessage) {
 		this.checkBoolean(index < this.args.length, invalidMessage);
 
 		if (this.args[index].equalsIgnoreCase("true"))
@@ -887,12 +843,12 @@ public abstract class SimpleCommandCore {
 	 * TIP: For a more complete check use {@link #checkPerm(String)} that
 	 * will automatically return your command if they lack the permission.
 	 *
-	 * @param audience
+	 * @param sender
 	 * @param permission
 	 * @return
 	 */
-	protected final boolean hasPerm(final Audience audience, final String permission) {
-		return permission == null ? true : Platform.hasPermission(audience, permission.replace("{label}", this.getLabel()));
+	protected final boolean hasPerm(final FoundationPlayer sender, final String permission) {
+		return permission == null || sender.hasPermission(permission);
 	}
 
 	// ----------------------------------------------------------------------
@@ -919,8 +875,8 @@ public abstract class SimpleCommandCore {
 	 * @param components
 	 */
 	/*protected final void tell(final List<SimpleComponentCore> components) {
-		if (components != null)
-			this.tell(components.toArray(new SimpleComponentCore[components.size()]));
+		if (SimpleComponents != null)
+			this.tell(SimpleComponents.toArray(new SimpleComponentCore[components.size()]));
 	}*/
 
 	/**
@@ -931,7 +887,7 @@ public abstract class SimpleCommandCore {
 	 * @param components
 	 */
 	/*protected final void tell(final SimpleComponentCore... components) {
-		if (components != null)
+		if (SimpleComponents != null)
 			for (final SimpleComponentCore component : components)
 				component.send(this.sender);
 	}*/
@@ -961,7 +917,7 @@ public abstract class SimpleCommandCore {
 	 * @param message
 	 */
 	protected final void tellNoPrefix(final String message) {
-		this.tellNoPrefix(CommonCore.colorize(message));
+		this.tellNoPrefix(SimpleComponent.fromMini(message));
 	}
 
 	/**
@@ -969,10 +925,10 @@ public abstract class SimpleCommandCore {
 	 *
 	 * @param messages
 	 */
-	protected final void tellNoPrefix(final Component message) {
-		final Component oldLocalPrefix = this.tellPrefix;
+	protected final void tellNoPrefix(final SimpleComponent message) {
+		final SimpleComponent oldLocalPrefix = this.tellPrefix;
 
-		this.tellPrefix = Component.empty();
+		this.tellPrefix = SimpleComponent.empty();
 
 		this.tell(message);
 
@@ -985,23 +941,23 @@ public abstract class SimpleCommandCore {
 	 * @param messages
 	 */
 	/*protected final void tell(String... messages) {
-
+	
 		if (messages == null)
 			return;
-
+	
 		final String oldTellPrefix = CommonCore.getTellPrefix();
-
+	
 		if (this.tellPrefix != null)
 			CommonCore.setTellPrefix(this.tellPrefix);
-
+	
 		try {
 			messages = this.replacePlaceholders(messages);
-
+	
 			if (messages.length > 2)
 				CommonCore.tellNoPrefix(this.sender, messages);
 			else
 				CommonCore.tell(this.sender, messages);
-
+	
 		} finally {
 			CommonCore.setTellPrefix(oldTellPrefix);
 		}
@@ -1013,7 +969,7 @@ public abstract class SimpleCommandCore {
 	 * @param message
 	 */
 	protected final void tell(String message) {
-		this.tell(CommonCore.colorize(message));
+		this.tell(SimpleComponent.fromMini(message));
 	}
 
 	/**
@@ -1021,23 +977,12 @@ public abstract class SimpleCommandCore {
 	 *
 	 * @param component
 	 */
-	protected final void tell(Component component) {
+	protected final void tell(SimpleComponent component) {
 		if (component == null)
 			return;
 
-		final Component oldTellPrefix = CommonCore.getTellPrefix();
-
-		if (this.tellPrefix != null)
-			CommonCore.setTellPrefix(this.tellPrefix);
-
-		try {
-			component = this.replacePlaceholders(component);
-
-			CommonCore.tell(this.sender, component);
-
-		} finally {
-			CommonCore.setTellPrefix(oldTellPrefix);
-		}
+		component = this.replacePlaceholders(component);
+		this.sender.sendMessage(this.tellPrefix != null ? this.tellPrefix.append(component) : component);
 	}
 
 	/**
@@ -1046,7 +991,7 @@ public abstract class SimpleCommandCore {
 	 * @param component
 	 */
 	protected final void tellSuccess(String component) {
-		this.tellSuccess(CommonCore.colorize(component));
+		this.tellSuccess(SimpleComponent.fromMini(component));
 	}
 
 	/**
@@ -1054,12 +999,9 @@ public abstract class SimpleCommandCore {
 	 *
 	 * @param component
 	 */
-	protected final void tellSuccess(Component component) {
-		if (component != null) {
-			component = this.replacePlaceholders(component);
-
-			MessengerCore.success(this.sender, component);
-		}
+	protected final void tellSuccess(SimpleComponent component) {
+		if (component != null)
+			MessengerCore.success(this.sender, this.replacePlaceholders(component));
 	}
 
 	/**
@@ -1068,7 +1010,7 @@ public abstract class SimpleCommandCore {
 	 * @param message
 	 */
 	protected final void tellInfo(String message) {
-		this.tellInfo(CommonCore.colorize(message));
+		this.tellInfo(SimpleComponent.fromMini(message));
 	}
 
 	/**
@@ -1076,12 +1018,9 @@ public abstract class SimpleCommandCore {
 	 *
 	 * @param message
 	 */
-	protected final void tellInfo(Component message) {
-		if (message != null) {
-			message = this.replacePlaceholders(message);
-
-			MessengerCore.info(this.sender, message);
-		}
+	protected final void tellInfo(SimpleComponent message) {
+		if (message != null)
+			MessengerCore.info(this.sender, this.replacePlaceholders(message));
 	}
 
 	/**
@@ -1090,7 +1029,7 @@ public abstract class SimpleCommandCore {
 	 * @param message
 	 */
 	protected final void tellWarn(String message) {
-		this.tellWarn(CommonCore.colorize(message));
+		this.tellWarn(SimpleComponent.fromMini(message));
 	}
 
 	/**
@@ -1098,12 +1037,9 @@ public abstract class SimpleCommandCore {
 	 *
 	 * @param message
 	 */
-	protected final void tellWarn(Component message) {
-		if (message != null) {
-			message = this.replacePlaceholders(message);
-
-			MessengerCore.warn(this.sender, message);
-		}
+	protected final void tellWarn(SimpleComponent message) {
+		if (message != null)
+			MessengerCore.warn(this.sender, this.replacePlaceholders(message));
 	}
 
 	/**
@@ -1112,20 +1048,17 @@ public abstract class SimpleCommandCore {
 	 * @param message
 	 */
 	protected final void tellError(String message) {
-		this.tellError(CommonCore.colorize(message));
+		this.tellError(SimpleComponent.fromMini(message));
 	}
 
 	/**
 	 * Sends an error message to the player
 	 *
-	 * @param component
+	 * @param message
 	 */
-	protected final void tellError(Component component) {
-		if (component != null) {
-			component = this.replacePlaceholders(component);
-
-			MessengerCore.error(this.sender, component);
-		}
+	protected final void tellError(SimpleComponent message) {
+		if (message != null)
+			MessengerCore.error(this.sender, this.replacePlaceholders(message));
 	}
 
 	/**
@@ -1134,7 +1067,7 @@ public abstract class SimpleCommandCore {
 	 * @param message
 	 */
 	protected final void tellQuestion(String message) {
-		this.tellQuestion(CommonCore.colorize(message));
+		this.tellQuestion(SimpleComponent.fromMini(message));
 	}
 
 	/**
@@ -1142,12 +1075,9 @@ public abstract class SimpleCommandCore {
 	 *
 	 * @param message
 	 */
-	protected final void tellQuestion(Component message) {
-		if (message != null) {
-			message = this.replacePlaceholders(message);
-
-			MessengerCore.question(this.sender, message);
-		}
+	protected final void tellQuestion(SimpleComponent message) {
+		if (message != null)
+			MessengerCore.question(this.sender, this.replacePlaceholders(message));
 	}
 
 	/**
@@ -1155,7 +1085,7 @@ public abstract class SimpleCommandCore {
 	 * message for player
 	 */
 	protected final void returnInvalidArgs() {
-		this.tellError(SimpleLocalization.Commands.INVALID_ARGUMENT.replaceText(b -> b.matchLiteral("{label}").replacement(this.getLabel())));
+		this.tellError(SimpleLocalization.Commands.INVALID_ARGUMENT.replaceBracket("label", this.getLabel()));
 
 		throw new CommandException();
 	}
@@ -1177,7 +1107,7 @@ public abstract class SimpleCommandCore {
 	 * @throws CommandException
 	 */
 	public final void returnTell(final String message) throws CommandException {
-		this.returnTell(CommonCore.colorize(message));
+		this.returnTell(SimpleComponent.fromMini(message));
 	}
 
 	/**
@@ -1186,7 +1116,7 @@ public abstract class SimpleCommandCore {
 	 * @param component
 	 * @throws CommandException
 	 */
-	public final void returnTell(final Component component) throws CommandException {
+	public final void returnTell(final SimpleComponent component) throws CommandException {
 		throw new CommandException(this.replacePlaceholders(component));
 	}
 
@@ -1223,10 +1153,10 @@ public abstract class SimpleCommandCore {
 	/*public final String[] replacePlaceholders(final String[] messages) {
 		for (int i = 0; i < messages.length; i++)
 			messages[i] = this.replacePlaceholders(messages[i]);
-
+	
 		return messages;
 	}
-
+	
 	// TODO get rid of
 	protected String replacePlaceholders(String legacy) {
 		return RemainCore.convertAdventureToLegacy(replacePlaceholders(RemainCore.convertLegacyToAdventure(legacy)));
@@ -1238,19 +1168,19 @@ public abstract class SimpleCommandCore {
 	 * @param component
 	 * @return
 	 */
-	protected Component replacePlaceholders(Component component) {
+	protected SimpleComponent replacePlaceholders(SimpleComponent component) {
 		component = this.replaceBasicPlaceholders0(component);
 
 		// Replace {X} with arguments
 		for (int i = 0; i < this.args.length; i++)
-			component = component.replaceText(TextReplacementConfig.builder().matchLiteral("{" + i + "}").replacement(CommonCore.getOrEmpty(this.args[i])).build());
+			component.replaceBracket(String.valueOf(i), CommonCore.getOrEmpty(this.args[i]));
 
 		return component;
 	}
 
 	// TODO get rid of
 	/*private String replaceBasicPlaceholders0(String component) {
-		return RemainCore.convertAdventureToLegacy(this.replaceBasicPlaceholders0(RemainCore.convertLegacyToAdventure(component)));
+		return RemainCore.convertAdventureToLegacy(this.replaceBasicPlaceholders0(RemainCore.convertLegacyToAdventure(SimpleComponent)));
 	}*/
 
 	/**
@@ -1259,12 +1189,12 @@ public abstract class SimpleCommandCore {
 	 * @param component
 	 * @return
 	 */
-	private Component replaceBasicPlaceholders0(Component component) {
+	private SimpleComponent replaceBasicPlaceholders0(SimpleComponent component) {
 
-		component = component.replaceText(b -> b.matchLiteral("{label}").replacement(this.label));
-		component = component.replaceText(b -> b.matchLiteral("{current_label}").replacement(CommonCore.getOrDefault(this.currentLabel, this.label)));
-		component = component.replaceText(b -> b.matchLiteral("{sublabel}").replacement(this instanceof SimpleSubCommandCore ? ((SimpleSubCommandCore) this).getSublabels()[0] : this.args != null && this.args.length > 0 ? this.args[0] : this.label));
-		component = component.replaceText(b -> b.matchLiteral("{current_sublabel}").replacement(this instanceof SimpleSubCommandCore ? ((SimpleSubCommandCore) this).getSublabel() : this.args != null && this.args.length > 0 ? this.args[0] : this.label));
+		component = component.replaceBracket("label", this.label);
+		component = component.replaceBracket("current_label", CommonCore.getOrDefault(this.currentLabel, this.label));
+		component = component.replaceBracket("sublabel", this instanceof SimpleSubCommandCore ? ((SimpleSubCommandCore) this).getSublabels()[0] : this.args != null && this.args.length > 0 ? this.args[0] : this.label);
+		component = component.replaceBracket("current_sublabel", this instanceof SimpleSubCommandCore ? ((SimpleSubCommandCore) this).getSublabel() : this.args != null && this.args.length > 0 ? this.args[0] : this.label);
 
 		component = Variables.replace(component, this.sender);
 
@@ -1282,7 +1212,7 @@ public abstract class SimpleCommandCore {
 	/*protected final void setArg(final int position, final String value) {
 		if (this.args.length <= position)
 			this.args = Arrays.copyOf(this.args, position + 1);
-
+	
 		this.args[position] = value;
 	}*/
 
@@ -1364,7 +1294,7 @@ public abstract class SimpleCommandCore {
 	 * @return
 	 */
 	@Deprecated
-	public final List<String> delegateTabComplete(final Audience sender, final String label, final String[] args) {
+	public final List<String> delegateTabComplete(final FoundationPlayer sender, final String label, final String[] args) {
 		this.sender = sender;
 		this.currentLabel = label;
 		this.args = args;
@@ -1409,7 +1339,7 @@ public abstract class SimpleCommandCore {
 	 * @return
 	 */
 	public List<String> completeLastWordPlayerNames() {
-		return TabUtil.complete(this.getLastArg(), CommonCore.convert(Platform.getOnlinePlayers(), audience -> Platform.resolveSenderName(audience)));
+		return TabUtil.complete(this.getLastArg(), CommonCore.convert(Platform.getOnlinePlayers(), FoundationPlayer::getName));
 	}
 
 	/**
@@ -1474,7 +1404,7 @@ public abstract class SimpleCommandCore {
 	 *
 	 * @param tellPrefix
 	 */
-	protected final void setTellPrefix(final Component tellPrefix) {
+	protected final void setTellPrefix(final SimpleComponent tellPrefix) {
 		this.tellPrefix = tellPrefix;
 	}
 
@@ -1515,7 +1445,7 @@ public abstract class SimpleCommandCore {
 	 *
 	 * @return
 	 */
-	protected final Component getCooldownMessage() {
+	protected final SimpleComponent getCooldownMessage() {
 		return cooldownMessage;
 	}
 
@@ -1526,14 +1456,14 @@ public abstract class SimpleCommandCore {
 	 *
 	 * @param cooldownMessage
 	 */
-	protected final void setCooldownMessage(final Component cooldownMessage) {
+	protected final void setCooldownMessage(final SimpleComponent cooldownMessage) {
 		this.cooldownMessage = cooldownMessage;
 	}
 
 	/**
 	 * Get the permission for this command, either the one you set or our from Localization
 	 */
-	public final Component getPermissionMessage() {
+	public final SimpleComponent getPermissionMessage() {
 		return CommonCore.getOrDefault(this.permissionMessage, SimpleLocalization.NO_PERMISSION);
 	}
 
@@ -1542,19 +1472,13 @@ public abstract class SimpleCommandCore {
 	 *
 	 * @param permissionMessage
 	 */
-	protected final void setPermissionMessage(Component permissionMessage) {
+	protected final void setPermissionMessage(SimpleComponent permissionMessage) {
 		this.permissionMessage = permissionMessage;
 	}
 
 	/**
 	 * By default we check if the player has the permission you set in setPermission.
-	 * <p>
-	 * If that is null, we check for the following:
-	 * {yourpluginname}.command.{label} for {@link SimpleCommandCore}
-	 * {yourpluginname}.command.{label}.{sublabel} for {@link SimpleSubCommandCore}
-	 * <p>
-	 * We handle lacking permissions automatically and return with an no-permission message
-	 * when the player lacks it.
+	 * Defaults to {plugin}.command.{label}. Variables in permission are not supported.
 	 *
 	 * @return
 	 */
@@ -1577,7 +1501,7 @@ public abstract class SimpleCommandCore {
 	 *
 	 * @return
 	 */
-	public final Audience getSender() {
+	public final FoundationPlayer getSender() {
 		ValidCore.checkNotNull(this.sender, "Sender cannot be null");
 
 		return this.sender;
@@ -1602,15 +1526,15 @@ public abstract class SimpleCommandCore {
 	/**
 	 * Get description for this command
 	 */
-	public final Component getDescription() {
-		return this.description == null ? Component.empty() : this.description;
+	public final SimpleComponent getDescription() {
+		return this.description == null ? SimpleComponent.empty() : this.description;
 	}
 
 	/**
 	 * Get the usage message of this command
 	 */
-	public final Component getUsage() {
-		return this.usage == null ? Component.empty() : this.usage;
+	public final SimpleComponent getUsage() {
+		return this.usage == null ? SimpleComponent.empty() : this.usage;
 	}
 
 	/**
@@ -1647,7 +1571,7 @@ public abstract class SimpleCommandCore {
 	 * @param usage
 	 */
 	protected final void setUsage(String usage) {
-		this.setUsage(CommonCore.colorize(usage));
+		this.setUsage(SimpleComponent.fromMini(usage));
 	}
 
 	/**
@@ -1655,7 +1579,7 @@ public abstract class SimpleCommandCore {
 	 *
 	 * @param usage
 	 */
-	protected final void setUsage(Component usage) {
+	protected final void setUsage(SimpleComponent usage) {
 		this.usage = usage;
 	}
 
@@ -1665,7 +1589,7 @@ public abstract class SimpleCommandCore {
 	 * @param description
 	 */
 	protected final void setDescription(String description) {
-		this.setDescription(CommonCore.colorize(description));
+		this.setDescription(SimpleComponent.fromMini(description));
 	}
 
 	/**
@@ -1673,7 +1597,7 @@ public abstract class SimpleCommandCore {
 	 *
 	 * @param description
 	 */
-	protected final void setDescription(Component description) {
+	protected final void setDescription(SimpleComponent description) {
 		this.description = description;
 	}
 
@@ -1745,18 +1669,10 @@ public abstract class SimpleCommandCore {
 
 		} catch (final CommandException ex) {
 			if (ex.getComponent() != null)
-				if (MessengerCore.ENABLED)
-					MessengerCore.error(this.sender, ex.getComponent());
-				else
-					CommonCore.tell(this.sender, ex.getComponent());
+				MessengerCore.error(this.sender, ex.getComponent());
 
 		} catch (final Throwable t) {
-			final Component errorMessage = SimpleLocalization.Commands.ERROR.replaceText(b -> b.matchLiteral("{error}").replacement(t.toString()));
-
-			if (MessengerCore.ENABLED)
-				MessengerCore.error(this.sender, errorMessage);
-			else
-				CommonCore.tell(this.sender, errorMessage);
+			MessengerCore.error(this.sender, SimpleLocalization.Commands.ERROR.replaceBracket("error", t.toString()));
 
 			throw t;
 		}

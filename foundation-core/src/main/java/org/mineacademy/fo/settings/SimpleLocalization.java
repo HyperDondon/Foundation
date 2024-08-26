@@ -7,11 +7,10 @@ import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.command.DebugCommand;
 import org.mineacademy.fo.command.PermsCommand;
 import org.mineacademy.fo.command.ReloadCommand;
+import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.remain.CompChatColor;
 import org.mineacademy.fo.settings.FileConfig.AccusativeHelper;
-
-import net.kyori.adventure.text.Component;
 
 /**
  * A simple implementation of a basic localization file.
@@ -115,96 +114,96 @@ public class SimpleLocalization extends YamlStaticConfig {
 		/**
 		 * The message at "No_Console" key shown when console is denied executing a command.
 		 */
-		public static Component NO_CONSOLE = CommonCore.colorize("&cYou may only use this command as a player");
+		public static SimpleComponent NO_CONSOLE = SimpleComponent.fromMini("&cYou may only use this command as a player");
 
 		/**
 		 * The message shown when console runs a command without specifying target player name
 		 */
-		public static Component CONSOLE_MISSING_PLAYER_NAME = CommonCore.colorize("When running from console, specify player name.");
+		public static SimpleComponent CONSOLE_MISSING_PLAYER_NAME = SimpleComponent.fromMini("When running from console, specify player name.");
 
 		/**
 		 * The message shown when there is a fatal error running this command
 		 */
-		public static Component COOLDOWN_WAIT = CommonCore.colorize("Wait {duration} second(s) before using this command again.");
+		public static SimpleComponent COOLDOWN_WAIT = SimpleComponent.fromMini("Wait {duration} second(s) before using this command again.");
 
 		/**
 		 * Keys below indicate an invalid action or input
 		 */
-		public static Component INVALID_ARGUMENT = CommonCore.colorize("Invalid argument. Run <gold>/{label} ? <red>for help.");
-		public static Component INVALID_SUB_ARGUMENT = CommonCore.colorize("Invalid argument. Run '/{label} {0}' for help.");
-		public static Component INVALID_ARGUMENT_MULTILINE = CommonCore.colorize("Invalid argument. Usage:");
-		public static Component INVALID_TIME = CommonCore.colorize("Expected time such as '3 hours' or '15 minutes'. Got: '{input}'");
-		public static Component INVALID_NUMBER = CommonCore.colorize("The number must be a whole or a decimal number. Got: '{input}'");
-		public static Component INVALID_STRING = CommonCore.colorize("Invalid string. Got: '{input}'");
-		public static Component INVALID_WORLD = CommonCore.colorize("Invalid world '{world}'. Available: {available}");
-		public static Component INVALID_UUID = CommonCore.colorize("Invalid UUID '{uuid}'");
-		public static Component INVALID_ENUM = CommonCore.colorize("No such {type} '{value}'. Available: {available}");
+		public static SimpleComponent INVALID_ARGUMENT = SimpleComponent.fromMini("Invalid argument. Run <gold>/{label} ? <red>for help.");
+		public static SimpleComponent INVALID_SUB_ARGUMENT = SimpleComponent.fromMini("Invalid argument. Run '/{label} {0}' for help.");
+		public static SimpleComponent INVALID_ARGUMENT_MULTILINE = SimpleComponent.fromMini("Invalid argument. Usage:");
+		public static SimpleComponent INVALID_TIME = SimpleComponent.fromMini("Expected time such as '3 hours' or '15 minutes'. Got: '{input}'");
+		public static SimpleComponent INVALID_NUMBER = SimpleComponent.fromMini("The number must be a whole or a decimal number. Got: '{input}'");
+		public static SimpleComponent INVALID_STRING = SimpleComponent.fromMini("Invalid string. Got: '{input}'");
+		public static SimpleComponent INVALID_WORLD = SimpleComponent.fromMini("Invalid world '{world}'. Available: {available}");
+		public static SimpleComponent INVALID_UUID = SimpleComponent.fromMini("Invalid UUID '{uuid}'");
+		public static SimpleComponent INVALID_ENUM = SimpleComponent.fromMini("No such {type} '{value}'. Available: {available}");
 
 		/**
 		 * The authors label
 		 */
-		public static Component LABEL_AUTHORS = CommonCore.colorize("Made by");
+		public static SimpleComponent LABEL_AUTHORS = SimpleComponent.fromMini("Made by");
 
 		/**
 		 * The description label
 		 */
-		public static Component LABEL_DESCRIPTION = CommonCore.colorize("<red><bold>Description:");
+		public static SimpleComponent LABEL_DESCRIPTION = SimpleComponent.fromMini("<red><bold>Description:");
 
 		/**
 		 * The optional arguments label
 		 */
-		public static Component LABEL_OPTIONAL_ARGS = CommonCore.colorize("optional arguments");
+		public static SimpleComponent LABEL_OPTIONAL_ARGS = SimpleComponent.fromMini("optional arguments");
 
 		/**
 		 * The required arguments label
 		 */
-		public static Component LABEL_REQUIRED_ARGS = CommonCore.colorize("required arguments");
+		public static SimpleComponent LABEL_REQUIRED_ARGS = SimpleComponent.fromMini("required arguments");
 
 		/**
 		 * The usage label
 		 */
-		public static Component LABEL_USAGE = CommonCore.colorize("&c&lUsage:");
+		public static SimpleComponent LABEL_USAGE = SimpleComponent.fromMini("&c&lUsage:");
 
 		/**
 		 * The help for label
 		 */
-		public static Component LABEL_HELP_FOR = CommonCore.colorize("Help for /{label}");
+		public static SimpleComponent LABEL_HELP_FOR = SimpleComponent.fromMini("Help for /{label}");
 
 		/**
 		 * The label shown when building subcommands
 		 */
-		public static Component LABEL_SUBCOMMAND_DESCRIPTION = CommonCore.colorize(" &f/{label} {sublabel} {usage+}{dash+}{description}");
+		public static SimpleComponent LABEL_SUBCOMMAND_DESCRIPTION = SimpleComponent.fromMini(" &f/{label} {sublabel} {usage+}{dash+}{description}");
 
 		/**
 		 * The keys below are shown as hover tooltip on /command help menu.
 		 */
-		public static Component HELP_TOOLTIP_DESCRIPTION = CommonCore.colorize("&7Description: &f{description}");
-		public static Component HELP_TOOLTIP_PERMISSION = CommonCore.colorize("&7Permission: &f{permission}");
-		public static Component HELP_TOOLTIP_USAGE = CommonCore.colorize("&7Usage: &f");
+		public static SimpleComponent HELP_TOOLTIP_DESCRIPTION = SimpleComponent.fromMini("&7Description: &f{description}");
+		public static SimpleComponent HELP_TOOLTIP_PERMISSION = SimpleComponent.fromMini("&7Permission: &f{permission}");
+		public static SimpleComponent HELP_TOOLTIP_USAGE = SimpleComponent.fromMini("&7Usage: &f");
 
 		/**
 		 * The keys below are used in the {@link ReloadCommand}
 		 */
-		public static Component RELOAD_DESCRIPTION = CommonCore.colorize("Reload the configuration.");
-		public static Component RELOAD_STARTED = CommonCore.colorize("Reloading plugin's data, please wait..");
-		public static Component RELOAD_SUCCESS = CommonCore.colorize("&6{plugin_name} {plugin_version} has been reloaded.");
-		public static Component RELOAD_FILE_LOAD_ERROR = CommonCore.colorize("&4Oups, &cthere was a problem loading files from your disk! See the console for more information. {plugin_name} has not been reloaded.");
-		public static Component RELOAD_FAIL = CommonCore.colorize("&4Oups, &creloading failed! See the console for more information. Error: {error}");
+		public static SimpleComponent RELOAD_DESCRIPTION = SimpleComponent.fromMini("Reload the configuration.");
+		public static SimpleComponent RELOAD_STARTED = SimpleComponent.fromMini("Reloading plugin's data, please wait..");
+		public static SimpleComponent RELOAD_SUCCESS = SimpleComponent.fromMini("&6{plugin_name} {plugin_version} has been reloaded.");
+		public static SimpleComponent RELOAD_FILE_LOAD_ERROR = SimpleComponent.fromMini("&4Oups, &cthere was a problem loading files from your disk! See the console for more information. {plugin_name} has not been reloaded.");
+		public static SimpleComponent RELOAD_FAIL = SimpleComponent.fromMini("&4Oups, &creloading failed! See the console for more information. Error: {error}");
 
 		/**
 		 * The message shown when there is a fatal error running this command
 		 */
-		public static Component ERROR = CommonCore.colorize("<red><bold>Oups! <red>The command failed :( Check the console and report the error.");
+		public static SimpleComponent ERROR = SimpleComponent.fromMini("<red><bold>Oups! <red>The command failed :( Check the console and report the error.");
 
 		/**
 		 * The message shown when player has no permissions to view ANY subcommands in group command.
 		 */
-		public static Component HEADER_NO_SUBCOMMANDS = CommonCore.colorize("&cThere are no arguments for this command.");
+		public static SimpleComponent HEADER_NO_SUBCOMMANDS = SimpleComponent.fromMini("&cThere are no arguments for this command.");
 
 		/**
 		 * The message shown when player has no permissions to view ANY subcommands in group command.
 		 */
-		public static Component HEADER_NO_SUBCOMMANDS_PERMISSION = CommonCore.colorize("&cYou don't have permissions to view any subcommands.");
+		public static SimpleComponent HEADER_NO_SUBCOMMANDS_PERMISSION = SimpleComponent.fromMini("&cYou don't have permissions to view any subcommands.");
 
 		/**
 		 * The primary color shown in the ----- COMMAND ----- header
@@ -234,52 +233,52 @@ public class SimpleLocalization extends YamlStaticConfig {
 		/**
 		 * Key for when plugin is reloading
 		 */
-		public static Component RELOADING = CommonCore.colorize("reloading");
+		public static SimpleComponent RELOADING = SimpleComponent.fromMini("reloading");
 
 		/**
 		 * Key for when plugin is disabled
 		 */
-		public static Component DISABLED = CommonCore.colorize("disabled");
+		public static SimpleComponent DISABLED = SimpleComponent.fromMini("disabled");
 
 		/**
 		 * The message shown when plugin is reloading or was disabled and player attempts to run command
 		 */
-		public static Component CANNOT_USE_WHILE_NULL = CommonCore.colorize("<red>Cannot use this command while the plugin is {state}.");
+		public static SimpleComponent CANNOT_USE_WHILE_NULL = SimpleComponent.fromMini("<red>Cannot use this command while the plugin is {state}.");
 
 		/**
 		 * The message shown in SimpleCommand.findWorld()
 		 */
-		public static Component CANNOT_AUTODETECT_WORLD = CommonCore.colorize("Only living players can use ~ for their world!");
+		public static SimpleComponent CANNOT_AUTODETECT_WORLD = SimpleComponent.fromMini("Only living players can use ~ for their world!");
 
 		/**
 		 * The keys below are used in the {@link DebugCommand}
 		 */
-		public static Component DEBUG_DESCRIPTION = CommonCore.colorize("ZIP your settings for reporting bugs.");
-		public static Component DEBUG_PREPARING = CommonCore.colorize("&6Preparing debug log...");
-		public static Component DEBUG_SUCCESS = CommonCore.colorize("&2Successfuly copied {amount} file(s) to debug.zip. Your sensitive MySQL information has been removed from yml files. Please upload it via ufile.io and send it to us for review.");
-		public static Component DEBUG_COPY_FAIL = CommonCore.colorize("&cCopying files failed on file {file} and it was stopped. See console for more information.");
-		public static Component DEBUG_ZIP_FAIL = CommonCore.colorize("&cCreating a ZIP of your files failed, see console for more information. Please ZIP debug/ folder and send it to us via ufile.io manually.");
+		public static SimpleComponent DEBUG_DESCRIPTION = SimpleComponent.fromMini("ZIP your settings for reporting bugs.");
+		public static SimpleComponent DEBUG_PREPARING = SimpleComponent.fromMini("&6Preparing debug log...");
+		public static SimpleComponent DEBUG_SUCCESS = SimpleComponent.fromMini("&2Successfuly copied {amount} file(s) to debug.zip. Your sensitive MySQL information has been removed from yml files. Please upload it via ufile.io and send it to us for review.");
+		public static SimpleComponent DEBUG_COPY_FAIL = SimpleComponent.fromMini("&cCopying files failed on file {file} and it was stopped. See console for more information.");
+		public static SimpleComponent DEBUG_ZIP_FAIL = SimpleComponent.fromMini("&cCreating a ZIP of your files failed, see console for more information. Please ZIP debug/ folder and send it to us via ufile.io manually.");
 
 		/**
 		 * The keys below are used in the {@link PermsCommand}
 		 */
-		public static Component PERMS_DESCRIPTION = CommonCore.colorize("List all permissions the plugin has.");
-		public static Component PERMS_USAGE = CommonCore.colorize("[phrase]");
-		public static Component PERMS_HEADER = CommonCore.colorize("Listing All {plugin_name} Permissions");
-		public static Component PERMS_MAIN = CommonCore.colorize("Main");
-		public static Component PERMS_PERMISSIONS = CommonCore.colorize("Permissions:");
-		public static Component PERMS_TRUE_BY_DEFAULT = CommonCore.colorize("&7[true by default]");
-		public static Component PERMS_INFO = CommonCore.colorize("&7Info: &f");
-		public static Component PERMS_DEFAULT = CommonCore.colorize("&7Default? ");
-		public static Component PERMS_APPLIED = CommonCore.colorize("&7Do you have it? ");
-		public static Component PERMS_YES = CommonCore.colorize("&2yes");
-		public static Component PERMS_NO = CommonCore.colorize("&cno");
+		public static SimpleComponent PERMS_DESCRIPTION = SimpleComponent.fromMini("List all permissions the plugin has.");
+		public static SimpleComponent PERMS_USAGE = SimpleComponent.fromMini("[phrase]");
+		public static SimpleComponent PERMS_HEADER = SimpleComponent.fromMini("Listing All {plugin_name} Permissions");
+		public static SimpleComponent PERMS_MAIN = SimpleComponent.fromMini("Main");
+		public static SimpleComponent PERMS_PERMISSIONS = SimpleComponent.fromMini("Permissions:");
+		public static SimpleComponent PERMS_TRUE_BY_DEFAULT = SimpleComponent.fromMini("&7[true by default]");
+		public static SimpleComponent PERMS_INFO = SimpleComponent.fromMini("&7Info: &f");
+		public static SimpleComponent PERMS_DEFAULT = SimpleComponent.fromMini("&7Default? ");
+		public static SimpleComponent PERMS_APPLIED = SimpleComponent.fromMini("&7Do you have it? ");
+		public static SimpleComponent PERMS_YES = SimpleComponent.fromMini("&2yes");
+		public static SimpleComponent PERMS_NO = SimpleComponent.fromMini("&cno");
 
 		/**
 		 * The keys below are used in RegionTool
 		 */
-		public static Component REGION_SET_PRIMARY = CommonCore.colorize("Set the primary region point.");
-		public static Component REGION_SET_SECONDARY = CommonCore.colorize("Set the secondary region point.");
+		public static SimpleComponent REGION_SET_PRIMARY = SimpleComponent.fromMini("Set the primary region point.");
+		public static SimpleComponent REGION_SET_SECONDARY = SimpleComponent.fromMini("Set the secondary region point.");
 
 		/**
 		 * Load the values -- this method is called automatically by reflection in the {@link YamlStaticConfig} class!
@@ -471,7 +470,7 @@ public class SimpleLocalization extends YamlStaticConfig {
 		/**
 		 * The key used when the player wants to converse but he is not conversing.
 		 */
-		public static Component CONVERSATION_NOT_CONVERSING = CommonCore.colorize("You must be conversing with the server!");
+		public static SimpleComponent CONVERSATION_NOT_CONVERSING = SimpleComponent.fromMini("You must be conversing with the server!");
 
 		/**
 		 * Called when console attempts to start conversing
@@ -521,17 +520,17 @@ public class SimpleLocalization extends YamlStaticConfig {
 		/**
 		 * Message shown when the player is not online on this server
 		 */
-		public static Component NOT_ONLINE = CommonCore.colorize("&cPlayer {player} &cis not online on this server.");
+		public static SimpleComponent NOT_ONLINE = SimpleComponent.fromMini("&cPlayer {player} &cis not online on this server.");
 
 		/**
 		 * Message shown when Bukkit#getOfflinePlayer(String) returns that the player has not played before
 		 */
-		public static Component NOT_PLAYED_BEFORE = CommonCore.colorize("&cPlayer {player} &chas not played before or we could not locate his disk data.");
+		public static SimpleComponent NOT_PLAYED_BEFORE = SimpleComponent.fromMini("&cPlayer {player} &chas not played before or we could not locate his disk data.");
 
 		/**
 		 * Message shown the an offline player is returned null from a given UUID.
 		 */
-		public static Component INVALID_UUID = CommonCore.colorize("&cCould not find a player from UUID {uuid}.");
+		public static SimpleComponent INVALID_UUID = SimpleComponent.fromMini("&cCould not find a player from UUID {uuid}.");
 
 		/**
 		 * Load the values -- this method is called automatically by reflection in the {@link YamlStaticConfig} class!
@@ -555,13 +554,13 @@ public class SimpleLocalization extends YamlStaticConfig {
 	 */
 	public static final class Pages {
 
-		public static String NO_PAGE_NUMBER = "&cPlease specify the page number for this command.";
-		public static String NO_PAGES = "There are no results to list.";
-		public static String NO_PAGE = "Pages do not contain the given page number.";
-		public static String INVALID_PAGE = "&cYour input '{input}' is not a valid number.";
-		public static String GO_TO_PAGE = "&7Go to page {page}";
-		public static String GO_TO_FIRST_PAGE = "&7Go to the first page";
-		public static String GO_TO_LAST_PAGE = "&7Go to the last page";
+		public static SimpleComponent NO_PAGE_NUMBER = SimpleComponent.fromMini("&cPlease specify the page number for this command.");
+		public static SimpleComponent NO_PAGES = SimpleComponent.fromMini("There are no results to list.");
+		public static SimpleComponent NO_PAGE = SimpleComponent.fromMini("Pages do not contain the given page number.");
+		public static SimpleComponent INVALID_PAGE = SimpleComponent.fromMini("&cYour input '{input}' is not a valid number.");
+		public static SimpleComponent GO_TO_PAGE = SimpleComponent.fromMini("&7Go to page {page}");
+		public static SimpleComponent GO_TO_FIRST_PAGE = SimpleComponent.fromMini("&7Go to the first page");
+		public static SimpleComponent GO_TO_LAST_PAGE = SimpleComponent.fromMini("&7Go to the last page");
 		public static String[] TOOLTIP = {
 				"&7You can also navigate using the",
 				"&7hidden /#flp <page> command."
@@ -574,25 +573,25 @@ public class SimpleLocalization extends YamlStaticConfig {
 			setPathPrefix("Pages");
 
 			if (isSetDefault("No_Page_Number"))
-				NO_PAGE_NUMBER = getString("No_Page_Number");
+				NO_PAGE_NUMBER = getComponent("No_Page_Number");
 
 			if (isSetDefault("No_Pages"))
-				NO_PAGES = getString("No_Pages");
+				NO_PAGES = getComponent("No_Pages");
 
 			if (isSetDefault("No_Page"))
-				NO_PAGE = getString("No_Page");
+				NO_PAGE = getComponent("No_Page");
 
 			if (isSetDefault("Invalid_Page"))
-				INVALID_PAGE = getString("Invalid_Page");
+				INVALID_PAGE = getComponent("Invalid_Page");
 
 			if (isSetDefault("Go_To_Page"))
-				GO_TO_PAGE = getString("Go_To_Page");
+				GO_TO_PAGE = getComponent("Go_To_Page");
 
 			if (isSetDefault("Go_To_First_Page"))
-				GO_TO_FIRST_PAGE = getString("Go_To_First_Page");
+				GO_TO_FIRST_PAGE = getComponent("Go_To_First_Page");
 
 			if (isSetDefault("Go_To_Last_Page"))
-				GO_TO_LAST_PAGE = getString("Go_To_Last_Page");
+				GO_TO_LAST_PAGE = getComponent("Go_To_Last_Page");
 
 			if (isSetDefault("Tooltip"))
 				TOOLTIP = CommonCore.toArray(getStringList("Tooltip"));
@@ -607,17 +606,17 @@ public class SimpleLocalization extends YamlStaticConfig {
 		/**
 		 * Message shown when the player is not online on this server
 		 */
-		public static String ITEM_DELETED = "&2The {item} has been deleted.";
+		public static SimpleComponent ITEM_DELETED = SimpleComponent.fromMini("&2The {item} has been deleted.");
 
 		/**
 		 * Message shown when the player tries to open menu, but has an ongoing conversation.
 		 */
-		public static String CANNOT_OPEN_DURING_CONVERSATION = "&cType 'exit' to quit your conversation before opening menu.";
+		public static SimpleComponent CANNOT_OPEN_DURING_CONVERSATION = SimpleComponent.fromMini("&cType 'exit' to quit your conversation before opening menu.");
 
 		/**
 		 * Message shown on error
 		 */
-		public static String ERROR = "&cOups! There was a problem with this menu! Please contact the administrator to review the console for details.";
+		public static SimpleComponent ERROR = SimpleComponent.fromMini("&cOups! There was a problem with this menu! Please contact the administrator to review the console for details.");
 
 		/**
 		 * Keys related to menu pagination
@@ -642,13 +641,13 @@ public class SimpleLocalization extends YamlStaticConfig {
 			setPathPrefix("Menu");
 
 			if (isSetDefault("Item_Deleted"))
-				ITEM_DELETED = getString("Item_Deleted");
+				ITEM_DELETED = getComponent("Item_Deleted");
 
 			if (isSetDefault("Cannot_Open_During_Conversation"))
-				CANNOT_OPEN_DURING_CONVERSATION = getString("Cannot_Open_During_Conversation");
+				CANNOT_OPEN_DURING_CONVERSATION = getComponent("Cannot_Open_During_Conversation");
 
 			if (isSetDefault("Error"))
-				ERROR = getString("Error");
+				ERROR = getComponent("Error");
 
 			if (isSetDefault("Page_Previous"))
 				PAGE_PREVIOUS = getString("Page_Previous");
@@ -744,7 +743,7 @@ public class SimpleLocalization extends YamlStaticConfig {
 	/**
 	 * The message for player if they lack a permission.
 	 */
-	public static Component NO_PERMISSION = CommonCore.colorize("<red>Insufficient permission ({permission}).");
+	public static SimpleComponent NO_PERMISSION = SimpleComponent.fromMini("<red>Insufficient permission ({permission}).");
 
 	/**
 	 * The server prefix. Example: you have to use it manually if you are sending messages

@@ -14,13 +14,10 @@ import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.debug.Debugger;
 import org.mineacademy.fo.exception.FoException;
-import org.mineacademy.fo.model.SimpleComponentCore;
+import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.proxy.ProxyListener;
 import org.mineacademy.fo.proxy.ProxyMessage;
-import org.mineacademy.fo.remain.RemainCore;
-
-import net.kyori.adventure.text.Component;
 
 /**
  * NB: This uses the standardized Foundation model where the first
@@ -68,17 +65,8 @@ public final class OutgoingMessage extends Message {
 	 *
 	 * @param component
 	 */
-	public void writeComponent(Component component) {
-		this.write(component, Component.class);
-	}
-
-	/**
-	 * Write the map into the message
-	 *
-	 * @param component
-	 */
-	public void writeSimpleComponent(SimpleComponentCore component) {
-		this.write(component, SimpleComponentCore.class);
+	public void writeSimpleComponent(SimpleComponent component) {
+		this.write(component, SimpleComponent.class);
 	}
 
 	/**
@@ -197,7 +185,7 @@ public final class OutgoingMessage extends Message {
 		try {
 			out.writeUTF(channel);
 			out.writeUTF(senderUid.toString());
-			out.writeUTF(RemainCore.getServerName());
+			out.writeUTF(Platform.getServerName());
 			out.writeUTF(message.toString());
 
 		} catch (final IOException ex) {
@@ -226,11 +214,8 @@ public final class OutgoingMessage extends Message {
 				} else if (data instanceof String) {
 					OutgoingMessage.writeCompressedString(out, (String) data);
 
-				} else if (data instanceof Component) {
-					OutgoingMessage.writeCompressedString(out, RemainCore.convertAdventureToJson((Component) data));
-
-				} else if (data instanceof SimpleComponentCore) {
-					OutgoingMessage.writeCompressedString(out, ((SimpleComponentCore) data).serialize().toJson());
+				} else if (data instanceof SimpleComponent) {
+					OutgoingMessage.writeCompressedString(out, ((SimpleComponent) data).serialize().toJson());
 
 				} else if (data instanceof SerializedMap) {
 					OutgoingMessage.writeCompressedString(out, ((SerializedMap) data).toJson());

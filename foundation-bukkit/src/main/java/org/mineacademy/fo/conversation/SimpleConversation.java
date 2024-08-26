@@ -3,7 +3,6 @@ package org.mineacademy.fo.conversation;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.bukkit.command.CommandSender;
 import org.bukkit.conversations.Conversable;
 import org.bukkit.conversations.Conversation;
 import org.bukkit.conversations.ConversationAbandonedEvent;
@@ -14,6 +13,7 @@ import org.bukkit.conversations.ConversationPrefix;
 import org.bukkit.conversations.Prompt;
 import org.bukkit.entity.Player;
 import org.mineacademy.fo.Common;
+import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.Messenger;
 import org.mineacademy.fo.Valid;
 import org.mineacademy.fo.collection.expiringmap.ExpiringMap;
@@ -21,6 +21,7 @@ import org.mineacademy.fo.menu.Menu;
 import org.mineacademy.fo.model.BoxedMessage;
 import org.mineacademy.fo.model.Task;
 import org.mineacademy.fo.model.Variables;
+import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.plugin.SimplePlugin;
 import org.mineacademy.fo.remain.CompSound;
@@ -167,9 +168,7 @@ public abstract class SimpleConversation implements ConversationAbandonedListene
 	 * @return
 	 */
 	protected ConversationPrefix getPrefix() {
-		final String prefix = Remain.convertAdventureToLegacy(Common.getTellPrefix());
-
-		return new SimplePrefix(!prefix.isEmpty() ? prefix + " " : "");
+		return new SimplePrefix("");
 	}
 
 	/**
@@ -261,7 +260,7 @@ public abstract class SimpleConversation implements ConversationAbandonedListene
 	 * @param messages
 	 */
 	protected static final void tellBoxed(final Conversable conversable, final String... messages) {
-		BoxedMessage.tell(Platform.toAudience(conversable), Common.colorizeList(messages));
+		BoxedMessage.tell(Platform.toPlayer(conversable), messages);
 	}
 
 	/**
@@ -271,10 +270,9 @@ public abstract class SimpleConversation implements ConversationAbandonedListene
 	 * @param message
 	 */
 	protected static final void tell(final Conversable conversable, String message) {
-		if (conversable instanceof CommandSender)
-			message = Variables.replace(message, Platform.toAudience(conversable));
+		final FoundationPlayer player = Platform.toPlayer(conversable);
 
-		Common.tell(conversable, message);
+		player.sendMessage(Variables.replace(message, player));
 	}
 
 	/**
@@ -285,10 +283,9 @@ public abstract class SimpleConversation implements ConversationAbandonedListene
 	 * @param message
 	 */
 	protected static final void tellLater(final int delayTicks, final Conversable conversable, String message) {
-		if (conversable instanceof CommandSender)
-			message = Variables.replace(message, Platform.toAudience(conversable));
+		final FoundationPlayer player = Platform.toPlayer(conversable);
 
-		Common.tellLater(delayTicks, conversable, message);
+		Common.tellLater(delayTicks, player, Variables.replace(message, player));
 	}
 
 	// ------------------------------------------------------------------------------------------------------------
@@ -401,8 +398,12 @@ public abstract class SimpleConversation implements ConversationAbandonedListene
 					if (!askedQuestions.containsKey(question)) {
 						askedQuestions.put(question, null);
 
-						if (!question.contains(Remain.convertAdventureToLegacy(Messenger.getQuestionPrefix())))
-							question = this.prefix.getPrefix(this.context) + question;
+						if (!CommonCore.stripColorCodes(question).contains(Messenger.getQuestionPrefix().toPlain())) {
+							final String prefix = this.prefix.getPrefix(this.context);
+
+							if (!prefix.isEmpty())
+								question = prefix + question;
+						}
 
 						this.context.setSessionData("Asked_" + promptClass, askedQuestions);
 						this.context.getForWhom().sendRawMessage(question);

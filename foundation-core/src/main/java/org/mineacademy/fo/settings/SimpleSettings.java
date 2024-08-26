@@ -8,10 +8,8 @@ import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.collection.StrictList;
 import org.mineacademy.fo.debug.Debugger;
 import org.mineacademy.fo.debug.LagCatcher;
+import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.platform.Platform;
-import org.mineacademy.fo.remain.RemainCore;
-
-import net.kyori.adventure.text.Component;
 
 /**
  * A simple implementation of a typical main plugin settings
@@ -128,7 +126,7 @@ public class SimpleSettings extends YamlStaticConfig {
 	 * <p>
 	 * Prefix: "&8[&3ChatControl&8]&7 "
 	 */
-	public static Component PLUGIN_PREFIX = RemainCore.convertLegacyToAdventure("&7" + Platform.getPlugin().getName() + " //");
+	public static SimpleComponent PLUGIN_PREFIX = SimpleComponent.fromMini("&7" + Platform.getPlugin().getName() + " //");
 
 	/**
 	 * The lag threshold used for {@link LagCatcher} in milliseconds. Set to -1 to disable.

@@ -9,13 +9,13 @@ import java.util.regex.Pattern;
 import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.model.RangedValue;
-import org.mineacademy.fo.platform.Platform;
+import org.mineacademy.fo.model.SimpleComponent;
+import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.settings.SimpleLocalization;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import net.kyori.adventure.audience.Audience;
 
 /**
  * Utility class for checking conditions and throwing our safe exception that is
@@ -139,13 +139,13 @@ public abstract class ValidCore {
 	 * Check if the player has the given permission, if false we send him {@link SimpleLocalization#NO_PERMISSION}
 	 * message and return false, otherwise no message is sent and we return true
 	 *
-	 * @param audience
+	 * @param sender
 	 * @param permission
 	 * @return
 	 */
-	public static boolean checkPermission(final Audience audience, final String permission) {
-		if (!Platform.hasPermission(audience, permission)) {
-			CommonCore.tell(audience, SimpleLocalization.NO_PERMISSION.replaceText(b -> b.matchLiteral("{permission}").replacement(permission)));
+	public static boolean checkPermission(final FoundationPlayer sender, final String permission) {
+		if (!sender.hasPermission(permission)) {
+			sender.sendMessage(SimpleLocalization.NO_PERMISSION.replaceBracket("permission", SimpleComponent.fromPlain(permission)));
 
 			return false;
 		}
@@ -465,17 +465,17 @@ public abstract class ValidCore {
 			return false;
 
 		for (int i = 0; i < first.size(); i++) {
-			final T f = first.get(i);
-			final T s = second.get(i);
+			final T firstElement = first.get(i);
+			final T secondElement = second.get(i);
 
-			if (f == null && s != null)
+			if (firstElement == null && secondElement != null)
 				return false;
 
-			if (f != null && s == null)
+			if (firstElement != null && secondElement == null)
 				return false;
 
-			if (f != null && !f.equals(s))
-				if (!CommonCore.removeColors(f.toString()).equalsIgnoreCase(CommonCore.removeColors(s.toString())))
+			if (firstElement != null && !firstElement.equals(secondElement))
+				if (!CommonCore.stripColorCodes(firstElement.toString()).equalsIgnoreCase(CommonCore.stripColorCodes(secondElement.toString())))
 					return false;
 		}
 

@@ -18,16 +18,14 @@ import org.mineacademy.fo.menu.RegionMenu;
 import org.mineacademy.fo.menu.SelectRegionMenu;
 import org.mineacademy.fo.menu.tool.RegionTool;
 import org.mineacademy.fo.model.ChatPaginator;
-import org.mineacademy.fo.model.SimpleComponentCore;
+import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.plugin.SimplePlugin;
 import org.mineacademy.fo.region.DiskRegion;
 import org.mineacademy.fo.remain.CompChatColor;
-import org.mineacademy.fo.remain.RemainCore;
 import org.mineacademy.fo.settings.SimpleSettings;
 import org.mineacademy.fo.visual.VisualizedRegion;
 
 import lombok.RequiredArgsConstructor;
-import net.kyori.adventure.text.Component;
 
 /**
  * The command to manage plugin's region system.
@@ -54,7 +52,7 @@ public class RegionCommand extends SimpleSubCommand {
 	 * @see org.mineacademy.fo.command.SimpleCommandCore#getMultilineUsageMessage()
 	 */
 	@Override
-	protected Component getMultilineUsage() {
+	protected SimpleComponent getMultilineUsage() {
 		return Param.generateUsages();
 	}
 
@@ -78,34 +76,34 @@ public class RegionCommand extends SimpleSubCommand {
 			if (regions.isEmpty())
 				this.returnTell("There are no regions created yet.");
 
-			final List<SimpleComponentCore> components = new ArrayList<>();
+			final List<SimpleComponent> components = new ArrayList<>();
 
 			for (final DiskRegion otherRegion : DiskRegion.getRegions()) {
 
 				final String longestText = "&7Secondary: &2" + Common.shortLocation(otherRegion.getSecondary());
 
-				components.add(SimpleComponentCore
-						.of(" ")
+				components.add(SimpleComponent
+						.fromPlain(" ")
 
-						.append("&8[&4X&8]")
+						.appendMini("&8[&4X&8]")
 						.onHover("&7Click to remove permanently.")
 						.onClickRunCmd("/" + this.getLabel() + " " + this.getSublabel() + " " + Param.REMOVE + " " + otherRegion.getName() + " -list")
 
-						.append(" ")
+						.appendPlain(" ")
 
-						.append("&8[&2?&8]")
+						.appendMini("&8[&2?&8]")
 						.onHover("&7Click to visualize.")
 						.onClickRunCmd("/" + this.getLabel() + " " + this.getSublabel() + " " + Param.VIEW + " " + otherRegion.getName() + " -list")
 
-						.append(" ")
+						.appendPlain(" ")
 
-						.append("&8[&3>&8]")
+						.appendMini("&8[&3>&8]")
 						.onHover("&7Click to teleport to the center.")
 						.onClickRunCmd("/" + this.getLabel() + " " + this.getSublabel() + " " + Param.TELEPORT + " " + otherRegion.getName() + " -list")
 
-						.append(" ")
+						.appendPlain(" ")
 
-						.append("&7" + otherRegion.getName())
+						.appendMini("&7" + otherRegion.getName())
 						.onHover(ChatUtil.center("&fRegion Information", longestText.length() * 2 + longestText.length() / 3),
 								"&7Primary: &2" + Common.shortLocation(otherRegion.getPrimary()),
 								longestText,
@@ -235,10 +233,10 @@ public class RegionCommand extends SimpleSubCommand {
 		if (this.isPlayer() && this.args.length > 2 && "-list".equals(this.args[2]))
 			this.getPlayer().performCommand(this.getLabel() + " " + this.getSublabel() + " " + Param.LIST);
 
-		SimpleComponentCore
-				.of(MessengerCore.getInfoPrefix().append(CommonCore.colorize(message)))
-
-				.append(" Click here to open its menu.")
+		MessengerCore
+				.getInfoPrefix()
+				.appendMini(message)
+				.appendPlain(" Click here to open its menu.")
 				.onHover("&7Click to open region menu.")
 				.onClickRunCmd("/" + SimpleSettings.MAIN_COMMAND_ALIASES.get(0) + " region menu " + region.getName())
 
@@ -358,9 +356,9 @@ public class RegionCommand extends SimpleSubCommand {
 		 *
 		 * @return
 		 */
-		public static Component generateUsages() {
+		public static SimpleComponent generateUsages() {
 			final Param[] params = Param.values();
-			Component component = Component.empty();
+			final SimpleComponent component = SimpleComponent.empty();
 
 			for (int i = 0; i < params.length; i++) {
 				final Param param = params[i];
@@ -376,10 +374,10 @@ public class RegionCommand extends SimpleSubCommand {
 					usage = usage + " ";
 				}
 
-				component = component.append(RemainCore.convertLegacyToAdventure("&c /{label} {sublabel} " + param.label + " " + usage + "&c- " + param.description));
+				component.append(SimpleComponent.fromAndCharacter("&c /{label} {sublabel} " + param.label + " " + usage + "&c- " + param.description));
 
 				if (i < params.length - 1)
-					component = component.appendNewline();
+					component.appendNewLine();
 			}
 
 			return component;

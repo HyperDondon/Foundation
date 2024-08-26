@@ -481,12 +481,7 @@ public abstract class Menu {
 		Valid.checkNotNull(this.title, "Title not set in " + this + " (call setTitle in your constructor)");
 
 		if (MinecraftVersion.olderThan(V.v1_5)) {
-			final String error = "Displaying menus require Minecraft 1.5.2 or greater.";
-
-			if (Messenger.ENABLED)
-				Messenger.error(player, error);
-			else
-				Common.tell(player, error);
+			Messenger.error(player, "Displaying menus require Minecraft 1.5.2 or greater.");
 
 			return;
 		}
@@ -512,7 +507,7 @@ public abstract class Menu {
 
 		// Prevent menu in conversation
 		if (player.isConversing()) {
-			player.sendRawMessage(Common.colorizeLegacy(SimpleLocalization.Menu.CANNOT_OPEN_DURING_CONVERSATION));
+			SimpleLocalization.Menu.CANNOT_OPEN_DURING_CONVERSATION.send(Platform.toPlayer(player));
 
 			return;
 		}

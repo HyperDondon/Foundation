@@ -3,12 +3,12 @@ package org.mineacademy.fo.command;
 import java.util.Arrays;
 
 import org.mineacademy.fo.ValidCore;
+import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.platform.Platform;
 
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import net.kyori.adventure.text.Component;
 
 /**
  * A simple subcommand belonging to a {@link SimpleCommandGroup}
@@ -64,13 +64,10 @@ public abstract class SimpleSubCommandCore extends SimpleCommandCore {
 
 		this.sublabel = this.sublabels[0];
 
-		// If the default perm was not changed, improve it
-		if (this.getPermission().equals(getDefaultPermission()))
-			if (Platform.getPlugin().getDefaultCommandGroup() != null && Platform.getPlugin().getDefaultCommandGroup().getLabel().equals(this.getLabel()))
-				this.setPermission(this.getPermission().replace("{label}", "{sublabel}")); // simply replace label with sublabel
-
-			else
-				this.setPermission(this.getPermission() + ".{sublabel}"); // append the sublabel at the end since this is not our main command
+		if (Platform.getPlugin().getDefaultCommandGroup() != null && Platform.getPlugin().getDefaultCommandGroup().getLabel().equals(this.getLabel()))
+			this.setPermission(Platform.getPlugin().getName().toLowerCase() + ".command." + this.sublabel); // simply replace label with sublabel
+		else
+			this.setPermission(this.getPermission() + ".{sublabel}"); // append the sublabel at the end since this is not our main command
 	}
 
 	/**
@@ -88,8 +85,8 @@ public abstract class SimpleSubCommandCore extends SimpleCommandCore {
 	 * See {@link SimpleCommandCore#replacePlaceholders(String)}
 	 */
 	@Override
-	protected Component replacePlaceholders(Component message) {
-		return super.replacePlaceholders(message).replaceText(b -> b.matchLiteral("{sublabel}").replacement(this.getSublabel()));
+	protected SimpleComponent replacePlaceholders(SimpleComponent message) {
+		return super.replacePlaceholders(message).replaceBracket("sublabel", this.getSublabel());
 	}
 
 	@Override

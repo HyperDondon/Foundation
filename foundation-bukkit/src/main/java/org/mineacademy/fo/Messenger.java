@@ -1,11 +1,11 @@
 package org.mineacademy.fo;
 
 import org.bukkit.command.CommandSender;
+import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.platform.Platform;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import net.kyori.adventure.text.Component;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class Messenger extends MessengerCore {
@@ -17,7 +17,7 @@ public final class Messenger extends MessengerCore {
 	 * @param message
 	 */
 	public static void info(final CommandSender sender, final String message) {
-		info(Platform.toAudience(sender), message);
+		info(Platform.toPlayer(sender), message);
 	}
 
 	/**
@@ -26,8 +26,8 @@ public final class Messenger extends MessengerCore {
 	 * @param sender
 	 * @param component
 	 */
-	public static void info(final CommandSender sender, final Component component) {
-		info(Platform.toAudience(sender), component);
+	public static void info(final CommandSender sender, final SimpleComponent component) {
+		info(Platform.toPlayer(sender), component);
 	}
 
 	/**
@@ -37,7 +37,7 @@ public final class Messenger extends MessengerCore {
 	 * @param message
 	 */
 	public static void success(final CommandSender sender, final String message) {
-		success(Platform.toAudience(sender), message);
+		success(Platform.toPlayer(sender), message);
 	}
 
 	/**
@@ -46,8 +46,8 @@ public final class Messenger extends MessengerCore {
 	 * @param sender
 	 * @param component
 	 */
-	public static void success(final CommandSender sender, final Component component) {
-		success(Platform.toAudience(sender), component);
+	public static void success(final CommandSender sender, final SimpleComponent component) {
+		success(Platform.toPlayer(sender), component);
 	}
 
 	/**
@@ -57,7 +57,7 @@ public final class Messenger extends MessengerCore {
 	 * @param message
 	 */
 	public static void warn(final CommandSender sender, final String message) {
-		warn(Platform.toAudience(sender), message);
+		warn(Platform.toPlayer(sender), message);
 	}
 
 	/**
@@ -66,8 +66,8 @@ public final class Messenger extends MessengerCore {
 	 * @param sender
 	 * @param component
 	 */
-	public static void warn(final CommandSender sender, final Component component) {
-		warn(Platform.toAudience(sender), component);
+	public static void warn(final CommandSender sender, final SimpleComponent component) {
+		warn(Platform.toPlayer(sender), component);
 	}
 
 	/**
@@ -77,7 +77,7 @@ public final class Messenger extends MessengerCore {
 	 * @param message
 	 */
 	public static void error(final CommandSender sender, final String message) {
-		error(Platform.toAudience(sender), message);
+		error(Platform.toPlayer(sender), message);
 	}
 
 	/**
@@ -86,8 +86,8 @@ public final class Messenger extends MessengerCore {
 	 * @param sender
 	 * @param component
 	 */
-	public static void error(final CommandSender sender, final Component component) {
-		error(Platform.toAudience(sender), component);
+	public static void error(final CommandSender sender, final SimpleComponent component) {
+		error(Platform.toPlayer(sender), component);
 	}
 
 	/**
@@ -97,7 +97,7 @@ public final class Messenger extends MessengerCore {
 	 * @param message
 	 */
 	public static void question(final CommandSender sender, final String message) {
-		question(Platform.toAudience(sender), message);
+		question(Platform.toPlayer(sender), message);
 	}
 
 	/**
@@ -106,8 +106,8 @@ public final class Messenger extends MessengerCore {
 	 * @param sender
 	 * @param component
 	 */
-	public static void question(final CommandSender sender, final Component component) {
-		question(Platform.toAudience(sender), component);
+	public static void question(final CommandSender sender, final SimpleComponent component) {
+		question(Platform.toPlayer(sender), component);
 	}
 
 	/**
@@ -117,7 +117,7 @@ public final class Messenger extends MessengerCore {
 	 * @param message
 	 */
 	public static void announce(final CommandSender sender, final String message) {
-		announce(Platform.toAudience(sender), message);
+		announce(Platform.toPlayer(sender), message);
 	}
 
 	/**
@@ -126,7 +126,7 @@ public final class Messenger extends MessengerCore {
 	 * @param sender
 	 * @param component
 	 */
-	public static void announce(final CommandSender sender, final Component component) {
-		announce(Platform.toAudience(sender), component);
+	public static void announce(final CommandSender sender, final SimpleComponent component) {
+		announce(Platform.toPlayer(sender), component);
 	}
 }

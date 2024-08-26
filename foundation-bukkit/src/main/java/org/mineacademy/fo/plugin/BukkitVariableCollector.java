@@ -11,17 +11,18 @@ import org.mineacademy.fo.MinecraftVersion;
 import org.mineacademy.fo.PlayerUtil;
 import org.mineacademy.fo.model.HookManager;
 import org.mineacademy.fo.model.Variables;
-import org.mineacademy.fo.platform.Platform;
+import org.mineacademy.fo.platform.BukkitPlayer;
+import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.remain.CompChatColor;
 import org.mineacademy.fo.remain.Remain;
 
-import net.kyori.adventure.audience.Audience;
-
 public final class BukkitVariableCollector implements Variables.Collector {
 
+	// TODO scan code for Audience instanceof and FoundationPlayer instanceof
+
 	@Override
-	public void addVariables(String variable, Audience audience, Map<String, Object> replacements) {
-		final Player player = audience instanceof Player ? (Player) audience : null;
+	public void addVariables(String variable, FoundationPlayer sender, Map<String, Object> replacements) {
+		final Player player = sender.isPlayer() ? ((BukkitPlayer) sender).getPlayer() : null;
 
 		// Replace PlaceholderAPI variables
 		final Map<String, Object> placeholderApiHooks = HookManager.getPlaceholderAPIHooks();
@@ -45,10 +46,10 @@ public final class BukkitVariableCollector implements Variables.Collector {
 		// Replace hard variables
 		GeoResponse geoResponse = null;
 
-		if (audience instanceof Player && Arrays.asList("country_code", "country_name", "region_name", "isp").contains(variable))
-			geoResponse = GeoAPI.getCountry(player.getAddress());
+		if (sender.isPlayer() && Arrays.asList("country_code", "country_name", "region_name", "isp").contains(variable))
+			geoResponse = GeoAPI.getCountry(sender.getAddress());
 
-		final String senderName = Platform.resolveSenderName(audience);
+		final String senderName = sender.getName();
 
 		replacements.put("server_version", MinecraftVersion.getFullVersion());
 		replacements.put("nms_version", MinecraftVersion.getServerVersion());

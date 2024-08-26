@@ -5,6 +5,7 @@ import javax.annotation.Nullable;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.remain.CompChatColor;
 import org.mineacademy.fo.remain.Remain;
 
@@ -57,7 +58,7 @@ public final class HealthBarUtil {
 		final String name = Common.getOrEmpty(damagedEntityName);
 		final String formatted = (name.isEmpty() ? ItemUtil.bountify(displayAbout.getType()) : name) + " - " + getHealthMessage(health, maxHealth, (int) damage);
 
-		Remain.sendActionBar(displayTo, formatted);
+		Platform.toPlayer(displayTo).sendActionBar(formatted);
 	}
 
 	/* Creates a new health component */

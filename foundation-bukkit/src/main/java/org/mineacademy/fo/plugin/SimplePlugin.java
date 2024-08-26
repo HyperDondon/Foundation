@@ -1,32 +1,20 @@
 package org.mineacademy.fo.plugin;
 
 import java.io.File;
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiFunction;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.InvalidConfigurationException;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.Listener;
-import org.bukkit.inventory.ItemFlag;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.messaging.Messenger;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 import org.mineacademy.fo.ChatUtil;
 import org.mineacademy.fo.Common;
 import org.mineacademy.fo.CommonCore;
@@ -34,13 +22,8 @@ import org.mineacademy.fo.MinecraftVersion;
 import org.mineacademy.fo.MinecraftVersion.V;
 import org.mineacademy.fo.ProxyUtil;
 import org.mineacademy.fo.ReflectionUtil;
-import org.mineacademy.fo.SerializeUtil;
-import org.mineacademy.fo.SerializeUtilCore.Mode;
-import org.mineacademy.fo.SerializeUtilCore.Serializer;
 import org.mineacademy.fo.Valid;
-import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.annotation.AutoRegister;
-import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.command.RegionCommand;
 import org.mineacademy.fo.command.SimpleCommandCore;
 import org.mineacademy.fo.command.SimpleCommandGroup;
@@ -49,8 +32,6 @@ import org.mineacademy.fo.debug.Debugger;
 import org.mineacademy.fo.enchant.SimpleEnchantment;
 import org.mineacademy.fo.event.SimpleListener;
 import org.mineacademy.fo.exception.FoException;
-import org.mineacademy.fo.jsonsimple.JSONArray;
-import org.mineacademy.fo.jsonsimple.JSONParser;
 import org.mineacademy.fo.library.BukkitLibraryManager;
 import org.mineacademy.fo.library.Library;
 import org.mineacademy.fo.library.LibraryManager;
@@ -64,28 +45,22 @@ import org.mineacademy.fo.model.DiscordListener;
 import org.mineacademy.fo.model.HookManager;
 import org.mineacademy.fo.model.PacketListener;
 import org.mineacademy.fo.model.SimpleScoreboard;
-import org.mineacademy.fo.model.SimpleSound;
 import org.mineacademy.fo.model.Tuple;
-import org.mineacademy.fo.model.Variables;
+import org.mineacademy.fo.platform.BukkitPlatform;
+import org.mineacademy.fo.platform.BukkitPlayer;
+import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.FoundationPlugin;
 import org.mineacademy.fo.platform.Platform;
-import org.mineacademy.fo.platform.PlatformBukkit;
 import org.mineacademy.fo.plugin.AutoRegisterScanner.AutoRegisterHandler;
 import org.mineacademy.fo.plugin.AutoRegisterScanner.FindInstance;
 import org.mineacademy.fo.proxy.ProxyListener;
 import org.mineacademy.fo.proxy.ProxyListenerImpl;
 import org.mineacademy.fo.proxy.message.OutgoingMessage;
 import org.mineacademy.fo.region.DiskRegion;
-import org.mineacademy.fo.remain.CompEnchantment;
 import org.mineacademy.fo.remain.CompMetadata;
-import org.mineacademy.fo.remain.CompPotionEffectType;
-import org.mineacademy.fo.remain.JsonItemStack;
 import org.mineacademy.fo.remain.Remain;
 import org.mineacademy.fo.settings.Lang;
-import org.mineacademy.fo.settings.SimpleSettings;
 
-import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 
 /**
@@ -144,11 +119,6 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 	// ----------------------------------------------------------------------------------------
 
 	/**
-	 * The Bukkit Audiences adventure platform
-	 */
-	private Object adventure;
-
-	/**
 	 * The library manager used to load third party libraries.
 	 */
 	private LibraryManager libraryManager;
@@ -181,11 +151,11 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 
 	@Override
 	public final void onLoad() {
+		getInstance();
+
 		this.loadLibraries();
 
-		Platform.setInstance(new PlatformBukkit());
-
-		getInstance();
+		Platform.setInstance(new BukkitPlatform());
 
 		this.onPluginLoad();
 	}
@@ -197,27 +167,34 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 
 		this.loadLibrary("org.snakeyaml", "snakeyaml-engine", "2.7");
 
-		if (!ReflectionUtil.isClassAvailable("com.google.gson.Gson"))
-			this.loadLibrary("com.google.code.gson", "gson", "2.11.0");
+		if (!ReflectionUtil.isClassAvailable("org.openjdk.nashorn.api.scripting.NashornScriptEngine"))
+			this.loadLibrary("org.openjdk.nashorn", "nashorn-core", "15.4");
 
 		if (!ReflectionUtil.isClassAvailable("net.md_5.bungee.chat.BaseComponentSerializer"))
 			this.loadLibrary("net.md-5", "bungeecord-api", "1.16-R0.1");
 
-		if (!ReflectionUtil.isClassAvailable("org.openjdk.nashorn.api.scripting.NashornScriptEngine"))
-			this.loadLibrary("org.openjdk.nashorn", "nashorn-core", "15.4");
+		if (!ReflectionUtil.isClassAvailable("com.google.gson.Gson"))
+			this.loadLibrary("com.google.code.gson", "gson", "2.11.0");
 
-		if (!ReflectionUtil.isClassAvailable("net.kyori.adventure.text.event.HoverEventSource")) {
+		if (!ReflectionUtil.isClassAvailable("net.kyori.adventure.text.event.HoverEventSource"))
 			this.loadLibrary("net.kyori", "adventure-api", "4.17.0");
-			this.loadLibrary("net.kyori", "adventure-platform-bukkit", "4.3.4");
-		}
 
 		if (!ReflectionUtil.isClassAvailable("net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer"))
 			this.loadLibrary("net.kyori", "adventure-text-serializer-plain", "4.17.0");
 
+		if (!ReflectionUtil.isClassAvailable("net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer"))
+			this.loadLibrary("net.kyori", "adventure-text-serializer-legacy", "4.17.0");
+
+		if (!ReflectionUtil.isClassAvailable("net.kyori.adventure.text.serializer.gson.GsonComponentSerializer"))
+			this.loadLibrary("net.kyori", "adventure-text-serializer-gson", "4.17.0");
+
+		if (!ReflectionUtil.isClassAvailable("net.kyori.adventure.text.serializer.bungeecord.BungeeComponentSerializer"))
+			this.loadLibrary("net.kyori", "adventure-text-serializer-bungeecord", "4.3.4");
+
 		if (!ReflectionUtil.isClassAvailable("net.kyori.adventure.text.minimessage.MiniMessage"))
 
 			// Pre-merge: 1.16-1.17
-			if (ReflectionUtil.isClassAvailable("net.kyori.adventure.audience.Audience")) {
+			if (ReflectionUtil.isClassAvailable("net.kyori.adventure.audience.FoundationPlayer")) {
 				String version = "4.2.0";
 
 				try {
@@ -259,17 +236,14 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 			if (this.getStartupLogo() != null)
 				Common.log(this.getStartupLogo());
 
-			// Initialize platform-specific variables
-			Variables.setCollector(new BukkitVariableCollector());
-
 			// Add a handler for chat paginator
-			ChatPaginator.setCustomSender(new BiFunction<Audience, Integer, Boolean>() {
+			ChatPaginator.setCustomSender(new BiFunction<FoundationPlayer, Integer, Boolean>() {
 
 				@Override
-				public Boolean apply(Audience audience, Integer page) {
+				public Boolean apply(FoundationPlayer audience, Integer page) {
 
-					if (audience instanceof Player) {
-						final Player player = (Player) audience;
+					if (audience.isPlayer()) {
+						final Player player = ((BukkitPlayer) audience).getPlayer();
 
 						// Remove old FoPages to prevent conflicts when two or more plugins use Foundation shaded
 						if (player.hasMetadata("FoPages")) {
@@ -411,211 +385,6 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 				}
 			});
 
-			// Add platform-specific helpers to translate values to a config and back
-
-			SerializeUtil.addCustomSerializer(Location.class, new Serializer<Location>() {
-
-				@Override
-				public Object serialize(Mode mode, Location object) {
-					return SerializeUtil.serializeLoc(object);
-				}
-
-				@Override
-				public Location deserialize(Mode mode, Object object) {
-					return SerializeUtil.deserializeLocation((String) object);
-				}
-			});
-
-			SerializeUtil.addCustomSerializer(World.class, new Serializer<World>() {
-
-				@Override
-				public Object serialize(Mode mode, World object) {
-					return object.getName();
-				}
-
-				@Override
-				public World deserialize(Mode mode, Object object) {
-					final World world = Bukkit.getWorld((String) object);
-					Valid.checkNotNull(world, "World " + object + " not found. Available: " + Bukkit.getWorlds());
-
-					return world;
-				}
-			});
-
-			SerializeUtil.addCustomSerializer(PotionEffectType.class, new Serializer<PotionEffectType>() {
-
-				@Override
-				public Object serialize(Mode mode, PotionEffectType object) {
-					return object.getName();
-				}
-
-				@Override
-				public PotionEffectType deserialize(Mode mode, Object object) {
-					final PotionEffectType type = CompPotionEffectType.getByName((String) object);
-					Valid.checkNotNull(type, "Potion effect type " + object + " not found. Available: " + CompPotionEffectType.getPotionNames());
-
-					return type;
-				}
-			});
-
-			SerializeUtil.addCustomSerializer(PotionEffect.class, new Serializer<PotionEffect>() {
-
-				@Override
-				public Object serialize(Mode mode, PotionEffect object) {
-					return object.getType().getName() + " " + object.getDuration() + " " + object.getAmplifier();
-				}
-
-				@Override
-				public PotionEffect deserialize(Mode mode, Object object) {
-					final String[] parts = object.toString().split(" ");
-					ValidCore.checkBoolean(parts.length == 3, "Expected PotionEffect (String) but got " + object.getClass().getSimpleName() + ": " + object);
-
-					final String typeRaw = parts[0];
-					final PotionEffectType type = PotionEffectType.getByName(typeRaw);
-
-					final int duration = Integer.parseInt(parts[1]);
-					final int amplifier = Integer.parseInt(parts[2]);
-
-					return new PotionEffect(type, duration, amplifier);
-				}
-			});
-
-			SerializeUtil.addCustomSerializer(Enchantment.class, new Serializer<Enchantment>() {
-
-				@Override
-				public Object serialize(Mode mode, Enchantment object) {
-					return object.getName();
-				}
-
-				@Override
-				public Enchantment deserialize(Mode mode, Object object) {
-					final Enchantment enchant = CompEnchantment.getByName((String) object);
-					Valid.checkNotNull(enchant, "Enchantment " + object + " not found. Available: " + CompEnchantment.getEnchantmentNames());
-
-					return enchant;
-				}
-			});
-
-			SerializeUtil.addCustomSerializer(SimpleSound.class, new Serializer<SimpleSound>() {
-
-				@Override
-				public Object serialize(Mode mode, SimpleSound object) {
-					return object.toString();
-				}
-
-				@Override
-				public SimpleSound deserialize(Mode mode, Object object) {
-					return new SimpleSound((String) object);
-				}
-			});
-
-			SerializeUtil.addCustomSerializer(ItemStack.class, new Serializer<ItemStack>() {
-
-				@Override
-				public Object serialize(Mode mode, ItemStack object) {
-					if (mode == Mode.JSON)
-						return JsonItemStack.toJson(object);
-					else
-						return object.serialize();
-				}
-
-				@Override
-				public ItemStack deserialize(Mode mode, Object object) {
-					if (mode == Mode.JSON)
-						return JsonItemStack.fromJson(object.toString());
-
-					else {
-						final SerializedMap map = SerializedMap.of(object);
-
-						final ItemStack item = ItemStack.deserialize(map.asMap());
-						final SerializedMap meta = map.getMap("meta");
-
-						if (meta != null)
-							try {
-								final Class<?> cl = ReflectionUtil.getOBCClass("inventory." + (meta.containsKey("spawnedType") ? "CraftMetaSpawnEgg" : "CraftMetaItem"));
-								final Constructor<?> c = cl.getDeclaredConstructor(Map.class);
-								c.setAccessible(true);
-
-								final Object craftMeta = c.newInstance((Map<String, ?>) meta.serialize());
-
-								if (craftMeta instanceof ItemMeta)
-									item.setItemMeta((ItemMeta) craftMeta);
-
-							} catch (final Throwable t) {
-
-								// We have to manually deserialize metadata :(
-								final ItemMeta itemMeta = item.getItemMeta();
-
-								final String display = meta.containsKey("display-name") ? meta.getString("display-name") : null;
-
-								if (display != null)
-									itemMeta.setDisplayName(display);
-
-								final List<String> lore = meta.containsKey("lore") ? meta.getStringList("lore") : null;
-
-								if (lore != null)
-									itemMeta.setLore(lore);
-
-								final SerializedMap enchants = meta.containsKey("enchants") ? meta.getMap("enchants") : null;
-
-								if (enchants != null)
-									for (final Map.Entry<String, Object> entry : enchants.entrySet()) {
-										final Enchantment enchantment = Enchantment.getByName(entry.getKey());
-										final int level = (int) entry.getValue();
-
-										itemMeta.addEnchant(enchantment, level, true);
-									}
-
-								final List<String> itemFlags = meta.containsKey("ItemFlags") ? meta.getStringList("ItemFlags") : null;
-
-								if (itemFlags != null)
-									for (final String flag : itemFlags)
-										try {
-											itemMeta.addItemFlags(ItemFlag.valueOf(flag));
-										} catch (final Exception ex) {
-											// Likely not MC compatible, ignore
-										}
-
-								item.setItemMeta(itemMeta);
-							}
-
-						return item;
-					}
-				}
-			});
-
-			SerializeUtil.addCustomSerializer(ItemStack[].class, new Serializer<ItemStack[]>() {
-
-				@Override
-				public Object serialize(Mode mode, ItemStack[] object) {
-					if (mode == SerializeUtil.Mode.JSON) {
-						final JSONArray jsonList = new JSONArray();
-
-						for (final ItemStack item : object)
-							jsonList.add(item == null ? null : JsonItemStack.toJson(item));
-
-						return jsonList.toJson();
-
-					} else
-						throw new FoException("Cannot deserialize non-JSON ItemStack[]");
-				}
-
-				@Override
-				public ItemStack[] deserialize(Mode mode, Object object) {
-					final List<ItemStack> list = new ArrayList<>();
-
-					if (mode == SerializeUtil.Mode.JSON) {
-						final JSONArray jsonList = JSONParser.deserialize(object.toString(), new JSONArray());
-
-						for (final Object element : jsonList)
-							list.add(element == null ? null : JsonItemStack.fromJson(element.toString()));
-					} else
-						throw new FoException("Cannot deserialize non-JSON ItemStack[]");
-
-					return list.toArray(new ItemStack[list.size()]);
-				}
-			});
-
 			// Register third party hooks
 			HookManager.loadDependencies();
 
@@ -666,9 +435,6 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 
 				this.registerEvents(DiscordListener.DiscordListenerImpl.getInstance());
 			}
-
-			// Set the logging and tell prefix
-			Common.setTellPrefix(SimpleSettings.PLUGIN_PREFIX);
 
 		} catch (final Throwable t) {
 			this.displayError(t);
@@ -844,12 +610,6 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 					Common.error(t, "Error saving region " + region.getName() + "...");
 				}
 
-		try {
-			Platform.closeAdventurePlatform();
-		} catch (final Throwable t) {
-			// Ignore
-		}
-
 		Objects.requireNonNull(instance, "Instance of " + this.getDataFolder().getName() + " already nulled!");
 		instance = null;
 	}
@@ -912,8 +672,6 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 			AutoRegisterScanner.reloadSettings();
 
 			this.onPluginReload();
-
-			Common.setTellPrefix(SimpleSettings.PLUGIN_PREFIX);
 
 			Lang.reloadLang();
 
@@ -1212,19 +970,6 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 	// ----------------------------------------------------------------------------------------
 	// Overriding parent methods
 	// ----------------------------------------------------------------------------------------
-
-	/**
-	 * Return the adventure platform
-	 *
-	 * @return
-	 */
-	@Override
-	public final Object getAdventure() {
-		if (this.adventure == null)
-			this.adventure = BukkitAudiences.create(instance);
-
-		return this.adventure;
-	}
 
 	/**
 	 * Return the command specified in plugin.yml

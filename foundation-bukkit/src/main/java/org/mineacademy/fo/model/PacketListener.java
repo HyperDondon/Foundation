@@ -17,7 +17,6 @@ import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.exception.EventHandledException;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.plugin.SimplePlugin;
-import org.mineacademy.fo.remain.Remain;
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.ListenerPriority;
@@ -36,7 +35,7 @@ import com.google.gson.Gson;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.chat.ComponentSerializer;
@@ -161,13 +160,14 @@ public abstract class PacketListener {
 		int count = 0;
 
 		for (final String hoverText : hoverTexts) {
+			final String colorized = SimpleComponent.fromMini(hoverText).toLegacy();
 			WrappedGameProfile profile;
 
 			try {
-				profile = new WrappedGameProfile(UUID.randomUUID(), Common.colorizeLegacy(hoverText));
+				profile = new WrappedGameProfile(UUID.randomUUID(), colorized);
 
 			} catch (final Throwable t) {
-				profile = new WrappedGameProfile(String.valueOf(count++), Common.colorizeLegacy(hoverText));
+				profile = new WrappedGameProfile(String.valueOf(count++), colorized);
 			}
 
 			profiles.add(profile);
@@ -312,9 +312,9 @@ public abstract class PacketListener {
 					}
 
 					if (this.jsonMessage != null) {
-						final Component adventureComp = Remain.convertJsonToAdventure(this.jsonMessage);
+						final SimpleComponent adventureComp = SimpleComponent.fromJson(this.jsonMessage);
 
-						return Remain.convertAdventureToLegacy(adventureComp);
+						return adventureComp.toLegacy();
 					}
 
 					try {
@@ -401,9 +401,9 @@ public abstract class PacketListener {
 
 					// Catch errors from other plugins and silence them
 					try {
-						final Component adventureComp = Remain.convertJsonToAdventure(this.jsonMessage);
+						final SimpleComponent adventureComp = SimpleComponent.fromJson(this.jsonMessage);
 
-						legacyText = Remain.convertAdventureToLegacy(adventureComp);
+						legacyText = adventureComp.toLegacy();
 
 					} catch (final Throwable t) {
 						return "";
@@ -440,7 +440,7 @@ public abstract class PacketListener {
 			final PacketContainer packet = event.getPacket();
 
 			if (!this.editJson())
-				this.jsonMessage = Remain.convertAdventureToJson(Remain.convertLegacyToAdventure(message));
+				this.jsonMessage = GsonComponentSerializer.gson().serialize(SimpleComponent.fromAndCharacter(message).toAdventure());
 
 			if (this.systemChat) {
 

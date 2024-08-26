@@ -1,9 +1,9 @@
 package org.mineacademy.fo.model;
 
 import org.mineacademy.fo.CommonCore;
+import org.mineacademy.fo.platform.FoundationPlayer;
 
 import lombok.NonNull;
-import net.kyori.adventure.audience.Audience;
 
 /**
  * Represents a placeholder expansion used for variables that need
@@ -17,7 +17,7 @@ public abstract class SimpleExpansion {
 	 * Indicates there is no replacement and the placeholder should be
 	 * printed out explicitly as-is to the console/game chat.
 	 */
-	protected static final String NO_REPLACE = null;
+	protected static final SimpleComponent NO_REPLACE = null;
 
 	/**
 	 * The current arguments changed each time the expansion is called,
@@ -29,27 +29,27 @@ public abstract class SimpleExpansion {
 	/**
 	 * Return the value of the placeholder such as arena_name
 	 *
-	 * @param audience
+	 * @param sender
 	 * @param params
 	 *
 	 * @return the value or null if not valid
 	 */
-	public final String replacePlaceholders(Audience audience, String params) {
+	public final SimpleComponent replacePlaceholders(FoundationPlayer sender, String params) {
 		this.args = params.split("\\_");
 
-		return this.onReplace(audience, params);
+		return this.onReplace(sender, params);
 	}
 
 	/**
 	 * Return what variable we should replace for the given audience and
 	 * identifier.
 	 *
-	 * @param audience
+	 * @param sender
 	 * @param identifier everything after your plugin name such as if user types {corearena_player_health},
 	 * 		  we return only "player_health". You can also use {@link #args} here.
 	 * @return
 	 */
-	protected abstract String onReplace(@NonNull Audience audience, String identifier);
+	protected abstract SimpleComponent onReplace(@NonNull FoundationPlayer sender, String identifier);
 
 	/**
 	 * Automatically joins the {@link #args} from the given index

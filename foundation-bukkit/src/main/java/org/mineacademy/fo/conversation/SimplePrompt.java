@@ -15,7 +15,6 @@ import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.menu.Menu;
 import org.mineacademy.fo.model.Variables;
 import org.mineacademy.fo.platform.Platform;
-import org.mineacademy.fo.remain.Remain;
 import org.mineacademy.fo.settings.SimpleLocalization;
 
 /**
@@ -82,15 +81,7 @@ public abstract class SimplePrompt extends ValidatingPrompt {
 	 */
 	@Override
 	public final String getPromptText(final ConversationContext context) {
-		String prompt = this.getPrompt(context);
-		final String promptColorless = Common.removeColors(prompt);
-
-		if (Messenger.ENABLED
-				&& (this.getCustomPrefix() == null || !promptColorless.contains(Common.removeColors(this.getCustomPrefix())))
-				&& !promptColorless.contains(Remain.convertAdventureToPlain(Messenger.getSuccessPrefix())))
-			prompt = Messenger.getQuestionPrefix() + prompt;
-
-		return Variables.replace(prompt, Platform.toAudience(this.getPlayer(context)));
+		return Variables.replace(this.getPrompt(context), Platform.toPlayer(this.getPlayer(context)));
 	}
 
 	/**
@@ -162,21 +153,8 @@ public abstract class SimplePrompt extends ValidatingPrompt {
 	 * @param conversable
 	 * @param message
 	 */
-	protected final void tell(final Conversable conversable, final String message) {
-		if (this.getCustomPrefix() != null)
-			Common.tellNoPrefix(conversable, this.getCustomPrefix() + message);
-		else
-			Common.tell(conversable, message);
-	}
-
-	/**
-	 * Sends the message to the player
-	 *
-	 * @param conversable
-	 * @param message
-	 */
-	protected final void tellNoPrefix(final Conversable conversable, final String message) {
-		Common.tellNoPrefix(conversable, message);
+	protected final void tell(final Conversable conversable, String message) {
+		Platform.toPlayer(conversable).sendMessage(this.getCustomPrefix() != null ? this.getCustomPrefix() + message : message);
 	}
 
 	/**
@@ -187,21 +165,7 @@ public abstract class SimplePrompt extends ValidatingPrompt {
 	 * @param message
 	 */
 	protected final void tellLater(final int delayTicks, final Conversable conversable, final String message) {
-		if (this.getCustomPrefix() != null)
-			Common.tellLaterNoPrefix(delayTicks, conversable, this.getCustomPrefix() + message);
-		else
-			Common.tellLater(delayTicks, conversable, message);
-	}
-
-	/**
-	 * Sends the message to the player later
-	 *
-	 * @param delayTicks
-	 * @param conversable
-	 * @param message
-	 */
-	protected final void tellLaterNoPrefix(final int delayTicks, final Conversable conversable, final String message) {
-		Common.tellLaterNoPrefix(delayTicks, conversable, message);
+		Common.tellLater(delayTicks, Platform.toPlayer(conversable), this.getCustomPrefix() != null ? this.getCustomPrefix() + message : message);
 	}
 
 	/**
@@ -226,13 +190,8 @@ public abstract class SimplePrompt extends ValidatingPrompt {
 			else {
 				final String failPrompt = this.getFailedValidationText(context, input);
 
-				if (failPrompt != null) {
-					final String failPromptColorless = Common.removeColors(failPrompt);
-					final String prefixColorless = Remain.convertAdventureToPlain(Messenger.getErrorPrefix());
-
-					this.tellLaterNoPrefix(0, context.getForWhom(),
-							Variables.replace((Messenger.ENABLED && !failPromptColorless.contains(prefixColorless) ? Messenger.getErrorPrefix() : "") + "&c" + failPrompt, Platform.toAudience(this.getPlayer(context))));
-				}
+				if (failPrompt != null)
+					this.tellLater(0, context.getForWhom(), Variables.replace("&c" + failPrompt, Platform.toPlayer(this.getPlayer(context))));
 
 				// Redisplay this prompt to the user to re-collect input
 				return this;
@@ -291,7 +250,7 @@ public abstract class SimplePrompt extends ValidatingPrompt {
 					if (Messenger.ENABLED)
 						Messenger.warn(player, message);
 					else
-						Common.tell(player, message);
+						Platform.toPlayer(player).sendMessage(message);
 			}
 		};
 

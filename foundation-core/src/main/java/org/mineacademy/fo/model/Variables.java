@@ -12,16 +12,14 @@ import org.mineacademy.fo.MessengerCore;
 import org.mineacademy.fo.TimeUtil;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.collection.StrictList;
+import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
-import org.mineacademy.fo.remain.RemainCore;
 import org.mineacademy.fo.settings.SimpleLocalization;
 import org.mineacademy.fo.settings.SimpleSettings;
 
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
-import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.text.Component;
 
 /**
  * A simple engine that replaces variables in a message.
@@ -85,54 +83,54 @@ public final class Variables {
 	 * Collects variables for the specified audience
 	 */
 	public interface Collector {
-		void addVariables(String variable, Audience audience, Map<String, Object> replacements);
+		void addVariables(String variable, FoundationPlayer audience, Map<String, Object> replacements);
 	}
 
 	// ------------------------------------------------------------------------------------------------------------
 	// Replacing
 	// ------------------------------------------------------------------------------------------------------------
 
-	public static List<String> replaceArray(List<String> list, Audience audience, Object... replacements) {
+	public static List<String> replaceArray(List<String> list, FoundationPlayer sender, Object... replacements) {
 		String joined = String.join("%FLPV%", list);
 
-		joined = replace(joined, audience, CommonCore.newHashMap(replacements));
+		joined = replace(joined, sender, CommonCore.newHashMap(replacements));
 
 		return Arrays.asList(joined.split("%FLPV%"));
 	}
 
-	public static String replace(String message, Audience audience) {
-		return replace(message, audience, new HashMap<>());
+	public static String replace(String message, FoundationPlayer sender) {
+		return replace(message, sender, new HashMap<>());
 	}
 
-	public static String replace(String message, Audience audience, Map<String, Object> replacements) {
+	public static String replace(String message, FoundationPlayer sender, Map<String, Object> replacements) {
 		final Matcher matcher = BRACKET_VARIABLE_PATTERN.matcher(message);
 
 		while (matcher.find()) {
 			final String variable = matcher.group();
-			final String value = replaceVariable(variable, audience, replacements);
+			final SimpleComponent value = replaceVariable(variable, sender, replacements);
 
 			if (value != null)
-				message = message.replace(variable, CommonCore.colorizeLegacy(value));
+				message = message.replace(variable, value.toLegacy());
 		}
 
 		return message;
 	}
 
-	public static Component replace(Component message, Audience audience) {
-		return replace(message, audience, new HashMap<>());
+	public static SimpleComponent replace(SimpleComponent message, FoundationPlayer sender) {
+		return replace(message, sender, new HashMap<>());
 	}
 
-	public static Component replace(Component message, Audience audience, Map<String, Object> replacements) {
-		return message.replaceText(b -> b.match(BRACKET_VARIABLE_PATTERN).replacement((result, input) -> {
+	public static SimpleComponent replace(SimpleComponent message, FoundationPlayer sender, Map<String, Object> replacements) {
+		return message.replaceMatch(BRACKET_VARIABLE_PATTERN, (result, input) -> {
 			final String variable = result.group();
-			final String value = replaceVariable(variable, audience, replacements);
+			final SimpleComponent value = replaceVariable(variable, sender, replacements);
 
-			return value == null ? Component.empty() : CommonCore.colorize(value);
-		}));
+			return value == null ? SimpleComponent.empty() : message;
+		});
 	}
 
 	// TODO readd cache
-	private static String replaceVariable(String variable, Audience audience, @NonNull Map<String, Object> replacements) {
+	private static SimpleComponent replaceVariable(String variable, FoundationPlayer audience, @NonNull Map<String, Object> replacements) {
 		boolean frontSpace = false;
 		boolean backSpace = false;
 
@@ -151,10 +149,20 @@ public final class Variables {
 		// Replace custom expansions
 		if (audience != null && !Platform.isPlaceholderAPIHooked()) // TODO test if it works with PAPI still
 			for (final SimpleExpansion expansion : expansions) {
-				final String value = expansion.replacePlaceholders(audience, variable);
+				SimpleComponent value = expansion.replacePlaceholders(audience, variable);
 
-				if (value != null)
-					return value.isEmpty() ? "" : (frontSpace ? " " : "") + value + (backSpace ? " " : "");
+				if (value != null) {
+					if (value.isEmpty())
+						return SimpleComponent.empty();
+
+					if (frontSpace)
+						value = SimpleComponent.fromPlain(" ").append(value);
+
+					if (backSpace)
+						value = value.append(SimpleComponent.fromPlain(" "));
+
+					return value;
+				}
 			}
 
 		replacements.put("prefix", SimpleSettings.PLUGIN_PREFIX);
@@ -177,8 +185,8 @@ public final class Variables {
 		replacements.put("announce", MessengerCore.getAnnouncePrefix());
 		replacements.put("announce_prefix", MessengerCore.getAnnouncePrefix());
 		replacements.put("prefix_announce", MessengerCore.getAnnouncePrefix());
-		replacements.put("server", RemainCore.getServerName());
-		replacements.put("server_name", RemainCore.getServerName());
+		replacements.put("server", Platform.hasServerName() ? Platform.getServerName() : "");
+		replacements.put("server_name", Platform.hasServerName() ? Platform.getServerName() : "");
 		replacements.put("date", TimeUtil.getFormattedDate());
 		replacements.put("date_short", TimeUtil.getFormattedDateShort());
 		replacements.put("date_month", TimeUtil.getFormattedDateMonth());
@@ -186,20 +194,15 @@ public final class Variables {
 		replacements.put("chat_line_smooth", CommonCore.chatLineSmooth());
 		replacements.put("label", Platform.getPlugin().getDefaultCommandGroup() != null ? Platform.getPlugin().getDefaultCommandGroup().getLabel() : SimpleLocalization.NONE);
 
-		replacements.put("sender_is_discord", Platform.isDiscord(audience) ? "true" : "false");
-		replacements.put("sender_is_console", Platform.isConsole(audience) ? "true" : "false");
+		replacements.put("sender_is_discord", audience.isDiscord() ? "true" : "false");
+		replacements.put("sender_is_console", audience.isConsole() ? "true" : "false");
 
 		// Replace JavaScript variables
 		if (replaceScript) {
 			final Variable javascriptKey = Variable.findVariable(variable, Variable.Type.FORMAT);
 
 			if (javascriptKey != null) {
-				final String value = javascriptKey.buildPlain(audience, replacements);
-
-				// And we remove the white prefix that is by default added in every component
-				// TODO Test if still needed
-				//if (value.startsWith(CompChatColor.COLOR_CHAR + "f" + CompChatColor.COLOR_CHAR + "f"))
-				//	value = value.substring(4);
+				final SimpleComponent value = javascriptKey.build(audience, replacements);
 
 				replacements.put(variable, value);
 			}
@@ -211,13 +214,32 @@ public final class Variables {
 		// Finally, do replace
 		for (final Map.Entry<String, Object> entry : replacements.entrySet()) {
 			final String key = entry.getKey();
-			final String value = entry.getValue() != null ? entry.getValue().toString() : "";
 
-			ValidCore.checkBoolean(!key.startsWith("{"), "Variable key cannot start with {, found: " + key);
-			ValidCore.checkBoolean(!key.endsWith("}"), "Variable key cannot end with }, found: " + key);
+			if (key.equals(variable)) {
+				final Object valueRaw = entry.getValue();
 
-			if (key.equals(variable))
-				return value.isEmpty() ? "" : (frontSpace ? " " : "") + value + (backSpace ? " " : "");
+				ValidCore.checkBoolean(!key.startsWith("{"), "Variable key cannot start with {, found: " + key);
+				ValidCore.checkBoolean(!key.endsWith("}"), "Variable key cannot end with }, found: " + key);
+
+				if (valueRaw == null)
+					return SimpleComponent.empty();
+
+				SimpleComponent value = null;
+
+				if (valueRaw instanceof SimpleComponent)
+					value = (SimpleComponent) valueRaw;
+
+				else
+					value = SimpleComponent.fromMini(valueRaw.toString());
+
+				if (frontSpace)
+					value = SimpleComponent.fromPlain(" ").append(value);
+
+				if (backSpace)
+					value = value.append(SimpleComponent.fromPlain(" "));
+
+				return value;
+			}
 		}
 
 		return null;

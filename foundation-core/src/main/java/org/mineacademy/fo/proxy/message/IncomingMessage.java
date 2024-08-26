@@ -8,13 +8,12 @@ import java.util.UUID;
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.ReflectionUtilCore;
 import org.mineacademy.fo.collection.SerializedMap;
-import org.mineacademy.fo.model.SimpleComponentCore;
+import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.proxy.ProxyListener;
 import org.mineacademy.fo.proxy.ProxyMessage;
 import org.mineacademy.fo.remain.RemainCore;
 
 import lombok.Getter;
-import net.kyori.adventure.text.Component;
 
 /**
  * Represents an incoming plugin message.
@@ -93,25 +92,14 @@ public final class IncomingMessage extends Message {
 	}
 
 	/**
-	 * Read a component from the string data if json
-	 *
-	 * @return
-	 */
-	public Component readComponent() {
-		this.moveHead(Component.class);
-
-		return RemainCore.convertJsonToAdventure(this.readCompressedString());
-	}
-
-	/**
 	 * Read a simple component from the string data if json
 	 *
 	 * @return
 	 */
-	public SimpleComponentCore readSimpleComponent() {
-		this.moveHead(SimpleComponentCore.class);
+	public SimpleComponent readSimpleComponent() {
+		this.moveHead(SimpleComponent.class);
 
-		return SimpleComponentCore.fromJson(this.readCompressedString());
+		return SimpleComponent.deserialize(SerializedMap.fromJson(this.readCompressedString()));
 	}
 
 	/**

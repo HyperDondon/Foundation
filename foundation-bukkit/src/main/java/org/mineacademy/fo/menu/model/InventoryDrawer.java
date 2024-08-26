@@ -5,7 +5,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-import org.mineacademy.fo.Common;
+import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.remain.CompMaterial;
 
 import lombok.Getter;
@@ -153,7 +153,7 @@ public final class InventoryDrawer {
 	public Inventory build(InventoryHolder holder) {
 
 		// Automatically append the black color in the menu, can be overriden by colors
-		final Inventory inv = Bukkit.createInventory(holder, this.size, Common.colorizeLegacy("&0" + (this.title.length() > 30 ? this.title.substring(0, 30) : this.title)));
+		final Inventory inv = Bukkit.createInventory(holder, this.size, SimpleComponent.fromAndCharacter("&0" + (this.title.length() > 30 ? this.title.substring(0, 30) : this.title)).toLegacy());
 
 		inv.setContents(this.content);
 

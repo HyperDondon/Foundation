@@ -11,6 +11,7 @@ import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.debug.Debugger;
 import org.mineacademy.fo.exception.FoScriptException;
+import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.settings.ConfigItems;
 import org.mineacademy.fo.settings.YamlConfig;
@@ -18,7 +19,6 @@ import org.mineacademy.fo.settings.YamlConfig;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import net.kyori.adventure.audience.Audience;
 
 public final class Variable extends YamlConfig {
 
@@ -215,7 +215,7 @@ public final class Variable extends YamlConfig {
 	 * @param replacements
 	 * @return
 	 */
-	public String getValue(Audience sender, Map<String, Object> replacements) {
+	public String getValue(FoundationPlayer sender, Map<String, Object> replacements) {
 
 		// Replace variables in script
 		final String script;
@@ -271,73 +271,20 @@ public final class Variable extends YamlConfig {
 	}
 
 	/**
-	 * Builds this variable without additional components
-	 *
-	 * @param sender
-	 * @param replacements
-	 * @return
-	 */
-	public String buildPlain(Audience sender, Map<String, Object> replacements) {
-		if (this.senderPermission != null && !this.senderPermission.isEmpty() && !Platform.hasPermission(sender, this.senderPermission))
-			return "";
-
-		if (this.senderCondition != null && !this.senderCondition.isEmpty()) {
-			final boolean replacingScript = Variables.isReplaceScript();
-
-			try {
-				Variables.setReplaceScript(false);
-
-				final Object result = JavaScriptExecutor.run(Variables.replace(this.senderCondition, sender, replacements), sender);
-
-				if (result != null) {
-					ValidCore.checkBoolean(result instanceof Boolean, "Variable '" + this.getFileName() + "' option Condition must return boolean not " + (result == null ? "null" : result.getClass()));
-
-					if (!((boolean) result))
-						return "";
-				}
-
-			} catch (final FoScriptException ex) {
-				CommonCore.logFramed(
-						"Error executing Sender_Condition in a variable!",
-						"Variable: " + this.getFileName(),
-						"Sender condition: " + this.senderCondition,
-						"Sender: " + sender,
-						"Replacements: " + replacements,
-						"Error: " + ex.getMessage(),
-						"",
-						"This is likely NOT a plugin bug,",
-						"check your JavaScript code in",
-						this.getFileName() + " in the 'Sender_Condition' key",
-						"before reporting it to us.");
-
-				throw ex;
-
-			} finally {
-				Variables.setReplaceScript(replacingScript);
-			}
-		}
-
-		final String value = this.getValue(sender, replacements);
-
-		return value == null || value.isEmpty() || "null".equals(value) ? "" : value;
-	}
-
-	/**
 	 * Create the variable and append it to the existing component as if the player initiated it
 	 *
 	 * @param sender
-	 * @param existingComponent
 	 * @param replacements
 	 * @return
 	 */
-	public SimpleComponentCore build(Audience sender, SimpleComponentCore existingComponent, Map<String, Object> replacements) {
+	public SimpleComponent build(FoundationPlayer sender, Map<String, Object> replacements) {
 		final boolean replacingScript = Variables.isReplaceScript();
 
 		try {
 			Variables.setReplaceScript(false);
 
-			if (this.senderPermission != null && !this.senderPermission.isEmpty() && !Platform.hasPermission(sender, this.senderPermission))
-				return SimpleComponentCore.of("");
+			if (this.senderPermission != null && !this.senderPermission.isEmpty() && !sender.hasPermission(this.senderPermission))
+				return SimpleComponent.empty();
 
 			if (this.senderCondition != null && !this.senderCondition.isEmpty()) {
 				try {
@@ -347,7 +294,7 @@ public final class Variable extends YamlConfig {
 						ValidCore.checkBoolean(result instanceof Boolean, "Variable '" + this.getFileName() + "' option Condition must return boolean not " + (result == null ? "null" : result.getClass()));
 
 						if (!((boolean) result))
-							return SimpleComponentCore.of("");
+							return SimpleComponent.empty();
 					}
 
 				} catch (final FoScriptException ex) {
@@ -371,9 +318,9 @@ public final class Variable extends YamlConfig {
 			final String value = this.getValue(sender, replacements);
 
 			if (value == null || value.isEmpty() || "null".equals(value))
-				return SimpleComponentCore.of("");
+				return SimpleComponent.empty();
 
-			final SimpleComponentCore component = (existingComponent == null ? SimpleComponentCore.of(value) : existingComponent.append(value))
+			final SimpleComponent component = SimpleComponent.fromMini(value)
 					.viewPermission(this.receiverPermission)
 					.viewCondition(this.receiverCondition);
 

@@ -5,12 +5,12 @@ import javax.annotation.Nullable;
 import org.bukkit.entity.Player;
 import org.mineacademy.fo.debug.Debugger;
 import org.mineacademy.fo.exception.FoException;
+import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.plugin.SimplePlugin;
 import org.mineacademy.fo.proxy.ProxyListener;
 import org.mineacademy.fo.proxy.ProxyMessage;
 import org.mineacademy.fo.proxy.message.OutgoingMessage;
 import org.mineacademy.fo.remain.Remain;
-import org.mineacademy.fo.remain.RemainCore;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
@@ -72,7 +72,7 @@ public final class ProxyUtil {
 	 * OBS! The data written always start with:
 	 *
 	 * 1. The recipient UUID
-	 * 2. {@link RemainCore#getServerName()}
+	 * 2. The server name gotten from Remain's class (please call {@link Platform#setServerName(String)} first)
 	 * 3. The action parameter
 	 *
 	 * We find a random player through which we will send the message. If the server is
@@ -96,7 +96,7 @@ public final class ProxyUtil {
 	 *
 	 * 1. The channel name (String)
 	 * 2. The recipient UUID (String)
-	 * 3. {@link RemainCore#getServerName()} (String)
+	 * 3. The server name gotten from Remain's class (please call {@link Platform#setServerName(String)} first)
 	 * 4. The action parameter (enum to String)
 	 *
 	 * @param <T>

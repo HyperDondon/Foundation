@@ -65,7 +65,7 @@ public final class DebugCommand extends SimpleSubCommandCore {
 		// Zip the folder
 		this.zipAndRemoveFolder(debugFolder);
 
-		this.tell(SimpleLocalization.Commands.DEBUG_SUCCESS.replaceText(b -> b.matchLiteral("{amount}").replacement(String.valueOf(files.size()))));
+		this.tell(SimpleLocalization.Commands.DEBUG_SUCCESS.replaceBracket("amount", String.valueOf(files.size())));
 	}
 
 	/*
@@ -121,7 +121,7 @@ public final class DebugCommand extends SimpleSubCommandCore {
 			} catch (final Exception ex) {
 				ex.printStackTrace();
 
-				this.returnTell(SimpleLocalization.Commands.DEBUG_COPY_FAIL.replaceText(b -> b.matchLiteral("{file}").replacement(file.getName())));
+				this.returnTell(SimpleLocalization.Commands.DEBUG_COPY_FAIL.replaceBracket("file", file.getName()));
 			}
 	}
 

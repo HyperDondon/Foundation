@@ -1,7 +1,8 @@
 package org.mineacademy.fo.exception;
 
+import org.mineacademy.fo.model.SimpleComponent;
+
 import lombok.Getter;
-import net.kyori.adventure.text.Component;
 
 /**
  * Represents a silent exception thrown then handling events,
@@ -38,7 +39,7 @@ public final class EventHandledException extends CommandException {
 	 * @param cancelled
 	 * @param message
 	 */
-	public EventHandledException(boolean cancelled, Component message) {
+	public EventHandledException(boolean cancelled, SimpleComponent message) {
 		super(message);
 
 		this.cancelled = cancelled;

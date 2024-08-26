@@ -10,24 +10,21 @@ import java.util.List;
 
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.MathUtilCore;
-import org.mineacademy.fo.MessengerCore;
 import org.mineacademy.fo.MinecraftVersion;
 import org.mineacademy.fo.MinecraftVersion.V;
 import org.mineacademy.fo.ReflectionUtilCore;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.collection.StrictList;
 import org.mineacademy.fo.model.ChatPaginator;
-import org.mineacademy.fo.model.SimpleComponentCore;
+import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.Variables;
+import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.remain.CompChatColor;
-import org.mineacademy.fo.remain.RemainCore;
 import org.mineacademy.fo.settings.SimpleLocalization;
 import org.mineacademy.fo.settings.SimpleSettings;
 
 import lombok.Getter;
-import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.text.Component;
 
 /**
  * A command group contains a set of different subcommands
@@ -63,7 +60,7 @@ public abstract class SimpleCommandGroup {
 	 * compiling info messages such as in {@link #getNoParamsHeader()}
 	 */
 	@Getter
-	protected Audience sender;
+	protected FoundationPlayer sender;
 
 	/**
 	 * Create a new simple command group using {@link SimpleSettings#MAIN_COMMAND_ALIASES}
@@ -249,38 +246,30 @@ public abstract class SimpleCommandGroup {
 	 *               may be null
 	 * @return
 	 */
-	protected Component getNoParamsHeader() {
+	protected List<SimpleComponent> getNoParamsHeader() {
 		final int foundedYear = Platform.getPlugin().getFoundedYear();
 		final int yearNow = Calendar.getInstance().get(Calendar.YEAR);
 
-		final List<String> messages = new ArrayList<>();
+		final List<SimpleComponent> messages = new ArrayList<>();
 
-		messages.add("&8" + CommonCore.chatLineSmooth());
-		messages.add(this.getHeaderPrefix() + "  " + Platform.getPlugin().getName() + this.getTrademark() + " &7" + Platform.getPlugin().getVersion());
-		messages.add(" ");
+		messages.add(SimpleComponent.fromAndCharacter("&8" + CommonCore.chatLineSmooth()));
+		messages.add(SimpleComponent.fromMini(this.getHeaderPrefix() + "  " + Platform.getPlugin().getName() + "&r" + this.getTrademark() + " &7" + Platform.getPlugin().getVersion()));
+		messages.add(SimpleComponent.empty());
 
 		final String authors = Platform.getPlugin().getAuthors();
 
 		if (!authors.isEmpty())
-			messages.add("   &7" + SimpleLocalization.Commands.LABEL_AUTHORS + " &f" + authors + (foundedYear != -1 ? " &7\u00A9 " + foundedYear + (yearNow != foundedYear ? " - " + yearNow : "") : ""));
+			messages.add(SimpleComponent.fromAndCharacter("   &7").append(SimpleLocalization.Commands.LABEL_AUTHORS).appendMini(" &f" + authors + (foundedYear != -1 ? " &7\u00A9 " + foundedYear + (yearNow != foundedYear ? " - " + yearNow : "") : "")));
 
 		final String credits = this.getCredits();
 
 		if (credits != null && !credits.isEmpty())
-			messages.add("   " + credits);
+			messages.add(SimpleComponent.fromMini("   " + credits));
 
-		messages.add("&8" + CommonCore.chatLineSmooth());
+		messages.add(SimpleComponent.fromAndCharacter("&8" + CommonCore.chatLineSmooth()));
 
-		Component component = Component.empty();
-
-		for (int i = 0; i < messages.size(); i++) {
-			component = component.append(CommonCore.colorize(messages.get(i)));
-
-			if (i != messages.size() - 1)
-				component = component.append(Component.newline());
-		}
-
-		return component;
+		// join with new line
+		return messages;
 	}
 
 	/**
@@ -295,7 +284,7 @@ public abstract class SimpleCommandGroup {
 
 	// Return the TM symbol in case we have it for kangarko's plugins
 	private String getTrademark() {
-		return Platform.getPlugin().getAuthors().contains("kangarko") ? this.getHeaderPrefix() + "&8\u2122" : "";
+		return Platform.getPlugin().getAuthors().contains("kangarko") ? "&8\u2122" : "";
 	}
 
 	/**
@@ -329,15 +318,15 @@ public abstract class SimpleCommandGroup {
 	 *
 	 * @return
 	 */
-	protected String[] getHelpHeader() {
-		return new String[] {
-				"&8",
-				"&8" + CommonCore.chatLineSmooth(),
-				this.getHeaderPrefix() + "  " + Platform.getPlugin().getName() + this.getTrademark() + " &7" + Platform.getPlugin().getVersion(),
-				" ",
-				"&2  [] &f= " + SimpleLocalization.Commands.LABEL_OPTIONAL_ARGS,
-				this.getTheme() + "  <> &f= " + SimpleLocalization.Commands.LABEL_REQUIRED_ARGS,
-				" "
+	protected SimpleComponent[] getHelpHeader() {
+		return new SimpleComponent[] {
+				SimpleComponent.empty(),
+				SimpleComponent.fromAndCharacter("&8" + CommonCore.chatLineSmooth()),
+				SimpleComponent.fromMini(this.getHeaderPrefix() + "  " + Platform.getPlugin().getName() + "&r" + this.getTrademark() + " &7" + Platform.getPlugin().getVersion()),
+				SimpleComponent.empty(),
+				SimpleComponent.fromAndCharacter("&2  [] &f= ").append(SimpleLocalization.Commands.LABEL_OPTIONAL_ARGS),
+				SimpleComponent.fromAndCharacter(this.getTheme() + "  <> &f= ").append(SimpleLocalization.Commands.LABEL_REQUIRED_ARGS),
+				SimpleComponent.empty()
 		};
 	}
 
@@ -345,7 +334,7 @@ public abstract class SimpleCommandGroup {
 	 * Return the subcommand description when listing all commands using the "help" or "?" subcommand
 	 * @return
 	 */
-	protected Component getSubcommandDescription() {
+	protected SimpleComponent getSubcommandDescription() {
 		return SimpleLocalization.Commands.LABEL_SUBCOMMAND_DESCRIPTION;
 	}
 
@@ -416,7 +405,8 @@ public abstract class SimpleCommandGroup {
 				if (SimpleCommandGroup.this.sendHelpIfNoArgs())
 					this.tellSubcommandsHelp();
 				else
-					this.tell(SimpleCommandGroup.this.getNoParamsHeader());
+					for (final SimpleComponent component : SimpleCommandGroup.this.getNoParamsHeader())
+						this.tell(component);
 
 				return;
 			}
@@ -456,65 +446,63 @@ public abstract class SimpleCommandGroup {
 			// Building help can be heavy so do it off of the main thread
 			Platform.runTaskAsync(0, () -> {
 				if (SimpleCommandGroup.this.subcommands.isEmpty()) {
-					if (MessengerCore.ENABLED)
-						this.tellError(SimpleLocalization.Commands.HEADER_NO_SUBCOMMANDS);
-					else
-						CommonCore.tell(this.sender, SimpleLocalization.Commands.HEADER_NO_SUBCOMMANDS);
+					this.tellError(SimpleLocalization.Commands.HEADER_NO_SUBCOMMANDS);
 
 					return;
 				}
 
-				final List<SimpleComponentCore> lines = new ArrayList<>();
+				final List<SimpleComponent> lines = new ArrayList<>();
 
 				final boolean atLeast17 = MinecraftVersion.atLeast(V.v1_7);
 				final boolean atLeast13 = MinecraftVersion.atLeast(V.v1_13);
 
-				for (final SimpleSubCommandCore subcommand : SimpleCommandGroup.this.subcommands)
+				for (final SimpleSubCommandCore subcommand : SimpleCommandGroup.this.subcommands) {
+					System.out.print("Subcommand: " + subcommand.getSublabel() + ", can show in help ? " + subcommand.showInHelp() + ", has permission '" + subcommand.getPermission() + "'? " + this.hasPerm(subcommand.getPermission()));
+
 					if (subcommand.showInHelp() && this.hasPerm(subcommand.getPermission())) {
 
 						// Simulate the sender to enable permission checks in getMultilineHelp for ex.
 						subcommand.sender = this.sender;
 
-						final String usage = this.colorizeUsage(subcommand.getUsage());
-						final String desc = RemainCore.convertAdventureToLegacy(subcommand.getDescription() == null ? Component.empty() : subcommand.getDescription());
-						final String plainMessage = RemainCore.convertAdventureToLegacy(Variables.replace(SimpleCommandGroup.this.getSubcommandDescription(), null, CommonCore.newHashMap(
+						final SimpleComponent usage = this.colorizeUsage(subcommand.getUsage());
+						final SimpleComponent desc = subcommand.getDescription() == null ? SimpleComponent.empty() : subcommand.getDescription();
+						final SimpleComponent plainMessage = Variables.replace(SimpleCommandGroup.this.getSubcommandDescription(), null, CommonCore.newHashMap(
 								"label", this.getLabel(),
 								"sublabel", (atLeast17 ? "&n" : "") + subcommand.getSublabel() + (atLeast17 ? "&r" : ""),
-								"usage", usage,
-								"description", !desc.isEmpty() && !atLeast17 ? desc : "",
-								"dash", !desc.isEmpty() && !atLeast17 ? "&e-" : "")));
-
-						final SimpleComponentCore line = SimpleComponentCore.of(plainMessage);
+								"usage", usage.toLegacy(),
+								"description", !desc.isEmpty() && !atLeast17 ? desc.toLegacy() : "",
+								"dash", !desc.isEmpty() && !atLeast17 ? "&e-" : ""));
 
 						if (!desc.isEmpty() && atLeast17) {
-							final String command = CommonCore.removeColors(plainMessage).substring(1);
-							final List<String> hover = new ArrayList<>();
+							final String command = plainMessage.toPlain().substring(1);
+							final List<SimpleComponent> hover = new ArrayList<>();
 
-							hover.add(RemainCore.convertAdventureToLegacy(SimpleLocalization.Commands.HELP_TOOLTIP_DESCRIPTION).replace("{description}", desc));
+							hover.add(SimpleLocalization.Commands.HELP_TOOLTIP_DESCRIPTION.replaceBracket("description", desc));
 
 							if (subcommand.getPermission() != null)
-								hover.add(RemainCore.convertAdventureToLegacy(SimpleLocalization.Commands.HELP_TOOLTIP_PERMISSION).replace("{permission}", subcommand.getPermission()));
+								hover.add(SimpleLocalization.Commands.HELP_TOOLTIP_PERMISSION.replaceBracket("permission", subcommand.getPermission()));
 
 							if (subcommand.getMultilineUsage() != null) {
-								hover.add(RemainCore.convertAdventureToLegacy(SimpleLocalization.Commands.HELP_TOOLTIP_USAGE));
+								hover.add(SimpleLocalization.Commands.HELP_TOOLTIP_USAGE);
 
-								hover.add("&f" + RemainCore.convertAdventureToLegacy(this.replacePlaceholders(RemainCore.convertLegacyToAdventure(this.colorizeUsage(subcommand.getMultilineUsage().replaceText(b -> b.matchLiteral("{sublabel}").replacement(subcommand.getSublabel())))))));
+								hover.add(SimpleComponent.fromAndCharacter("&f").append(this.replacePlaceholders(this.colorizeUsage(subcommand.getMultilineUsage().replaceBracket("sublabel", subcommand.getSublabel())))));
 
 							} else
-								hover.add(RemainCore.convertAdventureToLegacy(this.replacePlaceholders(CommonCore.colorize(SimpleLocalization.Commands.HELP_TOOLTIP_USAGE + (usage.isEmpty() ? command : usage)))));
+								hover.add(this.replacePlaceholders(SimpleLocalization.Commands.HELP_TOOLTIP_USAGE.append(usage.isEmpty() ? SimpleComponent.fromPlain(command) : usage)));
 
 							final List<String> hoverShortened = new ArrayList<>();
 
-							for (final String hoverLine : hover)
-								for (final String hoverLineSplit : CommonCore.split(hoverLine, atLeast13 ? 100 : 55))
+							for (final SimpleComponent hoverLine : hover)
+								for (final String hoverLineSplit : CommonCore.split(hoverLine.toLegacy(), atLeast13 ? 100 : 55))
 									hoverShortened.add(hoverLineSplit);
 
-							line.onHover(hoverShortened);
-							line.onClickSuggestCmd("/" + this.getLabel() + " " + subcommand.getSublabel());
+							plainMessage.onHover(hoverShortened);
+							plainMessage.onClickSuggestCmd("/" + this.getLabel() + " " + subcommand.getSublabel());
 						}
 
-						lines.add(line);
+						lines.add(plainMessage);
 					}
+				}
 
 				if (!lines.isEmpty()) {
 					final ChatPaginator pages = new ChatPaginator(MathUtilCore.range(0, lines.size(), SimpleCommandGroup.this.getCommandsPerPage()), CompChatColor.DARK_GRAY);
@@ -530,10 +518,8 @@ public abstract class SimpleCommandGroup {
 					// Send the component on the main thread
 					Platform.runTask(0, () -> pages.send(this.sender, page));
 
-				} else if (MessengerCore.ENABLED)
+				} else
 					this.tellError(SimpleLocalization.Commands.HEADER_NO_SUBCOMMANDS_PERMISSION);
-				else
-					CommonCore.tell(this.sender, SimpleLocalization.Commands.HEADER_NO_SUBCOMMANDS_PERMISSION);
 			});
 		}
 
@@ -543,14 +529,14 @@ public abstract class SimpleCommandGroup {
 		 * @param message
 		 * @return
 		 */
-		private String colorizeUsage(final Component message) {
-			return message == null ? ""
-					: RemainCore.convertAdventureToLegacy(message)
-							.replace("<", "&6<")
-							.replace(">", "&6>&f")
-							.replace("[", "&2[")
-							.replace("]", "&2]&f")
-							.replaceAll(" \\-([a-zA-Z])", " &3-$1");
+		private SimpleComponent colorizeUsage(final SimpleComponent message) {
+			return message == null ? SimpleComponent.empty()
+					: message
+							.replaceLiteral("<", "&6<")
+							.replaceLiteral(">", "&6>&f")
+							.replaceLiteral("[", "&2[")
+							.replaceLiteral("]", "&2]&f");
+			//.replaceAll(" \\-([a-zA-Z])", " &3-$1");
 		}
 
 		/**
@@ -593,7 +579,7 @@ public abstract class SimpleCommandGroup {
 		 * @param param
 		 * @return
 		 */
-		private List<String> tabCompleteSubcommands(final Audience sender, String param) {
+		private List<String> tabCompleteSubcommands(final FoundationPlayer sender, String param) {
 			param = param.toLowerCase();
 
 			final List<String> tab = new ArrayList<>();

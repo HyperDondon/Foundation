@@ -3,9 +3,7 @@ package org.mineacademy.fo.model;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.inventory.ClickType;
-import org.mineacademy.fo.Common;
 import org.mineacademy.fo.Messenger;
-import org.mineacademy.fo.MessengerCore;
 import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.exception.EventHandledException;
 
@@ -17,7 +15,6 @@ import net.citizensnpcs.api.event.NPCLeftClickEvent;
 import net.citizensnpcs.api.event.NPCRightClickEvent;
 import net.citizensnpcs.api.trait.Trait;
 import net.citizensnpcs.api.util.DataKey;
-import net.kyori.adventure.text.Component;
 
 /**
  * This is a trait that will be applied to a NPC using the /trait killboss command. Each NPC gets its own instance of this class.
@@ -113,10 +110,7 @@ public abstract class SimpleTrait extends Trait {
 
 		} catch (final EventHandledException ex) {
 			if (ex.getComponent() != null)
-				if (MessengerCore.ENABLED)
-					Messenger.error(player, ex.getComponent());
-				else
-					Common.tell(player, ex.getComponent());
+				Messenger.error(player, ex.getComponent());
 
 			if (ex.isCancelled())
 				event.setCancelled(true);
@@ -141,8 +135,8 @@ public abstract class SimpleTrait extends Trait {
 	 *
 	 * @param messages
 	 */
-	protected final void cancel(String... messages) {
-		throw new EventHandledException(true, Component.textOfChildren(Common.colorizeList(messages)));
+	protected final void cancel(String message) {
+		throw new EventHandledException(true, SimpleComponent.fromMini(message));
 	}
 
 	/**

@@ -23,14 +23,12 @@ import org.mineacademy.fo.MinecraftVersion.V;
 import org.mineacademy.fo.ReflectionUtilCore;
 import org.mineacademy.fo.model.ChatPaginator;
 import org.mineacademy.fo.model.HookManager;
-import org.mineacademy.fo.model.SimpleComponentCore;
+import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.SimpleScoreboard;
+import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.remain.CompMaterial;
 import org.mineacademy.fo.settings.SimpleLocalization;
-
-import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.text.Component;
 
 /**
  * Listens for some events we handle for you automatically
@@ -61,7 +59,7 @@ final class FoundationListener implements Listener {
 	public void onCommand(PlayerCommandPreprocessEvent event) {
 
 		final Player player = event.getPlayer();
-		final Audience audience = Platform.toAudience(player);
+		final FoundationPlayer sender = Platform.toPlayer(player);
 		final String message = event.getMessage();
 
 		if (!message.startsWith("/#flp"))
@@ -70,7 +68,7 @@ final class FoundationListener implements Listener {
 		final String[] args = message.split(" ");
 
 		if (args.length != 2) {
-			Common.tell(player, SimpleLocalization.Pages.NO_PAGE_NUMBER);
+			SimpleLocalization.Pages.NO_PAGE_NUMBER.send(sender);
 
 			event.setCancelled(true);
 			return;
@@ -95,39 +93,39 @@ final class FoundationListener implements Listener {
 			page = Integer.parseInt(numberRaw) - 1;
 
 		} catch (final NumberFormatException ex) {
-			Common.tell(player, SimpleLocalization.Pages.INVALID_PAGE.replace("{input}", numberRaw));
+			SimpleLocalization.Pages.INVALID_PAGE.replaceBracket("input", numberRaw).send(sender);
 
 			event.setCancelled(true);
 			return;
 		}
 
 		final ChatPaginator chatPages = (ChatPaginator) player.getMetadata(nbtPageTag).get(0).value();
-		final Map<Integer, List<? extends SimpleComponentCore>> pages = chatPages.getPages();
+		final Map<Integer, List<? extends SimpleComponent>> pages = chatPages.getPages();
 
 		// Remove empty lines
 		pages.entrySet().removeIf(entry -> entry.getValue().isEmpty());
 
 		if (pages.isEmpty() || !pages.containsKey(page)) {
-			final String playerMessage = pages.isEmpty() ? SimpleLocalization.Pages.NO_PAGES : SimpleLocalization.Pages.NO_PAGE;
+			final SimpleComponent playerMessage = pages.isEmpty() ? SimpleLocalization.Pages.NO_PAGES : SimpleLocalization.Pages.NO_PAGE;
 
 			if (Messenger.ENABLED)
 				Messenger.error(player, playerMessage);
 			else
-				Common.tell(player, playerMessage);
+				playerMessage.send(sender);
 
 			event.setCancelled(true);
 			return;
 		}
 
 		{ // Send the message body
-			for (final SimpleComponentCore component : chatPages.getHeader())
-				component.send(audience);
+			for (final SimpleComponent component : chatPages.getHeader())
+				component.send(sender);
 
-			final List<? extends SimpleComponentCore> messagesOnPage = pages.get(page);
+			final List<? extends SimpleComponent> messagesOnPage = pages.get(page);
 			int count = 1;
 
-			for (final SimpleComponentCore comp : messagesOnPage)
-				comp.replace("{count}", String.valueOf(page + count++)).send(audience);
+			for (final SimpleComponent comp : messagesOnPage)
+				comp.replaceBracket("count", String.valueOf(page + count++)).send(sender);
 
 			int whiteLines = chatPages.getLinesPerPage();
 
@@ -138,38 +136,38 @@ final class FoundationListener implements Listener {
 					whiteLines += 2;
 
 			for (int i = messagesOnPage.size(); i < whiteLines; i++)
-				SimpleComponentCore.of("&r").send(audience);
+				SimpleComponent.fromPlain(" ").send(sender);
 
-			for (final SimpleComponentCore component : chatPages.getFooter())
-				component.send(audience);
+			for (final SimpleComponent component : chatPages.getFooter())
+				component.send(sender);
 		}
 
 		// Fill in the pagination line
 		if (MinecraftVersion.atLeast(V.v1_7) && pages.size() > 1) {
-			Common.tellNoPrefix(audience, Component.text(" "));
+			player.sendMessage(" ");
 
 			final int pagesDigits = (int) (Math.log10(pages.size()) + 1);
 			final int multiply = 23 - (int) MathUtilCore.ceiling(pagesDigits);
 
-			final SimpleComponentCore pagination = SimpleComponentCore.of(chatPages.getThemeColor() + "&m" + Common.duplicate("-", multiply) + "&r");
+			final SimpleComponent pagination = SimpleComponent.fromMini(chatPages.getThemeColor() + "&m" + Common.duplicate("-", multiply) + "&r");
 
 			if (page == 0)
-				pagination.append(" &7« ");
+				pagination.appendMini(" &7« ");
 			else
-				pagination.append(" &6« ").onHover(SimpleLocalization.Pages.GO_TO_PAGE.replace("{page}", String.valueOf(page))).onClickRunCmd("/#flp " + page);
+				pagination.appendMini(" &6« ").onHover(SimpleLocalization.Pages.GO_TO_PAGE.replaceBracket("page", String.valueOf(page))).onClickRunCmd("/#flp " + page);
 
-			pagination.append("&f" + (page + 1)).onHover(SimpleLocalization.Pages.GO_TO_FIRST_PAGE).onClickRunCmd("/#flp 1");
-			pagination.append("/").onHover(SimpleLocalization.Pages.TOOLTIP);
-			pagination.append(pages.size() + "").onHover(SimpleLocalization.Pages.GO_TO_LAST_PAGE).onClickRunCmd("/#flp " + pages.size());
+			pagination.appendMini("&f" + (page + 1)).onHover(SimpleLocalization.Pages.GO_TO_FIRST_PAGE).onClickRunCmd("/#flp 1");
+			pagination.appendMini("/").onHover(SimpleLocalization.Pages.TOOLTIP);
+			pagination.appendMini(pages.size() + "").onHover(SimpleLocalization.Pages.GO_TO_LAST_PAGE).onClickRunCmd("/#flp " + pages.size());
 
 			if (page + 1 >= pages.size())
-				pagination.append(" &7» ");
+				pagination.appendMini(" &7» ");
 			else
-				pagination.append(" &6» ").onHover(SimpleLocalization.Pages.GO_TO_PAGE.replace("{page}", String.valueOf(page + 2))).onClickRunCmd("/#flp " + (page + 2));
+				pagination.appendMini(" &6» ").onHover(SimpleLocalization.Pages.GO_TO_PAGE.replaceBracket("page", String.valueOf(page + 2))).onClickRunCmd("/#flp " + (page + 2));
 
-			pagination.append(chatPages.getThemeColor() + "&m" + Common.duplicate("-", multiply));
+			pagination.appendMini(chatPages.getThemeColor() + "&m" + Common.duplicate("-", multiply));
 
-			pagination.send(audience);
+			pagination.send(sender);
 		}
 
 		// Prevent "Unknown command message"

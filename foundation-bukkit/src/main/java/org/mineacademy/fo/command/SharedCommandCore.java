@@ -12,18 +12,16 @@ import org.mineacademy.fo.Common;
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.PlayerUtil;
 import org.mineacademy.fo.exception.CommandException;
+import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.Task;
-import org.mineacademy.fo.platform.Platform;
+import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.remain.CompMaterial;
 import org.mineacademy.fo.remain.Remain;
 import org.mineacademy.fo.settings.SimpleLocalization;
 
-import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.text.Component;
-
 public interface SharedCommandCore {
 
-	void checkBoolean(boolean flag, Component falseMessage);
+	void checkBoolean(boolean flag, SimpleComponent falseMessage);
 
 	/**
 	 * Checks if the player is a console and throws an error if he is
@@ -35,7 +33,7 @@ public interface SharedCommandCore {
 			throw new CommandException(SimpleLocalization.Commands.NO_CONSOLE);
 	}
 
-	void checkNotNull(Object object, Component nullMessage);
+	void checkNotNull(Object object, SimpleComponent nullMessage);
 
 	<T> List<String> completeLastWord(final Iterable<T> suggestions);
 
@@ -63,12 +61,12 @@ public interface SharedCommandCore {
 	 * @return
 	 * @throws CommandException
 	 */
-	default CompMaterial findMaterial(final String name, final Component falseMessage) throws CommandException {
+	default CompMaterial findMaterial(final String name, final SimpleComponent falseMessage) throws CommandException {
 		final CompMaterial found = CompMaterial.fromString(name);
 
 		this.checkNotNull(found, falseMessage
-				.replaceText(b -> b.matchLiteral("{enum}").replacement(name))
-				.replaceText(b -> b.matchLiteral("{item}").replacement(name)));
+				.replaceBracket("enum", name)
+				.replaceBracket("item", name));
 
 		return found;
 	}
@@ -92,7 +90,7 @@ public interface SharedCommandCore {
 
 			} catch (final IllegalArgumentException ex) {
 				this.returnTell(SimpleLocalization.Commands.INVALID_UUID
-						.replaceText(b -> b.matchLiteral("{uuid}").replacement(name)));
+						.replaceBracket("uuid", name));
 			}
 
 			this.findOfflinePlayer(uuid, syncCallback);
@@ -101,7 +99,7 @@ public interface SharedCommandCore {
 			this.runAsync(() -> {
 				final OfflinePlayer targetPlayer = Bukkit.getOfflinePlayer(name);
 				this.checkBoolean(targetPlayer != null && (targetPlayer.isOnline() || targetPlayer.hasPlayedBefore()), SimpleLocalization.Player.NOT_PLAYED_BEFORE
-						.replaceText(b -> b.matchLiteral("{player}").replacement(name)));
+						.replaceBracket("player", name));
 
 				this.runLater(() -> syncCallback.accept(targetPlayer));
 			});
@@ -118,7 +116,7 @@ public interface SharedCommandCore {
 		this.runAsync(() -> {
 			final OfflinePlayer targetPlayer = Remain.getOfflinePlayerByUUID(uniqueId);
 			this.checkBoolean(targetPlayer != null && (targetPlayer.isOnline() || targetPlayer.hasPlayedBefore()), SimpleLocalization.Player.INVALID_UUID
-					.replaceText(b -> b.matchLiteral("{uuid}").replacement(uniqueId.toString())));
+					.replaceBracket("uuid", uniqueId.toString()));
 
 			this.runLater(() -> syncCallback.accept(targetPlayer));
 		});
@@ -144,10 +142,10 @@ public interface SharedCommandCore {
 	 * @return
 	 * @throws CommandException
 	 */
-	default Player findPlayer(final String name, final Component falseMessage) throws CommandException {
+	default Player findPlayer(final String name, final SimpleComponent falseMessage) throws CommandException {
 		final Player player = this.findPlayerInternal(name);
 		this.checkBoolean(player != null && player.isOnline() && !PlayerUtil.isVanished(player), falseMessage
-				.replaceText(b -> b.matchLiteral("{player}").replacement(name)));
+				.replaceBracket("player", name));
 
 		return player;
 	}
@@ -182,7 +180,7 @@ public interface SharedCommandCore {
 		final String name = this.getArgs()[argsIndex];
 		final Player player = this.findPlayerInternal(name);
 		this.checkBoolean(player != null && player.isOnline(), SimpleLocalization.Player.NOT_ONLINE
-				.replaceText(b -> b.matchLiteral("{player}").replacement(name)));
+				.replaceBracket("player", name));
 
 		return player;
 	}
@@ -203,7 +201,7 @@ public interface SharedCommandCore {
 
 		final Player player = this.findPlayerInternal(name);
 		this.checkBoolean(player != null && player.isOnline(), SimpleLocalization.Player.NOT_ONLINE
-				.replaceText(b -> b.matchLiteral("{player}").replacement(name)));
+				.replaceBracket("player", name));
 
 		return player;
 	}
@@ -225,8 +223,8 @@ public interface SharedCommandCore {
 		final World world = Bukkit.getWorld(name);
 
 		this.checkNotNull(world, SimpleLocalization.Commands.INVALID_WORLD
-				.replaceText(b -> b.matchLiteral("{world}").replacement(name))
-				.replaceText(b -> b.matchLiteral("{available}").replacement(CommonCore.join(Bukkit.getWorlds()))));
+				.replaceBracket("world}", name)
+				.replaceBracket("available}", CommonCore.join(Bukkit.getWorlds())));
 
 		return world;
 	}
@@ -243,11 +241,7 @@ public interface SharedCommandCore {
 		return this.isPlayer() ? (Player) this.getSender() : null;
 	}
 
-	Audience getSender();
-
-	default String getSenderName() {
-		return Platform.resolveSenderName(this.getSender());
-	}
+	FoundationPlayer getSender();
 
 	/**
 	 * Return whether the sender is a living player
@@ -258,7 +252,7 @@ public interface SharedCommandCore {
 		return this.getSender() instanceof Player;
 	}
 
-	void returnTell(Component message);
+	void returnTell(SimpleComponent message);
 
 	Task runAsync(Runnable task);
 

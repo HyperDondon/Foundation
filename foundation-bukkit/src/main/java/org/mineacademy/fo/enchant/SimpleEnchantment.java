@@ -13,7 +13,6 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
@@ -41,6 +40,7 @@ import org.mineacademy.fo.ReflectionUtil;
 import org.mineacademy.fo.Valid;
 import org.mineacademy.fo.collection.StrictSet;
 import org.mineacademy.fo.exception.FoException;
+import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.remain.CompEquipmentSlot;
 import org.mineacademy.fo.remain.Remain;
 
@@ -587,8 +587,8 @@ public abstract class SimpleEnchantment implements Listener {
 		final ItemMeta meta = item.getItemMeta();
 
 		if (meta != null && meta.hasLore()) {
-			Map<Enchantment, Integer> enchants = item.getEnchantments();
-			Map<Enchantment, Integer> storedEnchants = meta instanceof EnchantmentStorageMeta ? ((EnchantmentStorageMeta) meta).getStoredEnchants() : null;
+			final Map<Enchantment, Integer> enchants = item.getEnchantments();
+			final Map<Enchantment, Integer> storedEnchants = meta instanceof EnchantmentStorageMeta ? ((EnchantmentStorageMeta) meta).getStoredEnchants() : null;
 			if (enchants.isEmpty() && (storedEnchants == null || storedEnchants.isEmpty()))
 				return null;
 
@@ -606,7 +606,7 @@ public abstract class SimpleEnchantment implements Listener {
 						final String loreLine = simpleEnchantment.getLore(entry.getValue());
 
 						if (loreLine != null && !loreLine.isEmpty())
-							colorLess.add(ChatColor.stripColor(Common.colorizeLegacy(loreLine)));
+							colorLess.add(SimpleComponent.fromMini(loreLine).toPlain());
 					}
 				}
 
@@ -618,7 +618,7 @@ public abstract class SimpleEnchantment implements Listener {
 						final String loreLine = simpleEnchantment.getLore(entry.getValue());
 
 						if (loreLine != null && !loreLine.isEmpty())
-							colorLess.add(ChatColor.stripColor(Common.colorizeLegacy(loreLine)));
+							colorLess.add(SimpleComponent.fromMini(loreLine).toPlain());
 					}
 				}
 
@@ -627,11 +627,10 @@ public abstract class SimpleEnchantment implements Listener {
 			}
 
 			for (final String line : lore) {
-				if (colorLess.contains(ChatColor.stripColor(Common.colorizeLegacy(line)))) {
+				if (colorLess.contains(SimpleComponent.fromMini(line).toPlain()))
 					foEnchanted = true;
-				} else {
+				else
 					newLore.add(line);
-				}
 			}
 
 			if (!foEnchanted)
@@ -669,12 +668,12 @@ public abstract class SimpleEnchantment implements Listener {
 					final String lore = simpleEnchantment.getLore(entry.getValue());
 
 					if (lore != null && !lore.isEmpty())
-						customEnchants.add(Common.colorizeLegacy(FO_ENCHANT_PREFIX + lore));
+						customEnchants.add(SimpleComponent.fromMini(FO_ENCHANT_PREFIX + lore).toLegacy());
 				}
 			}
 
 			if (Remain.hasItemMeta() && item.hasItemMeta()) {
-				ItemMeta meta = item.getItemMeta();
+				final ItemMeta meta = item.getItemMeta();
 				if (meta instanceof EnchantmentStorageMeta) {
 					for (final Map.Entry<Enchantment, Integer> entry : ((EnchantmentStorageMeta) meta).getStoredEnchants().entrySet()) {
 						final Enchantment enchantment = entry.getKey();
@@ -684,7 +683,7 @@ public abstract class SimpleEnchantment implements Listener {
 							final String lore = simpleEnchantment.getLore(entry.getValue());
 
 							if (lore != null && !lore.isEmpty())
-								customEnchants.add(Common.colorizeLegacy(FO_ENCHANT_PREFIX + lore));
+								customEnchants.add(SimpleComponent.fromMini(FO_ENCHANT_PREFIX + lore).toLegacy());
 						}
 					}
 				}
@@ -702,11 +701,11 @@ public abstract class SimpleEnchantment implements Listener {
 			final List<String> colorlessOriginals = new ArrayList<>();
 
 			for (final String original : originalLore)
-				colorlessOriginals.add(Common.removeColors(original));
+				colorlessOriginals.add(Common.stripColorCodes(original));
 
 			// Place our enchants
 			for (final String customEnchant : customEnchants) {
-				final String colorlessEnchant = Common.removeColors(customEnchant);
+				final String colorlessEnchant = Common.stripColorCodes(customEnchant);
 
 				if (!colorlessOriginals.contains(colorlessEnchant))
 					finalLore.add(customEnchant);

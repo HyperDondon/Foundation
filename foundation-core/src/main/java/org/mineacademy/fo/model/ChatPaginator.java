@@ -2,7 +2,6 @@ package org.mineacademy.fo.model;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -13,6 +12,7 @@ import org.mineacademy.fo.ChatUtil;
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.command.PermsCommand;
+import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.remain.CompChatColor;
 import org.mineacademy.fo.settings.SimpleLocalization;
@@ -20,7 +20,6 @@ import org.mineacademy.fo.settings.SimpleLocalization;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import net.kyori.adventure.audience.Audience;
 
 /**
  * A draft API for enumerating chat messages into pages.
@@ -44,7 +43,7 @@ public final class ChatPaginator {
 	 * receives the given page and return true if sending was successful.
 	 */
 	@Setter
-	private static BiFunction<Audience, Integer, Boolean> customSender;
+	private static BiFunction<FoundationPlayer, Integer, Boolean> customSender;
 
 	/**
 	 * How many lines per page? Maximum on screen is 20 minus header and footer.
@@ -59,17 +58,17 @@ public final class ChatPaginator {
 	/**
 	 * The header included on every page.
 	 */
-	private final List<SimpleComponentCore> header = new ArrayList<>();
+	private final List<SimpleComponent> header = new ArrayList<>();
 
 	/**
 	 * The pages with their content.
 	 */
-	private final Map<Integer, List<? extends SimpleComponentCore>> pages = new HashMap<>();
+	private final Map<Integer, List<? extends SimpleComponent>> pages = new HashMap<>();
 
 	/**
 	 * The footer included on every page.
 	 */
-	private final List<SimpleComponentCore> footer = new ArrayList<>();
+	private final List<SimpleComponent> footer = new ArrayList<>();
 
 	/**
 	 * Construct chat pages taking the entire visible
@@ -116,6 +115,8 @@ public final class ChatPaginator {
 				.replace("{theme_color}", this.themeColor.toString())
 				.replace("{title}", title);
 
+		final List<String> messages = new ArrayList<>();
+
 		for (String message : format.split("\n")) {
 
 			// Support centering inside the message itself
@@ -127,10 +128,10 @@ public final class ChatPaginator {
 				message = centeredParts[0] + ChatUtil.center(centeredParts[1], SimpleLocalization.Commands.HEADER_CENTER_LETTER.charAt(0), SimpleLocalization.Commands.HEADER_CENTER_PADDING);
 			}
 
-			this.header.add(SimpleComponentCore.of(message));
+			messages.add(message);
 		}
 
-		return this;
+		return this.setHeader(CommonCore.toArray(messages));
 	}
 
 	/**
@@ -139,7 +140,7 @@ public final class ChatPaginator {
 	 * @param components
 	 * @return
 	 */
-	public <T extends SimpleComponentCore> ChatPaginator setHeader(T... components) {
+	public ChatPaginator setHeader(SimpleComponent... components) {
 		Collections.addAll(this.header, components);
 
 		return this;
@@ -153,20 +154,7 @@ public final class ChatPaginator {
 	 */
 	public ChatPaginator setHeader(String... messages) {
 		for (final String message : messages)
-			this.header.add(SimpleComponentCore.of(message));
-
-		return this;
-	}
-
-	/**
-	 * Set the content type
-	 *
-	 * @param components
-	 * @return
-	 */
-	public <T extends SimpleComponentCore> ChatPaginator setPages(T... components) {
-		this.pages.clear();
-		this.pages.putAll(CommonCore.fillPages(this.linesPerPage, Arrays.asList(components)));
+			this.header.add(SimpleComponent.fromMini(message));
 
 		return this;
 	}
@@ -178,12 +166,12 @@ public final class ChatPaginator {
 	 * @return
 	 */
 	public ChatPaginator setPages(String... messages) {
-		final List<SimpleComponentCore> pages = new ArrayList<>();
+		final List<SimpleComponent> pages = new ArrayList<>();
 
 		for (final String message : messages)
-			pages.add(SimpleComponentCore.of(message));
+			pages.add(SimpleComponent.fromMini(message));
 
-		return this.setPages(pages);
+		return this.setPages(pages.toArray(new SimpleComponent[pages.size()]));
 	}
 
 	/**
@@ -192,9 +180,9 @@ public final class ChatPaginator {
 	 * @param components
 	 * @return
 	 */
-	public <T extends SimpleComponentCore> ChatPaginator setPages(Collection<T> components) {
+	public ChatPaginator setPages(SimpleComponent... components) {
 		this.pages.clear();
-		this.pages.putAll(CommonCore.fillPages(this.linesPerPage, components));
+		this.pages.putAll(CommonCore.fillPages(this.linesPerPage, Arrays.asList(components)));
 
 		return this;
 	}
@@ -205,8 +193,9 @@ public final class ChatPaginator {
 	 * @param components
 	 * @return
 	 */
-	public <T extends SimpleComponentCore> ChatPaginator setFooter(T... components) {
-		Collections.addAll(this.footer, components);
+	public ChatPaginator setPages(List<SimpleComponent> components) {
+		this.pages.clear();
+		this.pages.putAll(CommonCore.fillPages(this.linesPerPage, components));
 
 		return this;
 	}
@@ -219,7 +208,19 @@ public final class ChatPaginator {
 	 */
 	public ChatPaginator setFooter(String... messages) {
 		for (final String message : messages)
-			this.footer.add(SimpleComponentCore.of(message));
+			this.footer.add(SimpleComponent.fromMini(message));
+
+		return this;
+	}
+
+	/**
+	 * Set the content type
+	 *
+	 * @param components
+	 * @return
+	 */
+	public ChatPaginator setFooter(SimpleComponent... components) {
+		Collections.addAll(this.footer, components);
 
 		return this;
 	}
@@ -229,7 +230,7 @@ public final class ChatPaginator {
 	 *
 	 * @param audience
 	 */
-	public void send(Audience audience) {
+	public void send(FoundationPlayer audience) {
 		this.send(audience, 1);
 	}
 
@@ -239,37 +240,37 @@ public final class ChatPaginator {
 	 * @param audience
 	 * @param page
 	 */
-	public void send(Audience audience, int page) {
+	public void send(FoundationPlayer audience, int page) {
 		if (Platform.isAsync())
 			Platform.runTask(0, () -> this.send0(audience, page));
 		else
 			this.send0(audience, page);
 	}
 
-	public interface Sender {
-		void send(Audience audience, int page);
-	}
-
-	private void send0(Audience audience, int page) {
+	private void send0(FoundationPlayer audience, int page) {
 		if (customSender != null && customSender.apply(audience, page)) {
 			// Successful sending upstream
 
 		} else {
-			for (final SimpleComponentCore component : this.header)
+			for (final SimpleComponent component : this.header)
 				component.send(audience);
 
 			int amount = 1;
 
-			for (final List<? extends SimpleComponentCore> components : this.pages.values())
-				for (final SimpleComponentCore component : components)
-					component.replace("{count}", String.valueOf(amount++)).send(audience);
+			for (final List<? extends SimpleComponent> components : this.pages.values())
+				for (final SimpleComponent component : components)
+					component.replaceBracket("count", String.valueOf(amount++)).send(audience);
 
-			for (final SimpleComponentCore component : this.footer)
+			for (final SimpleComponent component : this.footer)
 				component.send(audience);
 		}
 	}
 
 	public static String getPageNbtTag() {
 		return "FoPages_" + Platform.getPlugin().getName();
+	}
+
+	public interface Sender {
+		void send(FoundationPlayer audience, int page);
 	}
 }

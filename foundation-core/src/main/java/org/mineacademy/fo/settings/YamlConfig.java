@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Function;
 
 import org.jetbrains.annotations.Nullable;
 import org.mineacademy.fo.CommonCore;
@@ -15,8 +16,11 @@ import org.snakeyaml.engine.v2.api.DumpSettings;
 import org.snakeyaml.engine.v2.api.Load;
 import org.snakeyaml.engine.v2.api.LoadSettings;
 import org.snakeyaml.engine.v2.common.FlowStyle;
+import org.snakeyaml.engine.v2.constructor.StandardConstructor;
+import org.snakeyaml.engine.v2.representer.StandardRepresenter;
 
 import lombok.NonNull;
+import lombok.Setter;
 
 /**
  * The core settings class. Fully compatible with Minecraft 1.7.10 to the
@@ -24,6 +28,12 @@ import lombok.NonNull;
  * and automatic config upgrading if we request a value that only exist in the default file.
  */
 public class YamlConfig extends FileConfig {
+
+	@Setter
+	private static Function<LoadSettings, StandardConstructor> customConstructor = loadSettings -> new PlatformNeutralYamlConstructor(loadSettings);
+
+	@Setter
+	private static Function<DumpSettings, StandardRepresenter> customRepresenter = dumpSettings -> new PlatformNeutralYamlRepresenter(dumpSettings);
 
 	/**
 	 * The Yaml instance
@@ -46,7 +56,7 @@ public class YamlConfig extends FileConfig {
 				.setMaxAliasesForCollections(Integer.MAX_VALUE)
 				.build();
 
-		this.yamlLoader = new Load(loadSettings);
+		this.yamlLoader = new Load(loadSettings, customConstructor.apply(loadSettings));
 
 		final DumpSettings dumpSettings = DumpSettings.builder()
 				.setDefaultFlowStyle(FlowStyle.BLOCK)
@@ -54,7 +64,7 @@ public class YamlConfig extends FileConfig {
 				.setWidth(4096) // Do not wrap long lines
 				.build();
 
-		this.yamlDumper = new Dump(dumpSettings);
+		this.yamlDumper = new Dump(dumpSettings, customRepresenter.apply(dumpSettings));
 	}
 
 	/**
@@ -361,4 +371,5 @@ public class YamlConfig extends FileConfig {
 
 		return config;
 	}
+
 }

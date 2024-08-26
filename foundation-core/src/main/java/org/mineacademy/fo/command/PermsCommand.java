@@ -9,9 +9,8 @@ import org.mineacademy.fo.command.annotation.Permission;
 import org.mineacademy.fo.command.annotation.PermissionGroup;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.model.ChatPaginator;
-import org.mineacademy.fo.model.SimpleComponentCore;
+import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.platform.Platform;
-import org.mineacademy.fo.remain.RemainCore;
 import org.mineacademy.fo.settings.SimpleLocalization.Commands;
 
 import lombok.NonNull;
@@ -66,7 +65,7 @@ public final class PermsCommand extends SimpleSubCommandCore {
 		final String phrase = this.args.length > 0 ? this.joinArgs(0) : null;
 
 		new ChatPaginator(15)
-				.setFoundationHeader(RemainCore.convertAdventureToLegacy(Commands.PERMS_HEADER))
+				.setFoundationHeader(Commands.PERMS_HEADER.toLegacy())
 				.setPages(this.list(phrase))
 				.send(this.sender);
 	}
@@ -74,7 +73,7 @@ public final class PermsCommand extends SimpleSubCommandCore {
 	/*
 	 * Iterate through all classes and superclasses in the given classes and fill their permissions
 	 */
-	private List<SimpleComponentCore> list() {
+	private List<SimpleComponent> list() {
 		return this.list(null);
 	}
 
@@ -82,8 +81,8 @@ public final class PermsCommand extends SimpleSubCommandCore {
 	 * Iterate through all classes and superclasses in the given classes and fill their permissions
 	 * that match the given phrase
 	 */
-	private List<SimpleComponentCore> list(String phrase) {
-		final List<SimpleComponentCore> messages = new ArrayList<>();
+	private List<SimpleComponent> list(String phrase) {
+		final List<SimpleComponent> messages = new ArrayList<>();
 		Class<?> iteratedClass = this.classToList;
 
 		try {
@@ -102,15 +101,15 @@ public final class PermsCommand extends SimpleSubCommandCore {
 	 * Find annotations and compile permissions list from the given class and given existing
 	 * permissions that match the given phrase
 	 */
-	private void listIn(Class<?> clazz, List<SimpleComponentCore> messages, String phrase) throws ReflectiveOperationException {
+	private void listIn(Class<?> clazz, List<SimpleComponent> messages, String phrase) throws ReflectiveOperationException {
 
 		final PermissionGroup group = clazz.getAnnotation(PermissionGroup.class);
 
 		if (!messages.isEmpty() && !clazz.isAnnotationPresent(PermissionGroup.class))
 			throw new FoException("Please place @PermissionGroup over " + clazz);
 
-		messages.add(SimpleComponentCore
-				.of("&7- " + (messages.isEmpty() ? Commands.PERMS_MAIN : group.value()) + " " + Commands.PERMS_PERMISSIONS)
+		messages.add(SimpleComponent
+				.fromAndCharacter("&7- ").append(messages.isEmpty() ? Commands.PERMS_MAIN : SimpleComponent.fromMini(group.value())).appendPlain(" ").append(Commands.PERMS_PERMISSIONS)
 				.onClickOpenUrl(""));
 
 		for (final Field field : clazz.getDeclaredFields()) {
@@ -133,16 +132,16 @@ public final class PermsCommand extends SimpleSubCommandCore {
 			final boolean has = this.sender == null ? false : this.hasPerm(node);
 
 			if (phrase == null || node.contains(phrase))
-				messages.add(SimpleComponentCore
-						.of("  " + (has ? "&a" : "&7") + node + (def ? " " + Commands.PERMS_TRUE_BY_DEFAULT : ""))
+				messages.add(SimpleComponent
+						.fromAndCharacter("  " + (has ? "&a" : "&7") + node).append(def ? SimpleComponent.fromPlain(" ").append(Commands.PERMS_TRUE_BY_DEFAULT) : SimpleComponent.empty())
 						.onClickOpenUrl("")
-						.onHover(Commands.PERMS_INFO + info,
-								RemainCore.convertAdventureToLegacy(Commands.PERMS_DEFAULT.append(def ? Commands.PERMS_YES : Commands.PERMS_NO)),
-								RemainCore.convertAdventureToLegacy(Commands.PERMS_APPLIED.append(has ? Commands.PERMS_YES : Commands.PERMS_NO))));
+						.onHover(Commands.PERMS_INFO.toLegacy() + info,
+								Commands.PERMS_DEFAULT.append(def ? Commands.PERMS_YES : Commands.PERMS_NO).toLegacy(),
+								Commands.PERMS_APPLIED.append(has ? Commands.PERMS_YES : Commands.PERMS_NO).toLegacy()));
 		}
 
 		for (final Class<?> inner : clazz.getDeclaredClasses()) {
-			messages.add(SimpleComponentCore.of("&r "));
+			messages.add(SimpleComponent.fromAndCharacter("&r "));
 
 			this.listIn(inner, messages, phrase);
 		}

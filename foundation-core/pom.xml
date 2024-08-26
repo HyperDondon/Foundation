@@ -36,9 +36,19 @@
 		    <artifactId>adventure-text-serializer-plain</artifactId>
 		    <version>4.17.0</version>
 		</dependency>
-	 	<dependency>
+		<dependency>
 		    <groupId>net.kyori</groupId>
-		    <artifactId>adventure-platform-bukkit</artifactId>
+		    <artifactId>adventure-text-serializer-gson</artifactId>
+		    <version>4.17.0</version>
+		</dependency>
+		<dependency>
+		    <groupId>net.kyori</groupId>
+		    <artifactId>adventure-text-serializer-legacy</artifactId>
+		    <version>4.17.0</version>
+		</dependency>
+		<dependency>
+		    <groupId>net.kyori</groupId>
+		    <artifactId>adventure-text-serializer-bungeecord</artifactId>
 		    <version>4.3.4</version>
 		</dependency>
 		<dependency>
@@ -51,7 +61,6 @@
 		    <groupId>org.snakeyaml</groupId>
 		    <artifactId>snakeyaml-engine</artifactId>
 		    <version>2.7</version>
-		    <scope>provided</scope>
 		</dependency>	
 		<dependency>
 			<groupId>com.google.code.gson</groupId>

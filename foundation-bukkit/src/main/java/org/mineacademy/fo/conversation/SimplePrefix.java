@@ -2,15 +2,13 @@ package org.mineacademy.fo.conversation;
 
 import org.bukkit.conversations.ConversationContext;
 import org.bukkit.conversations.ConversationPrefix;
-import org.mineacademy.fo.Common;
+import org.mineacademy.fo.model.SimpleComponent;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 /**
  * A simple conversation prefix with a static string
  */
-@RequiredArgsConstructor
 public final class SimplePrefix implements ConversationPrefix {
 
 	/**
@@ -19,8 +17,12 @@ public final class SimplePrefix implements ConversationPrefix {
 	@Getter
 	private final String prefix;
 
+	public SimplePrefix(String prefix) {
+		this.prefix = SimpleComponent.fromMini(prefix).toLegacy();
+	}
+
 	@Override
 	public String getPrefix(ConversationContext context) {
-		return Common.colorizeLegacy(this.prefix);
+		return this.prefix;
 	}
 }

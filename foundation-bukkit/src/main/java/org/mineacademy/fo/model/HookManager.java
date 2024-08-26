@@ -37,6 +37,7 @@ import org.mineacademy.fo.Valid;
 import org.mineacademy.fo.collection.StrictSet;
 import org.mineacademy.fo.debug.Debugger;
 import org.mineacademy.fo.exception.FoException;
+import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.plugin.SimplePlugin;
 import org.mineacademy.fo.region.Region;
@@ -93,7 +94,6 @@ import net.citizensnpcs.api.CitizensAPI;
 import net.citizensnpcs.api.ai.EntityTarget;
 import net.citizensnpcs.api.npc.NPC;
 import net.citizensnpcs.api.npc.NPCRegistry;
-import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.milkbowl.vault.chat.Chat;
 import net.milkbowl.vault.economy.Economy;
@@ -939,7 +939,9 @@ public final class HookManager {
 	 */
 	public static void setLiteBansMute(String targetPlayerName, String durationTokenized, String reason) {
 		if (isLiteBansLoaded())
-			Common.dispatchCommand(Platform.toAudience(Bukkit.getConsoleSender()), "lmute " + targetPlayerName + " " + durationTokenized + (reason == null || reason.isEmpty() ? "" : " " + reason));
+			Platform.runTask(0, () -> {
+				Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "lmute " + targetPlayerName + " " + durationTokenized + (reason == null || reason.isEmpty() ? "" : " " + reason));
+			});
 	}
 
 	/**
@@ -950,7 +952,9 @@ public final class HookManager {
 	 */
 	public static void setLiteBansUnmute(String targetPlayerName) {
 		if (isLiteBansLoaded())
-			Common.dispatchCommand(Platform.toAudience(Bukkit.getConsoleSender()), "lunmute " + targetPlayerName);
+			Platform.runTask(0, () -> {
+				Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "lunmute " + targetPlayerName);
+			});
 	}
 
 	/**
@@ -1074,7 +1078,7 @@ public final class HookManager {
 
 		final String nick = nickyNick != null ? nickyNick : cmiNick != null ? cmiNick : essNick != null ? essNick : sender.getName();
 
-		return stripColors ? Common.removeColors(nick) : nick;
+		return stripColors ? SimpleComponent.fromMini(nick).toPlain() : nick;
 	}
 
 	/**
@@ -1502,7 +1506,7 @@ public final class HookManager {
 	 * @param component
 	 * @return
 	 */
-	public static Component replaceRelationPlaceholders(@Nullable final Audience one, @Nullable final Audience two, final Component component) {
+	public static Component replaceRelationPlaceholders(@Nullable final FoundationPlayer one, @Nullable final FoundationPlayer two, final Component component) {
 		return isPlaceholderAPILoaded() ? placeholderAPIHook.replaceRelationPlaceholders(one, two, component) : component;
 	}
 
@@ -1972,14 +1976,15 @@ class EssentialsHook {
 		final User user = this.getUser(uniqueId);
 
 		if (user != null) {
-			final boolean isEmpty = nick == null || Common.removeColors(nick).replace(" ", "").isEmpty();
+			final SimpleComponent nickComponent = SimpleComponent.fromMini(nick);
+			final boolean isEmpty = nick == null || nickComponent.toPlain().replace(" ", "").isEmpty();
 
-			user.setNickname(isEmpty ? null : Common.colorizeLegacy(nick));
+			user.setNickname(isEmpty ? null : nickComponent.toLegacy());
 		}
 	}
 
 	String getNameFromNick(String maybeNick) {
-		maybeNick = Common.removeColors(maybeNick).toLowerCase();
+		maybeNick = SimpleComponent.fromMini(maybeNick).toPlain().toLowerCase();
 
 		final UserMap users = this.ess.getUserMap();
 
@@ -1987,7 +1992,7 @@ class EssentialsHook {
 			for (final UUID userId : users.getAllUniqueUsers()) {
 				final User user = users.getUser(userId);
 
-				if (user != null && user.getNickname() != null && Common.removeColors(user.getNickname()).toLowerCase().equals(maybeNick))
+				if (user != null && user.getNickname() != null && SimpleComponent.fromMini(user.getNickname()).toPlain().toLowerCase().equals(maybeNick))
 					return Common.getOrDefault(user.getName(), maybeNick);
 			}
 
@@ -2559,7 +2564,7 @@ final class PlaceholderAPIHook {
 				String value = this.getValue(hooks.get(identifier), identifier, player, params);
 
 				if (value != null) {
-					value = Matcher.quoteReplacement(Common.colorizeLegacy(value));
+					value = Matcher.quoteReplacement(SimpleComponent.fromMini(value).toLegacy());
 
 					message = message.replaceAll(Pattern.quote(matcher.group()), value.isEmpty() ? "" : (frontSpace ? " " : "") + value + (backSpace ? " " : ""));
 				}
@@ -2594,7 +2599,7 @@ final class PlaceholderAPIHook {
 		}
 	}
 
-	Component replaceRelationPlaceholders(@Nullable Audience one, @Nullable Audience two, Component component) {
+	Component replaceRelationPlaceholders(@Nullable FoundationPlayer one, @Nullable FoundationPlayer two, Component component) {
 		final Map<String, PlaceholderHook> hooks = PlaceholderAPI.getPlaceholders();
 		final boolean canReplace = one instanceof Player && two instanceof Player;
 
@@ -2618,7 +2623,7 @@ final class PlaceholderAPIHook {
 						final Relational relational = (Relational) hook;
 						final String value = canReplace ? relational.onPlaceholderRequest((Player) one, (Player) two, params) : null;
 
-						text = text.replaceAll(Pattern.quote(matcher.group()), value != null ? Matcher.quoteReplacement(Common.colorizeLegacy(value)) : "");
+						text = text.replaceAll(Pattern.quote(matcher.group()), value != null ? Matcher.quoteReplacement(SimpleComponent.fromMini(value).toLegacy()) : "");
 					}
 				}
 
@@ -2628,7 +2633,7 @@ final class PlaceholderAPIHook {
 						"Player one: " + one,
 						"Player two: " + two,
 						"Variable: " + matcher.group(),
-						"Component: " + Remain.convertAdventureToLegacy(component),
+						"Component: " + SimpleComponent.fromAdventure(component).toLegacy(),
 						"Error: %error");
 
 			}
@@ -2655,7 +2660,7 @@ final class PlaceholderAPIHook {
 					final String value = one != null && two != null ? relational.onPlaceholderRequest(one, two, params) : "";
 
 					if (value != null)
-						text = text.replaceAll(Pattern.quote(matcher.group()), Matcher.quoteReplacement(Common.colorizeLegacy(value)));
+						text = text.replaceAll(Pattern.quote(matcher.group()), Matcher.quoteReplacement(SimpleComponent.fromMini(value).toLegacy()));
 				}
 			}
 		}
@@ -2748,10 +2753,11 @@ final class PlaceholderAPIHook {
 
 			try {
 				for (final SimpleExpansion expansion : Variables.getExpansions()) {
-					final String value = expansion.replacePlaceholders(Platform.toAudience(player), identifier);
+					final SimpleComponent valueComponent = expansion.replacePlaceholders(Platform.toPlayer(player), identifier);
 
-					if (value != null) {
-						final boolean emptyColorless = Common.removeColors(value).isEmpty();
+					if (valueComponent != null) {
+						final boolean emptyColorless = valueComponent.toPlain().isEmpty();
+						final String value = valueComponent.toLegacy();
 
 						return (!value.isEmpty() && frontSpace && !emptyColorless ? " " : "") + value + (!value.isEmpty() && backSpace && !emptyColorless ? " " : "");
 					}
@@ -2963,7 +2969,7 @@ class WorldGuardHook {
 		final List<String> list = new ArrayList<>();
 
 		this.getApplicableRegions(location).forEach(region -> {
-			final String name = Common.removeColors(region.getId());
+			final String name = Common.stripColorCodes(region.getId());
 
 			if (!name.startsWith("__"))
 				list.add(name);
@@ -2983,7 +2989,7 @@ class WorldGuardHook {
 						if (regObj == null)
 							continue;
 
-						if (Common.removeColors(((ProtectedRegion) regObj).getId()).equals(name)) {
+						if (Common.stripColorCodes(((ProtectedRegion) regObj).getId()).equals(name)) {
 
 							final Class<?> clazz = regObj.getClass();
 							final Method getMax = clazz.getMethod("getMaximumPoint");
@@ -3013,7 +3019,7 @@ class WorldGuardHook {
 				}
 			else
 				for (final ProtectedRegion reg : ((com.sk89q.worldguard.protection.managers.RegionManager) rm).getRegions().values())
-					if (reg != null && reg.getId() != null && Common.removeColors(reg.getId()).equals(name)) {
+					if (reg != null && reg.getId() != null && Common.stripColorCodes(reg.getId()).equals(name)) {
 						//if(reg instanceof com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion) {
 						// just going to pretend that everything is a cuboid..
 						final Location locMax;
@@ -3045,7 +3051,7 @@ class WorldGuardHook {
 						if (getId == null)
 							getId = regObj.getClass().getMethod("getId");
 
-						final String name = Common.removeColors(getId.invoke(regObj).toString());
+						final String name = Common.stripColorCodes(getId.invoke(regObj).toString());
 
 						if (!name.startsWith("__"))
 							list.add(name);
@@ -3061,7 +3067,7 @@ class WorldGuardHook {
 							if (reg == null || reg.getId() == null)
 								return;
 
-							final String name = Common.removeColors(reg.getId());
+							final String name = Common.stripColorCodes(reg.getId());
 
 							if (!name.startsWith("__"))
 								list.add(name);
@@ -3168,7 +3174,7 @@ final class FactionsMassive extends FactionsHook {
 
 	@Override
 	public Collection<String> getFactions() {
-		return Common.convert(com.massivecraft.factions.entity.FactionColl.get().getAll(), object -> Common.removeColors(object.getName()));
+		return Common.convert(com.massivecraft.factions.entity.FactionColl.get().getAll(), object -> Common.stripColorCodes(object.getName()));
 	}
 
 	@Override
@@ -3506,9 +3512,9 @@ class CMIHook {
 		final TabListManager tabManager = CMI.getInstance().getTabListManager();
 
 		if (user != null) {
-			final boolean isEmpty = nick == null || Common.removeColors(nick).replace(" ", "").isEmpty();
+			final boolean isEmpty = nick == null || Common.stripColorCodes(nick).replace(" ", "").isEmpty();
 
-			user.setNickName(isEmpty ? null : Common.colorizeLegacy(nick), true);
+			user.setNickName(isEmpty ? null : SimpleComponent.fromMini(nick).toLegacy(), true);
 			user.updateDisplayName();
 
 			if (tabManager.isUpdatesOnNickChange())
@@ -3517,10 +3523,10 @@ class CMIHook {
 	}
 
 	String getNameFromNick(String nick) {
-		nick = Common.removeColors(nick).toLowerCase();
+		nick = Common.stripColorCodes(nick).toLowerCase();
 
 		for (final CMIUser user : CMI.getInstance().getPlayerManager().getAllUsers().values())
-			if (user != null && user.getNickName() != null && Common.removeColors(user.getNickName()).toLowerCase().equals(nick))
+			if (user != null && user.getNickName() != null && Common.stripColorCodes(user.getNickName()).toLowerCase().equals(nick))
 				return Common.getOrDefault(user.getName(), nick);
 
 		return nick;
@@ -3578,7 +3584,7 @@ class DiscordSRVHook {
 	}
 
 	boolean sendMessage(@Nullable CommandSender sender, final String channel, String message) {
-		message = Common.removeColors(message);
+		message = Common.stripColorCodes(message);
 
 		if (message.replace(" ", "").isEmpty())
 			return false;
@@ -3862,16 +3868,16 @@ class LiteBansHook {
 		/*try {
 			final Class<?> api = ReflectionUtil.lookupClass("litebans.api.Database");
 			final Object instance = ReflectionUtil.invokeStatic(api, "get");
-		
+
 			return ReflectionUtil.invoke("isPlayerMuted", instance, player.getUniqueId());
-		
+
 		} catch (final Throwable t) {
 			if (!t.toString().contains("Could not find class")) {
 				Common.log("Unable to check if " + player.getName() + " is muted at LiteBans. Is the API hook outdated? See console error:");
-		
+
 				t.printStackTrace();
 			}
-		
+
 			return false;
 		}*/
 	}

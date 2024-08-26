@@ -9,69 +9,36 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.conversations.Conversable;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 import org.mineacademy.fo.model.HookManager;
+import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.Task;
+import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.remain.Remain;
 import org.mineacademy.fo.settings.SimpleSettings;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.text.Component;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class Common extends CommonCore {
 
 	/**
-	 * Sends the conversable a message later
+	 * Sends a message to the player
 	 *
-	 * @param delayTicks
-	 * @param conversable
-	 * @param message
+	 * @param player
+	 * @param messages
 	 */
-	public static void tellLater(final int delayTicks, final Conversable conversable, final String message) {
-		runLater(delayTicks, () -> tell(conversable, message));
-	}
+	public static void tell(Player player, String... messages) {
+		final FoundationPlayer sender = Platform.toPlayer(player);
 
-	/**
-	 * Sends the conversable player a colorized message
-	 *
-	 * @param conversable
-	 * @param message
-	 */
-	public static void tell(final Conversable conversable, final String message) {
-		final String tellPrefix = Remain.convertAdventureToLegacy(getTellPrefix());
-
-		conversable.sendRawMessage(colorizeLegacy((message.contains(tellPrefix) || tellPrefix.isEmpty() ? "" : tellPrefix) + message));
-	}
-
-	/**
-	 * Sends the conversable a message later
-	 *
-	 * @param delayTicks
-	 * @param conversable
-	 * @param message
-	 */
-	public static void tellLaterNoPrefix(final int delayTicks, final Conversable conversable, final String message) {
-		runLater(delayTicks, () -> tellNoPrefix(conversable, message));
-	}
-
-	/**
-	 * Sends the conversable player a colorized message
-	 *
-	 * @param conversable
-	 * @param message
-	 */
-	public static void tellNoPrefix(final Conversable conversable, final String message) {
-		conversable.sendRawMessage(colorizeLegacy(message));
+		for (final String message : messages)
+			SimpleComponent.fromMini(message).send(sender);
 	}
 
 	/**
@@ -82,9 +49,9 @@ public final class Common extends CommonCore {
 	 * @param sender
 	 * @param message
 	 */
-	public static void tell(@NonNull final CommandSender sender, Component message) {
-		tell(Platform.toAudience(sender), message);
-	}
+	/*public static void tell(@NonNull final CommandSender sender, SimpleComponent message) {
+		Platform.toPlayer(sender).sendMessage(message);
+	}*/
 
 	/**
 	 * Sends a message to the audience. Supports {prefix} and {player} variable.
@@ -94,12 +61,12 @@ public final class Common extends CommonCore {
 	 * @param sender
 	 * @param messages
 	 */
-	public static void tell(@NonNull final CommandSender sender, String... messages) {
-		final Audience audience = Platform.toAudience(sender);
-
+	/*public static void tell(@NonNull final CommandSender sender, String... messages) {
+		final FoundationPlayer foundationSender = Platform.toPlayer(sender);
+	
 		for (final String message : messages)
-			tell(audience, colorize(message));
-	}
+			foundationSender.sendMessage(message);
+	}*/
 
 	/**
 	 * Sends a message to the audience. Supports {prefix} and {player} variable.
@@ -109,12 +76,12 @@ public final class Common extends CommonCore {
 	 * @param sender
 	 * @param messages
 	 */
-	public static void tellNoPrefix(@NonNull final CommandSender sender, String... messages) {
-		final Audience audience = Platform.toAudience(sender);
-
+	/*public static void tellNoPrefix(@NonNull final CommandSender sender, String... messages) {
+		final FoundationPlayer audience = Platform.toPlayer(sender);
+	
 		for (final String message : messages)
-			tellNoPrefix(audience, colorize(message));
-	}
+			CommonCore.tellNoPrefix(audience, message);
+	}*/
 
 	/**
 	 * Replace some common classes such as entity to name automatically
@@ -320,22 +287,22 @@ public final class Common extends CommonCore {
 	 */
 	/*public static Map<String, Object> getMapFromSection(@NonNull Object mapOrSection) {
 		mapOrSection = Remain.getRootOfSectionPathData(mapOrSection);
-	
+
 		final Map<String, Object> map = mapOrSection instanceof ConfigSection ? ((ConfigSection) mapOrSection).getValues(false)
 				: mapOrSection instanceof Map ? (Map<String, Object>) mapOrSection
 						: mapOrSection instanceof MemorySection ? ReflectionUtil.getFieldContent(mapOrSection, "map") : null;
-	
+
 		Valid.checkNotNull(map, "Unexpected " + mapOrSection.getClass().getSimpleName() + " '" + mapOrSection + "'. Must be Map or MemorySection! (Do not just send config name here, but the actual section with get('section'))");
-	
+
 		final Map<String, Object> copy = new LinkedHashMap<>();
-	
+
 		for (final Map.Entry<String, Object> entry : map.entrySet()) {
 			final String key = entry.getKey();
 			final Object value = entry.getValue();
-	
+
 			copy.put(key, Remain.getRootOfSectionPathData(value));
 		}
-	
+
 		return copy;
 	}*/
 
@@ -348,9 +315,9 @@ public final class Common extends CommonCore {
 	 * @param playerReplacement
 	 * @param command
 	 */
-	public static void dispatchCommand(CommandSender playerReplacement, @NonNull String command) {
-		CommonCore.dispatchCommand(Platform.toAudience(playerReplacement), command);
-	}
+	/*public static void dispatchCommand(CommandSender playerReplacement, @NonNull String command) {
+		CommonCore.dispatchCommand(Platform.toFoundationPlayer(playerReplacement), command);
+	}*/
 
 	/**
 	 * Runs the given command (without /) as if the sender would type it, replacing {player} with his name
@@ -358,9 +325,9 @@ public final class Common extends CommonCore {
 	 * @param sender
 	 * @param command
 	 */
-	public static void dispatchCommandAsPlayer(@NonNull final CommandSender sender, @NonNull String command) {
-		CommonCore.dispatchCommandAsPlayer(Platform.toAudience(sender), command);
-	}
+	/*public static void dispatchCommandAsPlayer(@NonNull final CommandSender sender, @NonNull String command) {
+		CommonCore.dispatchCommandAsPlayer(Platform.toFoundationPlayer(sender), command);
+	}*/
 
 	// ------------------------------------------------------------------------------------------------------------
 	// Scheduling

@@ -31,6 +31,7 @@ import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.model.BoxedMessage;
 import org.mineacademy.fo.model.ConfigSerializable;
 import org.mineacademy.fo.model.IsInList;
+import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.SimpleTime;
 import org.mineacademy.fo.model.Tuple;
 import org.mineacademy.fo.platform.Platform;
@@ -39,7 +40,6 @@ import org.mineacademy.fo.remain.RemainCore;
 import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.Setter;
-import net.kyori.adventure.text.Component;
 
 /**
  * Represents any configuration that can be stored in a file
@@ -244,26 +244,26 @@ public abstract class FileConfig {
 	// ------------------------------------------------------------------------------------
 
 	/**
-	 * Return a {@link Component} value from the key at the given path.
+	 * Return a {@link SimpleComponent} value from the key at the given path.
 	 *
 	 * @param path
 	 * @return
 	 */
 	// TODO see serializeutil whether we deserialize using minimessage
-	public final Component getComponent(final String path) {
+	public final SimpleComponent getComponent(final String path) {
 		return this.getComponent(path, null);
 	}
 
 	/**
-	 * Return a {@link Component} value from the key at the given path
+	 * Return a {@link SimpleComponent} value from the key at the given path
 	 * or supply with default if path is not set.
 	 *
 	 * @param path
 	 * @param def
 	 * @return
 	 */
-	public final Component getComponent(final String path, final Component def) {
-		return this.get(path, Component.class, def);
+	public final SimpleComponent getComponent(final String path, final SimpleComponent def) {
+		return this.get(path, SimpleComponent.class, def);
 	}
 
 	/**
@@ -452,11 +452,11 @@ public abstract class FileConfig {
 	/*public final TitleHelper getTitle(final String path) {
 		return this.getTitle(path, null, null);
 	}
-
+	
 	public final TitleHelper getTitle(final String path, final String defTitle, final String defSubtitle) {
 		final String title = this.getString(path + ".Title", defTitle);
 		final String subtitle = this.getString(path + ".Subtitle", defSubtitle);
-	
+
 		return title != null ? new TitleHelper(title, subtitle) : null;
 	}*/
 
@@ -864,11 +864,11 @@ public abstract class FileConfig {
 				/*if (LocationList.class.isAssignableFrom(valueType)) {
 					final List<?> list = SerializeUtilCore.deserialize(Mode.YAML, List.class, entry.getValue());
 					final List<Location> copy = new ArrayList<>();
-
+				
 					list.forEach(locationRaw -> copy.add(SerializeUtilCore.deserializeLocation(locationRaw)));
-
+				
 					value = (Value) new LocationList(this, copy);
-
+				
 				} else*/
 				value = SerializeUtilCore.deserialize(Mode.YAML, valueType, entry.getValue(), valueDeserializeParams);
 
@@ -1455,34 +1455,34 @@ public abstract class FileConfig {
 	 * A helper to automatically send titles and subtitles to players.
 	 */
 	/*public static final class TitleHelper {
-	
+
 		private final String title, subtitle;
-	
+
 		private TitleHelper(final String title, final String subtitle) {
 			this.title = CommonCore.colorize(title);
 			this.subtitle = CommonCore.colorize(subtitle);
 		}
-	
+
 		public void playLong(final Player player) {
 			this.playLong(player, null);
 		}
-	
+
 		public void playLong(final Player player, final Function<String, String> replacer) {
 			this.play(player, 5, 4 * 20, 15, replacer);
 		}
-	
+
 		public void playShort(final Player player) {
 			this.playShort(player, null);
 		}
-	
+
 		public void playShort(final Player player, final Function<String, String> replacer) {
 			this.play(player, 3, 2 * 20, 5, replacer);
 		}
-	
+
 		public void play(final Player player, final int fadeIn, final int stay, final int fadeOut) {
 			this.play(player, fadeIn, stay, fadeOut, null);
 		}
-	
+
 		public void play(final Player player, final int fadeIn, final int stay, final int fadeOut, Function<String, String> replacer) {
 			RemainCore.sendTitle(player, fadeIn, stay, fadeOut, replacer != null ? replacer.apply(this.title) : this.title, replacer != null ? replacer.apply(this.subtitle) : this.subtitle);
 		}
@@ -1493,70 +1493,70 @@ public abstract class FileConfig {
 	 * one click, automatically saving your configuration.
 	 */
 	/*public static final class LocationList implements Iterable<Location> {
-
+	
 		private final FileConfig settings;
 		private final List<Location> points;
-
+	
 		public LocationList(final FileConfig settings) {
 			this(settings, new ArrayList<>());
 		}
-
+	
 		private LocationList(final FileConfig settings, final List<Location> points) {
 			this.settings = settings;
 			this.points = points;
 		}
-
+	
 		public boolean toggle(final Location location) {
 			for (final Location point : this.points)
 				if (ValidCore.locationEquals(point, location)) {
 					this.points.remove(point);
-
+	
 					this.settings.save();
 					return false;
 				}
-
+	
 			this.points.add(location);
 			this.settings.save();
-
+	
 			return true;
 		}
-
+	
 		public void add(final Location location) {
 			ValidCore.checkBoolean(!this.hasLocation(location), "Location at " + location + " already exists!");
-
+	
 			this.points.add(location);
 			this.settings.save();
 		}
-
+	
 		public void remove(final Location location) {
 			final Location point = this.find(location);
 			ValidCore.checkNotNull(point, "Location at " + location + " does not exist!");
-
+	
 			this.points.remove(point);
 			this.settings.save();
 		}
-
+	
 		public boolean hasLocation(final Location location) {
 			return this.find(location) != null;
 		}
-
+	
 		public Location find(final Location location) {
 			for (final Location entrance : this.points)
 				if (ValidCore.locationEquals(entrance, location))
 					return entrance;
-
+	
 			return null;
 		}
-
+	
 		public List<Location> getLocations() {
 			return Collections.unmodifiableList(this.points);
 		}
-
+	
 		@Override
 		public Iterator<Location> iterator() {
 			return this.points.iterator();
 		}
-
+	
 		public int size() {
 			return this.points.size();
 		}

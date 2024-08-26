@@ -262,7 +262,7 @@ public final class FileUtil {
 	 * @param message line, is split by \n
 	 */
 	public static void writeFormatted(String to, String prefix, String message) {
-		message = CommonCore.removeColors(message);
+		message = CommonCore.stripColorCodes(message);
 
 		if (!message.equalsIgnoreCase("none") && !message.isEmpty())
 			for (final String line : message.split("\n"))

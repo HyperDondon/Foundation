@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
@@ -30,6 +29,8 @@ import org.mineacademy.fo.collection.StrictList;
 import org.mineacademy.fo.collection.StrictMap;
 import org.mineacademy.fo.debug.Debugger;
 import org.mineacademy.fo.exception.FoException;
+import org.mineacademy.fo.model.SimpleComponent;
+import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.remain.CompChatColor;
 import org.mineacademy.fo.remain.RemainCore;
@@ -39,9 +40,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 
 /**
  * Our main utility class hosting a large variety of different convenience functions
@@ -50,73 +48,56 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 public abstract class CommonCore {
 
 	/**
-	 * Stores legacy colors
-	 */
-	private static final Map<String, String> LEGACY_COLOR_MAP = new HashMap<>();
-
-	/**
-	 * The pattern for matching MiniMessage tags
-	 */
-	private static final Pattern MINIMESSAGE_PATTERN = Pattern.compile("<[!?#]?[a-z0-9_-]*>");
-
-	/**
 	 * Used to send messages to player without repetition, e.g. if they attempt to break a block
 	 * in a restricted region, we will not spam their chat with "You cannot break this block here" 120x times,
 	 * instead, we only send this message once per X seconds. This cache holds the last times when we
 	 * sent that message so we know how long to wait before the next one.
 	 */
-	private static final Map<Component, Long> TIMED_TELL_CACHE = new HashMap<>();
+	private static final Map<SimpleComponent, Long> TIMED_TELL_CACHE = new HashMap<>();
 
 	/**
 	 * See {@link #TIMED_TELL_CACHE}, but this is for sending messages to your console
 	 */
 	private static final Map<String, Long> TIMED_LOG_CACHE = new HashMap<>();
 
-	static {
-		LEGACY_COLOR_MAP.put("&0", "<black>");
-		LEGACY_COLOR_MAP.put("&1", "<dark_blue>");
-		LEGACY_COLOR_MAP.put("&2", "<dark_green>");
-		LEGACY_COLOR_MAP.put("&3", "<dark_aqua>");
-		LEGACY_COLOR_MAP.put("&4", "<dark_red>");
-		LEGACY_COLOR_MAP.put("&5", "<dark_purple>");
-		LEGACY_COLOR_MAP.put("&6", "<gold>");
-		LEGACY_COLOR_MAP.put("&7", "<gray>");
-		LEGACY_COLOR_MAP.put("&8", "<dark_gray>");
-		LEGACY_COLOR_MAP.put("&9", "<blue>");
-		LEGACY_COLOR_MAP.put("&a", "<green>");
-		LEGACY_COLOR_MAP.put("&b", "<aqua>");
-		LEGACY_COLOR_MAP.put("&c", "<red>");
-		LEGACY_COLOR_MAP.put("&d", "<light_purple>");
-		LEGACY_COLOR_MAP.put("&e", "<yellow>");
-		LEGACY_COLOR_MAP.put("&f", "<white>");
-		LEGACY_COLOR_MAP.put("&n", "<u>");
-		LEGACY_COLOR_MAP.put("&m", "<st>");
-		LEGACY_COLOR_MAP.put("&k", "<obf>");
-		LEGACY_COLOR_MAP.put("&o", "<i>");
-		LEGACY_COLOR_MAP.put("&l", "<b>");
-		LEGACY_COLOR_MAP.put("&r", "<r>");
-		LEGACY_COLOR_MAP.put("§0", "<black>");
-		LEGACY_COLOR_MAP.put("§1", "<dark_blue>");
-		LEGACY_COLOR_MAP.put("§2", "<dark_green>");
-		LEGACY_COLOR_MAP.put("§3", "<dark_aqua>");
-		LEGACY_COLOR_MAP.put("§4", "<dark_red>");
-		LEGACY_COLOR_MAP.put("§5", "<dark_purple>");
-		LEGACY_COLOR_MAP.put("§6", "<gold>");
-		LEGACY_COLOR_MAP.put("§7", "<gray>");
-		LEGACY_COLOR_MAP.put("§8", "<dark_gray>");
-		LEGACY_COLOR_MAP.put("§9", "<blue>");
-		LEGACY_COLOR_MAP.put("§a", "<green>");
-		LEGACY_COLOR_MAP.put("§b", "<aqua>");
-		LEGACY_COLOR_MAP.put("§c", "<red>");
-		LEGACY_COLOR_MAP.put("§d", "<light_purple>");
-		LEGACY_COLOR_MAP.put("§e", "<yellow>");
-		LEGACY_COLOR_MAP.put("§f", "<white>");
-		LEGACY_COLOR_MAP.put("§n", "<u>");
-		LEGACY_COLOR_MAP.put("§m", "<st>");
-		LEGACY_COLOR_MAP.put("§k", "<obf>");
-		LEGACY_COLOR_MAP.put("§o", "<i>");
-		LEGACY_COLOR_MAP.put("§l", "<b>");
-		LEGACY_COLOR_MAP.put("§r", "<r>");
+	// ------------------------------------------------------------------------------------------------------------
+	// Plugin prefixes
+	// ------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Removes valid Minecraft color codes from a message. Valid color codes are sequences of
+	 * '§' or '&' followed by a character in the ranges 0-9, a-f, A-F, k-o, K-O, or r/R.
+	 *
+	 * @param message The input message potentially containing Minecraft color codes.
+	 * @return A new string with valid color codes removed.
+	 */
+	public static String stripColorCodes(String message) {
+		final int messageLength = message.length();
+		final char[] strippedMessage = new char[messageLength];
+		int resultIndex = 0;
+
+		for (int i = 0; i < messageLength; i++) {
+			final char currentChar = message.charAt(i);
+
+			if ((currentChar == '§' || currentChar == '&') && i + 1 < messageLength) {
+				final char nextChar = message.charAt(i + 1);
+
+				if ((nextChar >= '0' && nextChar <= '9') ||
+						(nextChar >= 'a' && nextChar <= 'f') ||
+						(nextChar >= 'A' && nextChar <= 'F') ||
+						(nextChar >= 'k' && nextChar <= 'o') ||
+						(nextChar >= 'K' && nextChar <= 'O') ||
+						nextChar == 'r' || nextChar == 'R') {
+					i++; // Skip the valid color code
+
+				} else
+					strippedMessage[resultIndex++] = currentChar;
+
+			} else
+				strippedMessage[resultIndex++] = currentChar;
+		}
+
+		return new String(strippedMessage, 0, resultIndex);
 	}
 
 	// ------------------------------------------------------------------------------------------------------------
@@ -124,27 +105,10 @@ public abstract class CommonCore {
 	// ------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * The tell prefix applied on tell() methods, defaults to empty
-	 */
-	@Getter
-	private static Component tellPrefix = Component.empty();
-
-	/**
 	 * The log prefix applied on log() methods, defaults to [PluginName]
 	 */
 	@Getter
 	private static String logPrefix = "[" + Platform.getPlugin().getName() + "]";
-
-	/**
-	 * Set the tell prefix applied for messages to players from tell() methods
-	 * <p>
-	 * Colors with & letter are translated automatically.
-	 *
-	 * @param prefix
-	 */
-	public static void setTellPrefix(final Component prefix) {
-		tellPrefix = prefix == null ? Component.empty() : prefix;
-	}
 
 	/**
 	 * Set the log prefix applied for messages in the console from log() methods.
@@ -167,8 +131,8 @@ public abstract class CommonCore {
 	 * @param message
 	 * @param playerReplacement
 	 */
-	public static void broadcast(final Component message, final Audience playerReplacement) {
-		broadcast(message, Platform.resolveSenderName(playerReplacement));
+	public static void broadcast(final SimpleComponent message, final FoundationPlayer playerReplacement) {
+		broadcast(message, playerReplacement.getName());
 	}
 
 	/**
@@ -177,8 +141,8 @@ public abstract class CommonCore {
 	 * @param message
 	 * @param playerReplacement
 	 */
-	public static void broadcast(final Component message, final String playerReplacement) {
-		broadcast(message.replaceText(b -> b.matchLiteral("{player}").replacement(playerReplacement)));
+	public static void broadcast(final SimpleComponent message, final String playerReplacement) {
+		broadcast(message.replaceBracket("player", playerReplacement));
 	}
 
 	/**
@@ -186,14 +150,11 @@ public abstract class CommonCore {
 	 *
 	 * @param message
 	 */
-	public static void broadcast(final Component message) {
+	public static void broadcast(final SimpleComponent message) {
 		if (message != null) {
-			final String legacy = RemainCore.convertAdventureToLegacy(message);
+			message.send(Platform.getOnlinePlayers());
 
-			for (final Audience online : Platform.getOnlinePlayers())
-				tell(online, message);
-
-			log(legacy);
+			log(message.toLegacy());
 		}
 	}
 
@@ -203,9 +164,9 @@ public abstract class CommonCore {
 	 * @param recipients
 	 * @param message
 	 */
-	public static void broadcastTo(final Iterable<Audience> recipients, final Component message) {
-		for (final Audience recipient : recipients)
-			tell(recipient, message);
+	public static void broadcastTo(final Iterable<FoundationPlayer> recipients, final SimpleComponent message) {
+		for (final FoundationPlayer recipient : recipients)
+			recipient.sendMessage(message);
 	}
 
 	/**
@@ -215,17 +176,14 @@ public abstract class CommonCore {
 	 * @param message
 	 * @param log
 	 */
-	public static void broadcastWithPerm(final String showPermission, @NonNull final Component message, final boolean log) {
-		final String legacy = RemainCore.convertAdventureToLegacy(message);
-		final String plain = RemainCore.convertAdventureToPlain(message);
-
-		if (!plain.equals("none")) {
-			for (final Audience online : Platform.getOnlinePlayers())
-				if (Platform.hasPermission(online, showPermission))
+	public static void broadcastWithPerm(final String showPermission, @NonNull final SimpleComponent message, final boolean log) {
+		if (!message.isEmpty()) {
+			for (final FoundationPlayer online : Platform.getOnlinePlayers())
+				if (online.hasPermission(showPermission))
 					online.sendMessage(message);
 
 			if (log)
-				log(legacy);
+				log(message.toLegacy());
 		}
 	}
 
@@ -234,45 +192,26 @@ public abstract class CommonCore {
 	// ------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Sends a message to the player and saves the time when it was sent.
-	 * The delay in seconds is the delay between which we won't send player the
-	 * same message, in case you call this method again.
-	 *
-	 * Does not prepend the message with {@link #getTellPrefix()}
-	 *
-	 * @param delaySeconds
-	 * @param sender
-	 * @param message
-	 */
-	public static void tellTimedNoPrefix(final int delaySeconds, final Audience sender, final Component message) {
-		final Component oldPrefix = tellPrefix;
-		tellPrefix = Component.empty();
-
-		tellTimed(delaySeconds, sender, message);
-		tellPrefix = oldPrefix;
-	}
-
-	/**
-	 * Sends a message to the player and saves the time when it was sent.
-	 * The delay in seconds is the delay between which we won't send player the
-	 * same message, in case you call this method again.
-	 *
-	 * @param delaySeconds
-	 * @param sender
-	 * @param message
-	 */
-	public static void tellTimed(final int delaySeconds, final Audience sender, final Component message) {
+	* Sends a message to the player and saves the time when it was sent.
+	* The delay in seconds is the delay between which we won't send player the
+	* same message, in case you call this method again.
+	*
+	* @param delaySeconds
+	* @param sender
+	* @param message
+	*/
+	public static void tellTimed(final int delaySeconds, final FoundationPlayer sender, final SimpleComponent message) {
 
 		// No previous message stored, just tell the player now
 		if (!TIMED_TELL_CACHE.containsKey(message)) {
-			tell(sender, message);
+			sender.sendMessage(message);
 
 			TIMED_TELL_CACHE.put(message, TimeUtil.currentTimeSeconds());
 			return;
 		}
 
 		if (TimeUtil.currentTimeSeconds() - TIMED_TELL_CACHE.get(message) > delaySeconds) {
-			tell(sender, message);
+			sender.sendMessage(message);
 
 			TIMED_TELL_CACHE.put(message, TimeUtil.currentTimeSeconds());
 		}
@@ -285,93 +224,25 @@ public abstract class CommonCore {
 	 * @param delayTicks
 	 * @param message
 	 */
-	public static void tellLater(final int delayTicks, final Audience sender, final Component message) {
+	public static void tellLater(final int delayTicks, final FoundationPlayer sender, final String message) {
 		Platform.runTask(delayTicks, () -> {
-			if (Platform.isOnline(sender))
-				tell(sender, message);
+			if (sender.isOnline())
+				sender.sendMessage(message);
 		});
 	}
 
 	/**
-	 * Sends the sender a bunch of messages, colors & are supported
-	 * without {@link #getTellPrefix()} prefix
+	 * Sends a message to the sender with a given delay, colors & are supported
 	 *
 	 * @param sender
+	 * @param delayTicks
 	 * @param message
 	 */
-	public static void tellNoPrefix(final Audience sender, final Component message) {
-		final Component oldPrefix = tellPrefix;
-
-		tellPrefix = Component.empty();
-		tell(sender, message);
-		tellPrefix = oldPrefix;
-	}
-
-	/**
-	 * Sends a message to the audience. Supports {prefix} and {player} variable.
-	 * Supports \<actionbar\>, \<toast\>, \<title\>, \<bossbar\> and \<center\>.
-	 * Properly sends the message to the player if he is conversing with the server.
-	 *
-	 * @param audience
-	 * @param message
-	 */
-	public static void tell(@NonNull final Audience audience, Component message) {
-		if (message == null)
-			return;
-
-		final String plainMessage = RemainCore.convertAdventureToPlain(message);
-		final String plainTellPrefix = RemainCore.convertAdventureToPlain(tellPrefix);
-
-		// Support localization being none or empty
-		if (plainMessage.isEmpty() || "none".equals(plainMessage))
-			return;
-
-		// Add tell prefix if not present already
-		if (!plainTellPrefix.isEmpty() && !plainMessage.startsWith(plainTellPrefix) && !plainMessage.contains("{prefix}"))
-			message = tellPrefix.append(message);
-
-		// Replace player variable
-		message = message.replaceText(b -> b.matchLiteral("{player}").replacement(Platform.resolveSenderName(audience)));
-
-		if (plainMessage.startsWith("<actionbar>")) {
-			Platform.sendActionBar(audience, message.replaceText(b -> b.matchLiteral("<actionbar>").replacement("")));
-
-		} else if (plainMessage.startsWith("<toast>")) {
-			Platform.sendToast(audience, message.replaceText(b -> b.matchLiteral("<toast>").replacement("")));
-
-		} else if (plainMessage.startsWith("<title>")) {
-			final String stripped = RemainCore.convertAdventureToLegacy(message).replace("<title>", "").trim();
-
-			if (!stripped.isEmpty()) {
-				final String[] split = stripped.split("\\|");
-				final String title = split[0];
-				final String subtitle = split.length > 1 ? CommonCore.joinRange(1, split) : null;
-
-				RemainCore.sendTitle(audience, 0, 60, 0, RemainCore.convertLegacyToAdventure(title), RemainCore.convertLegacyToAdventure(subtitle));
-			}
-
-		} else if (plainMessage.startsWith("<bossbar>")) {
-			RemainCore.sendBossbarTimed(audience, message.replaceText(b -> b.matchLiteral("<bossbar>").replacement("")), 10, 1F);
-
-		} else {
-
-			if (plainMessage.startsWith("<center>")) {
-				final String centeredLegacyMessage = ChatUtil.center(RemainCore.convertAdventureToLegacy(message).replace("\\<center\\>(\\s|)", ""));
-
-				if (Platform.isConversing(audience))
-					Platform.sendConversingMessage(audience, colorize(centeredLegacyMessage));
-
-				else
-					audience.sendMessage(RemainCore.convertLegacyToAdventure(centeredLegacyMessage));
-
-			} else {
-				if (Platform.isConversing(audience))
-					Platform.sendConversingMessage(audience, message);
-
-				else
-					audience.sendMessage(message);
-			}
-		}
+	public static void tellLater(final int delayTicks, final FoundationPlayer sender, final SimpleComponent message) {
+		Platform.runTask(delayTicks, () -> {
+			if (sender.isOnline())
+				sender.sendMessage(message);
+		});
 	}
 
 	// ------------------------------------------------------------------------------------------------------------
@@ -423,139 +294,19 @@ public abstract class CommonCore {
 	}*/
 
 	/**
-	 * Replaces & color codes and MiniMessage tags in the message.
-	 * Also replaces {prefix}, {plugin_name} and {plugin_version} with their respective values.
-	 *
-	 * @param message
-	 * @return
-	 */
-	public static String colorizeLegacy(final String message) {
-		return RemainCore.convertAdventureToLegacy(colorize(message));
-	}
-
-	/**
 	 * See colorize(). This method is for an array of messages
 	 *
 	 * @param messages
 	 * @return
 	 */
-	public static Component[] colorizeList(String[] messages) {
+	/*public static Component[] colorizeList(String[] messages) {
 		final List<Component> components = new ArrayList<>();
-
+	
 		for (final String message : messages)
 			components.add(colorize(message));
-
+	
 		return components.toArray(new Component[components.size()]);
-	}
-
-	/**
-	 * Replaces & color codes and MiniMessage tags in the message.
-	 * Also replaces {prefix}, {plugin_name} and {plugin_version} with their respective values.
-	 *
-	 * @param message
-	 * @return
-	 */
-	public static Component colorize(String message) {
-		return colorize0(message)
-				.replaceText(b -> b.matchLiteral("{prefix}").replacement(tellPrefix))
-				.replaceText(b -> b.matchLiteral("{plugin_name}").replacement(Platform.getPlugin().getName()))
-				.replaceText(b -> b.matchLiteral("{plugin_version}").replacement(Platform.getPlugin().getVersion()));
-	}
-
-	/*
-	 * Replaces & color codes and MiniMessage tags in the message
-	 */
-	private static Component colorize0(String message) {
-		if (message == null || message.isEmpty())
-			return Component.empty();
-
-		// First, replace legacy & color codes
-		final StringBuilder result = new StringBuilder();
-
-		for (int i = 0; i < message.length(); i++) {
-			if (i + 1 < message.length() && (message.charAt(i) == '&' || message.charAt(i) == '§')) {
-				final String code = message.substring(i, i + 2);
-
-				if (LEGACY_COLOR_MAP.containsKey(code)) {
-					result.append(LEGACY_COLOR_MAP.get(code));
-					i++;
-
-					continue;
-				}
-
-				if (i + 7 < message.length() && message.charAt(i + 1) == '#' && message.substring(i + 2, i + 8).matches("[0-9a-fA-F]{6}")) {
-					result.append("<#").append(message.substring(i + 2, i + 8)).append(">");
-					i += 7;
-
-					continue;
-				}
-			}
-
-			result.append(message.charAt(i));
-		}
-
-		message = result.toString();
-		message = escapeInvalidTags(message);
-
-		Component mini;
-
-		try {
-			mini = MiniMessage.miniMessage().deserialize(message);
-
-		} catch (final Throwable t) {
-			Debugger.printStackTrace("Error parsing mini message tags in: " + message);
-
-			RemainCore.sneaky(t);
-			return null;
-		}
-
-		// if message ends with color code from the above map, add an empty component at the end with the same color
-		if (!message.endsWith(" "))
-			for (final String value : LEGACY_COLOR_MAP.values()) {
-				if (message.endsWith(value)) {
-					mini = mini.append(Component.text(" ").color(MiniMessage.miniMessage().deserialize(value).color()));
-
-					break;
-				}
-			}
-
-		return mini;
-	}
-
-	/*
-	 * Escapes invalid minimessage tags in the message.
-	 */
-	private static String escapeInvalidTags(String input) {
-		final Matcher matcher = Pattern.compile("<[^>]*>").matcher(input);
-		final StringBuffer buffer = new StringBuffer();
-
-		while (matcher.find()) {
-			String match = matcher.group(0);
-
-			if (!MINIMESSAGE_PATTERN.matcher(match).matches())
-				match = match.replace("<", "\\\\<").replace(">", "\\>");
-
-			matcher.appendReplacement(buffer, match);
-		}
-
-		matcher.appendTail(buffer);
-		return buffer.toString();
-	}
-
-	/**
-	 * Remove all & and § colors as well as MiniMessage tags.
-	 *
-	 * @param message
-	 * @return
-	 */
-	public static String removeColors(String message) {
-		if (message == null || message.isEmpty())
-			return message;
-
-		final Component component = CommonCore.colorize(message);
-
-		return RemainCore.convertAdventureToPlain(component);
-	}
+	}*/
 
 	/**
 	 * Returns if the message contains & or § color codes, or MiniMessage tags.
@@ -564,10 +315,7 @@ public abstract class CommonCore {
 	 * @return
 	 */
 	public static boolean hasColorTags(final String message) {
-		final Component component = CommonCore.colorize(message);
-		final String legacy = RemainCore.convertAdventureToLegacy(component).toLowerCase();
-
-		return Pattern.compile("§([0-9a-fk-or])").matcher(legacy).find();
+		return Pattern.compile("§([0-9a-fk-or])").matcher(SimpleComponent.fromMini(message).toLegacy().toLowerCase()).find();
 	}
 
 	// ------------------------------------------------------------------------------------------------------------
@@ -847,7 +595,7 @@ public abstract class CommonCore {
 	 * @param playerReplacement
 	 * @param command
 	 */
-	public static void dispatchCommand(Audience playerReplacement, @NonNull String command) {
+	public static void dispatchCommand(FoundationPlayer playerReplacement, @NonNull String command) {
 		if (command.isEmpty() || command.equalsIgnoreCase("none"))
 			return;
 
@@ -889,54 +637,16 @@ public abstract class CommonCore {
 
 		else {
 			command = command.startsWith("/") && !command.startsWith("//") ? command.substring(1) : command;
-			command = command.replace("{player}", playerReplacement == null ? "" : Platform.resolveSenderName(playerReplacement));
+			command = command.replace("{player}", playerReplacement == null ? "" : playerReplacement.getName());
 
 			// Workaround for JSON in tellraw getting HEX colors replaced
 			if (!command.startsWith("tellraw"))
-				command = colorizeLegacy(command);
-
-			checkBlockedCommands(playerReplacement, command);
+				command = SimpleComponent.fromMini(command).toLegacy();
 
 			final String finalCommand = command;
 
 			Platform.runTask(0, () -> Platform.dispatchConsoleCommand(finalCommand));
 		}
-	}
-
-	/**
-	 * Runs the given command (without /) as if the sender would type it, replacing {player} with his name
-	 *
-	 * @param sender
-	 * @param command
-	 */
-	public static void dispatchCommandAsPlayer(@NonNull final Audience sender, @NonNull String command) {
-		if (command.isEmpty() || command.equalsIgnoreCase("none"))
-			return;
-
-		// Remove trailing /
-		if (command.startsWith("/") && !command.startsWith("//"))
-			command = command.substring(1);
-
-		checkBlockedCommands(sender, command);
-
-		final String finalCommand = command;
-
-		Platform.runTask(0, () -> Platform.dispatchCommand(sender, colorizeLegacy(finalCommand.replace("{player}", Platform.resolveSenderName(sender)))));
-	}
-
-	/*
-	 * A pitiful attempt at blocking a few known commands which might be used for malicious intent.
-	 * We log the attempt to a file for manual review.
-	 */
-	private static boolean checkBlockedCommands(Audience sender, String command) {
-		if (command.startsWith("op ") || command.startsWith("minecraft:op ")) {
-			final String errorMessage = Platform.resolveSenderName(sender) + " tried to run blocked command: " + command;
-			FileUtil.writeFormatted("blocked-commands.log", errorMessage);
-
-			throw new FoException(errorMessage);
-		}
-
-		return false;
 	}
 
 	// ------------------------------------------------------------------------------------------------------------
@@ -1058,14 +768,11 @@ public abstract class CommonCore {
 			if (message.startsWith("[JSON]")) {
 				final String stripped = message.replaceFirst("\\[JSON\\]", "").trim();
 
-				if (!stripped.isEmpty()) {
-					final Component component = RemainCore.convertJsonToAdventure(stripped);
-
-					log(RemainCore.convertAdventureToLegacy(component));
-				}
+				if (!stripped.isEmpty())
+					Platform.logToConsole(SimpleComponent.fromJson(stripped).toLegacy());
 
 			} else {
-				message = colorizeLegacy(message);
+				message = SimpleComponent.fromMini(message).toLegacy();
 
 				for (final String part : message.split("\n")) {
 					final String log = (addLogPrefix && !logPrefix.isEmpty() ? logPrefix + " " : "") + getOrEmpty(part);
@@ -1192,7 +899,7 @@ public abstract class CommonCore {
 	 * @return
 	 */
 	public static Pattern compilePattern(String regex) {
-		regex = Platform.getPlugin().isRegexStrippingColors() ? CommonCore.removeColors(regex) : regex;
+		regex = Platform.getPlugin().isRegexStrippingColors() ? stripColorCodes(regex) : regex;
 		regex = Platform.getPlugin().isRegexStrippingAccents() ? ChatUtil.replaceDiacritic(regex) : regex;
 
 		if (Platform.getPlugin().isRegexCaseInsensitive())
@@ -1246,18 +953,17 @@ public abstract class CommonCore {
 	 * A convenience method for converting array of command senders into array of their names
 	 * except the given player
 	 *
-	 * @param <T>
 	 * @param array
 	 * @param nameToIgnore
 	 * @return
 	 */
-	public static <T extends Audience> String joinPlayersExcept(final Iterable<T> array, final String nameToIgnore) {
-		final Iterator<T> it = array.iterator();
+	public static String joinPlayersExcept(final Iterable<FoundationPlayer> array, final String nameToIgnore) {
+		final Iterator<FoundationPlayer> it = array.iterator();
 		String message = "";
 
 		while (it.hasNext()) {
-			final T next = it.next();
-			final String nextName = Platform.resolveSenderName(next);
+			final FoundationPlayer next = it.next();
+			final String nextName = next.getName();
 
 			if (!nameToIgnore.equals(nextName))
 				message += nextName + (it.hasNext() ? ", " : "");
@@ -1865,8 +1571,8 @@ public abstract class CommonCore {
 	 * @param components
 	 * @return
 	 */
-	public static String joinComponents(Component... components) {
-		return String.join("\n - ", convert(components, RemainCore::convertAdventureToLegacy));
+	public static String joinComponents(SimpleComponent... components) {
+		return String.join("\n - ", convert(components, SimpleComponent::toLegacy));
 	}
 
 	/**
@@ -1875,8 +1581,8 @@ public abstract class CommonCore {
 	 * @param components
 	 * @return
 	 */
-	public static String joinComponents(Iterable<Component> components) {
-		return String.join("\n - ", convert(components, RemainCore::convertAdventureToLegacy));
+	public static String joinComponents(Iterable<SimpleComponent> components) {
+		return String.join("\n - ", convert(components, SimpleComponent::toLegacy));
 	}
 
 	/**
@@ -2027,6 +1733,9 @@ public abstract class CommonCore {
 	 */
 	@SafeVarargs
 	public static <K, V> Map<K, V> newHashMap(Object... entries) {
+		if (entries == null || entries.length == 0)
+			return new HashMap<>();
+
 		if (entries.length % 2 != 0)
 			throw new FoException("Entries must be in pairs: " + Arrays.toString(entries));
 

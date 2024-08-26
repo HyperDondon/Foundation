@@ -12,15 +12,14 @@ import java.util.List;
 import javax.imageio.ImageIO;
 
 import org.mineacademy.fo.ValidCore;
+import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.remain.CompChatColor;
-import org.mineacademy.fo.remain.RemainCore;
 
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Setter;
-import net.kyori.adventure.audience.Audience;
 
 /**
  * Represents a way to show an image in chat
@@ -151,9 +150,9 @@ public final class ChatImage {
 	 *
 	 * @param sender
 	 */
-	public void send(Audience sender) {
+	public void send(FoundationPlayer sender) {
 		for (final String line : this.lines)
-			sender.sendMessage(Variables.replace(RemainCore.convertLegacyToAdventure(line), sender));
+			sender.sendMessage(Variables.replace(line, sender));
 	}
 
 	/* ------------------------------------------------------------------------------- */

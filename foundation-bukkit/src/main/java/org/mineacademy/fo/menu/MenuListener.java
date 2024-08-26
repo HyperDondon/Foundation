@@ -103,7 +103,7 @@ public final class MenuListener implements Listener {
 							menu.onMenuClick(player, slot, action, event.getClick(), cursor, slotItem, !allowed);
 
 					} catch (final Throwable t) {
-						Common.tell(player, SimpleLocalization.Menu.ERROR);
+						SimpleLocalization.Menu.ERROR.send(Platform.toPlayer(player));
 						player.closeInventory();
 
 						Common.error(t, "Error clicking in menu " + menu);
