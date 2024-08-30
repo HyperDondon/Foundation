@@ -24,6 +24,7 @@ import org.mineacademy.fo.settings.SimpleSettings;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class Common extends CommonCore {
@@ -34,7 +35,7 @@ public final class Common extends CommonCore {
 	 * @param player
 	 * @param messages
 	 */
-	public static void tell(Player player, String... messages) {
+	public static void tell(@NonNull Player player, String... messages) {
 		final FoundationPlayer sender = Platform.toPlayer(player);
 
 		for (final String message : messages)
@@ -49,9 +50,9 @@ public final class Common extends CommonCore {
 	 * @param sender
 	 * @param message
 	 */
-	/*public static void tell(@NonNull final CommandSender sender, SimpleComponent message) {
+	public static void tell(@NonNull final CommandSender sender, SimpleComponent message) {
 		Platform.toPlayer(sender).sendMessage(message);
-	}*/
+	}
 
 	/**
 	 * Sends a message to the audience. Supports {prefix} and {player} variable.
@@ -287,22 +288,22 @@ public final class Common extends CommonCore {
 	 */
 	/*public static Map<String, Object> getMapFromSection(@NonNull Object mapOrSection) {
 		mapOrSection = Remain.getRootOfSectionPathData(mapOrSection);
-
+	
 		final Map<String, Object> map = mapOrSection instanceof ConfigSection ? ((ConfigSection) mapOrSection).getValues(false)
 				: mapOrSection instanceof Map ? (Map<String, Object>) mapOrSection
 						: mapOrSection instanceof MemorySection ? ReflectionUtil.getFieldContent(mapOrSection, "map") : null;
-
+	
 		Valid.checkNotNull(map, "Unexpected " + mapOrSection.getClass().getSimpleName() + " '" + mapOrSection + "'. Must be Map or MemorySection! (Do not just send config name here, but the actual section with get('section'))");
-
+	
 		final Map<String, Object> copy = new LinkedHashMap<>();
-
+	
 		for (final Map.Entry<String, Object> entry : map.entrySet()) {
 			final String key = entry.getKey();
 			final Object value = entry.getValue();
-
+	
 			copy.put(key, Remain.getRootOfSectionPathData(value));
 		}
-
+	
 		return copy;
 	}*/
 

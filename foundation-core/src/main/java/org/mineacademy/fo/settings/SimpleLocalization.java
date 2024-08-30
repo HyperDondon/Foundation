@@ -50,6 +50,8 @@ public class SimpleLocalization extends YamlStaticConfig {
 				+ ".yml (For custom locale, set the Locale to 'en' and edit your English file instead)");
 
 		this.loadConfiguration(localePath);
+
+		Lang.setInstance(TEMPORARY_INSTANCE); // pass thru and make permanent, this is null right after this call
 	}
 
 	// --------------------------------------------------------------------
@@ -193,7 +195,7 @@ public class SimpleLocalization extends YamlStaticConfig {
 		/**
 		 * The message shown when there is a fatal error running this command
 		 */
-		public static SimpleComponent ERROR = SimpleComponent.fromMini("<red><bold>Oups! <red>The command failed :( Check the console and report the error.");
+		public static SimpleComponent ERROR = SimpleComponent.fromMini("<red><bold>Oups! <reset><red>The command failed :( Check the console and report the error.");
 
 		/**
 		 * The message shown when player has no permissions to view ANY subcommands in group command.

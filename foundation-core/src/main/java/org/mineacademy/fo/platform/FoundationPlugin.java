@@ -53,6 +53,4 @@ public interface FoundationPlugin {
 	void registerCommand(SimpleCommandCore instance);
 
 	void setDefaultProxyListener(ProxyListener instance);
-
-	Object getAdventure();
 }

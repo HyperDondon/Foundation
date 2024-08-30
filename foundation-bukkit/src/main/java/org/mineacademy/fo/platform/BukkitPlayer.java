@@ -15,7 +15,6 @@ import org.mineacademy.fo.Common;
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.MinecraftVersion;
 import org.mineacademy.fo.MinecraftVersion.V;
-import org.mineacademy.fo.ReflectionUtil;
 import org.mineacademy.fo.model.CompToastStyle;
 import org.mineacademy.fo.model.DiscordSender;
 import org.mineacademy.fo.model.SimpleComponent;
@@ -37,6 +36,7 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.title.Title;
 import net.kyori.adventure.title.Title.Times;
 import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 
 @Getter
 public class BukkitPlayer extends FoundationPlayer {
@@ -97,37 +97,22 @@ public class BukkitPlayer extends FoundationPlayer {
 			this.sender.sendActionBar(message);
 
 		} catch (final NoSuchMethodError err) {
-
-			if (MinecraftVersion.olderThan(V.v1_7))
+			if (MinecraftVersion.olderThan(V.v1_8))
 				this.sender.sendMessage(message.toLegacy());
 
-			else if (MinecraftVersion.equals(V.v1_7) && Remain.getChatMessageConstructor() != null && this.isPlayer) {
-				try {
-					final Object iChatBaseComponent = Remain.convertAdventureToIChatBase(message.toAdventure());
-					final Object packet;
-					final byte type = 2;
-
-					if (MinecraftVersion.atLeast(V.v1_12)) {
-						final Class<?> chatMessageTypeEnum = ReflectionUtil.getNMSClass("ChatMessageType", "net.minecraft.network.chat.ChatMessageType");
-
-						packet = Remain.getChatMessageConstructor().newInstance(iChatBaseComponent, chatMessageTypeEnum.getMethod("a", byte.class).invoke(null, type));
-
-					} else
-						packet = Remain.getChatMessageConstructor().newInstance(iChatBaseComponent, type);
-
-					Remain.sendPacket((Player) sender, packet);
-
-				} catch (final ReflectiveOperationException ex) {
-					CommonCore.error(ex, "Failed to send action bar to " + ((Player) sender).getName() + ", message: " + message);
-				}
-
-			} else {
+			else {
 				if (this.isPlayer)
-					this.player.spigot().sendMessage(ChatMessageType.ACTION_BAR, Remain.convertAdventureToBungee(message.toAdventure()));
+					try {
+						this.player.spigot().sendMessage(ChatMessageType.ACTION_BAR, Remain.convertAdventureToBungee(message.toAdventure()));
+
+					} catch (final NoSuchMethodError ex) {
+						Remain.sendActionBarLegacyPacket(player, message);
+					}
 				else
 					this.sender.sendMessage(message.toLegacy());
 			}
 		}
+
 	}
 
 	@Override
@@ -181,10 +166,12 @@ public class BukkitPlayer extends FoundationPlayer {
 			this.sender.sendPlayerListHeaderAndFooter(header, footer);
 
 		} catch (final NoSuchMethodError err) {
-			if (this.isPlayer)
+			if (this.isPlayer && MinecraftVersion.atLeast(V.v1_8))
 				try {
 					this.player.setPlayerListHeaderFooter(header.toLegacy(), footer.toLegacy());
+
 				} catch (final NoSuchMethodError ex) {
+					Remain.sendTablistLegacyPacket(player, header, footer);
 				}
 		}
 	}
@@ -196,42 +183,16 @@ public class BukkitPlayer extends FoundationPlayer {
 
 		} catch (final NoSuchMethodError err) {
 
-			if (!this.isPlayer) {
+			if (!this.isPlayer || MinecraftVersion.olderThan(V.v1_8)) {
 				this.sendMessage(title);
 				this.sendMessage(subtitle);
+
 			} else {
 				try {
 					this.player.sendTitle(title.toLegacy(), subtitle.toLegacy(), fadeIn, stay, fadeOut);
+
 				} catch (final NoSuchMethodError ex) {
-
-					try {
-						if (titleConstructor == null)
-							return;
-
-						resetTitleLegacy(player);
-
-						if (titleTimesConstructor != null) {
-							final Object packet = titleTimesConstructor.newInstance(fadeIn, stay, fadeOut);
-
-							Remain.sendPacket(player, packet);
-						}
-
-						if (title != null) {
-							final Object chatTitle = serializeText(title);
-							final Object packet = titleConstructor.newInstance(enumTitle, chatTitle);
-
-							Remain.sendPacket(player, packet);
-						}
-
-						if (subtitle != null) {
-							final Object chatSubtitle = serializeText(subtitle);
-							final Object packet = subtitleConstructor.newInstance(enumSubtitle, chatSubtitle);
-
-							Remain.sendPacket(player, packet);
-						}
-					} catch (final ReflectiveOperationException ex) {
-						throw new ReflectionException(ex, "Error sending title to: " + player.getName() + ", title: " + title + ", subtitle: " + subtitle);
-					}
+					Remain.sendTitleLegacyPacket(this.player, fadeIn, stay, fadeOut, title, subtitle);
 				}
 
 			}
@@ -240,8 +201,18 @@ public class BukkitPlayer extends FoundationPlayer {
 
 	@Override
 	public void resetTitle() {
-		// TODO Auto-generated method stub
+		try {
+			this.sender.resetTitle();
 
+		} catch (final NoSuchMethodError err) {
+			if (this.isPlayer && MinecraftVersion.atLeast(V.v1_8))
+				Remain.resetTitleLegacy(this.player);
+		}
+	}
+
+	@Override
+	public void sendMessage(String message) {
+		this.sender.sendMessage(message);
 	}
 
 	@Override
@@ -254,66 +225,81 @@ public class BukkitPlayer extends FoundationPlayer {
 			return;
 		}
 
-		// Try native first for best performance
+		if (!this.isPlayer) {
+			this.sender.sendMessage(LegacyComponentSerializer.legacySection().serialize(component));
+
+			return;
+		}
+
+		final long nanoTime = System.nanoTime();
+
 		try {
-			if (MinecraftVersion.olderThan(V.v1_8))
-				throw new NoSuchMethodError(); // Adventure has a bug in 1.7.10, use our own handler
+			if (MinecraftVersion.olderThan(V.v1_16)) {
 
-			this.sender.sendMessage(component);
+				if (MinecraftVersion.olderThan(V.v1_7))
+					this.sender.sendMessage(LegacyComponentSerializer.legacySection().serialize(component));
 
-		} catch (final NoSuchMethodError err) {
-			final boolean is1_7 = MinecraftVersion.equals(V.v1_7);
-			final String legacy = LegacyComponentSerializer.legacySection().serialize(component);
+				else if (MinecraftVersion.equals(V.v1_7)) {
+					final List<String> jsonMessages = new ArrayList<>();
+					final JsonElement element = GsonComponentSerializer.gson().serializeToTree(component);
 
-			if (MinecraftVersion.olderThan(V.v1_7) || !this.isPlayer) {
-				this.sender.sendMessage(legacy);
+					if (element.isJsonNull() || element.isJsonPrimitive())
+						jsonMessages.add(element.toString());
 
-				return;
-			}
+					else {
+						final JsonObject json = element.getAsJsonObject();
 
-			final List<String> jsonMessages = new ArrayList<>();
-			final JsonObject json = GsonComponentSerializer.gson().serializeToTree(component).getAsJsonObject();
+						// Convert incompatible hover event
+						this.convertHoverEvent(json);
 
-			if (is1_7) {
+						// SPECIAL CASE: If we have {RIADOK} in the message, split the message by it and send each part separately
+						// Used in ChatControl to patch 1.7.10 not recognizing the \n newline symbol
+						if (json.toString().contains("{RIADOK}")) {
+							int count = 0;
+							final Map<Integer, JsonArray> split = new HashMap<>();
 
-				// Convert incompatible hover event
-				this.convertHoverEvent(json);
+							for (final JsonElement extraElement : json.get("extra").getAsJsonArray()) {
+								final JsonObject extra = extraElement.getAsJsonObject();
+								final String text = extra.get("text").getAsString();
 
-				// SPECIAL CASE: If we have {RIADOK} in the message, split the message by it and send each part separately
-				// Used in ChatControl to patch 1.7.10 not recognizing the \n newline symbol
-				if (json.toString().contains("{RIADOK}")) {
-					int count = 0;
-					final Map<Integer, JsonArray> split = new HashMap<>();
+								if (text.equals("{RIADOK}"))
+									count++;
+								else {
+									if (!split.containsKey(count))
+										split.put(count, new JsonArray());
 
-					for (final JsonElement extraElement : json.get("extra").getAsJsonArray()) {
-						final JsonObject extra = extraElement.getAsJsonObject();
-						final String text = extra.get("text").getAsString();
+									split.get(count).add(extra);
+								}
+							}
 
-						if (text.equals("{RIADOK}"))
-							count++;
-						else {
-							if (!split.containsKey(count))
-								split.put(count, new JsonArray());
+							for (final JsonArray array : split.values())
+								jsonMessages.add(array.toString());
 
-							split.get(count).add(extra);
-						}
+						} else
+							jsonMessages.add(json.toString());
 					}
 
-					for (final JsonArray array : split.values())
-						jsonMessages.add(array.toString());
+					for (final String jsonMessage : jsonMessages)
+						if (jsonMessage != null)
+							try {
+								this.player.spigot().sendMessage(Remain.convertJsonToBungee(jsonMessage));
 
+							} catch (final NoSuchMethodError ex) {
+								this.sender.sendMessage(TextComponent.toLegacyText(Remain.convertJsonToBungee(jsonMessage)));
+							}
 				} else
-					jsonMessages.add(json.toString());
+					try {
+						this.player.spigot().sendMessage(Remain.convertAdventureToBungee(component));
+
+					} catch (final NoSuchMethodError ex) {
+						this.sender.sendMessage(TextComponent.toLegacyText(Remain.convertAdventureToBungee(component)));
+					}
+
 			} else
-				jsonMessages.add(json.toString());
+				this.sender.sendMessage(component);
 
-			for (final String jsonMessage : jsonMessages)
-				try {
-					this.player.spigot().sendMessage(Remain.convertJsonToBungee(jsonMessage));
-
-				} catch (final NoSuchMethodError ex) {
-					this.sender.sendMessage(legacy);
-				}
+		} finally {
+			System.out.println("sendRawMessage took " + String.format("%.3f", (System.nanoTime() - nanoTime) / 1_000_000D) + "ms");
 		}
 	}
 

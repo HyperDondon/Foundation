@@ -10,6 +10,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.MerchantRecipe;
 import org.bukkit.metadata.MetadataValue;
+import org.mineacademy.fo.MinecraftVersion;
+import org.mineacademy.fo.MinecraftVersion.V;
 import org.mineacademy.fo.annotation.AutoRegister;
 import org.mineacademy.fo.constants.FoConstants;
 import org.mineacademy.fo.enchant.SimpleEnchantment;
@@ -95,6 +97,7 @@ final class FoundationPacketListener extends PacketListener {
 						ItemStack item = itemStacks.get(j);
 						if (item != null && !CompMaterial.isAir(item.getType()) && !CompItemFlag.HIDE_ENCHANTS.has(item)) {
 							item = SimpleEnchantment.addEnchantmentLores(item);
+
 							if (item == null)
 								continue;
 
@@ -132,28 +135,35 @@ final class FoundationPacketListener extends PacketListener {
 			}
 		});
 
-		this.addSendingListener(PacketType.Play.Server.OPEN_WINDOW_MERCHANT, event -> {
-			final PacketContainer packet = event.getPacket();
-			final List<MerchantRecipe> ls = packet.getMerchantRecipeLists().read(0);
-			boolean changed = false;
-			for (int i = 0; i < ls.size(); i++) {
-				final MerchantRecipe recipe = ls.get(i);
-				ItemStack item = recipe.getResult();
-				if (!CompMaterial.isAir(item.getType()) && !CompItemFlag.HIDE_ENCHANTS.has(item)) {
-					item = SimpleEnchantment.addEnchantmentLores(item);
-					if (item == null) {
-						continue;
-					}
+		if (MinecraftVersion.atLeast(V.v1_9))
+			this.addSendingListener(PacketType.Play.Server.OPEN_WINDOW_MERCHANT, event -> {
+				final PacketContainer packet = event.getPacket();
+				final List<MerchantRecipe> ls = packet.getMerchantRecipeLists().read(0);
 
-					final MerchantRecipe newRecipe = new MerchantRecipe(item, recipe.getUses(), recipe.getMaxUses(), recipe.hasExperienceReward(), recipe.getVillagerExperience(), recipe.getPriceMultiplier());
-					newRecipe.setIngredients(recipe.getIngredients());
-					ls.set(i, newRecipe);
-					changed = true;
+				boolean changed = false;
+
+				for (int i = 0; i < ls.size(); i++) {
+					final MerchantRecipe recipe = ls.get(i);
+					ItemStack item = recipe.getResult();
+
+					if (!CompMaterial.isAir(item.getType()) && !CompItemFlag.HIDE_ENCHANTS.has(item)) {
+						item = SimpleEnchantment.addEnchantmentLores(item);
+
+						if (item == null)
+							continue;
+
+						final MerchantRecipe newRecipe = new MerchantRecipe(item, recipe.getUses(), recipe.getMaxUses(), recipe.hasExperienceReward(), recipe.getVillagerExperience(), recipe.getPriceMultiplier());
+						newRecipe.setIngredients(recipe.getIngredients());
+
+						ls.set(i, newRecipe);
+
+						changed = true;
+					}
 				}
-			}
-			if (changed)
-				packet.getMerchantRecipeLists().write(0, ls);
-		});
+
+				if (changed)
+					packet.getMerchantRecipeLists().write(0, ls);
+			});
 
 		// "Fix" a Folia bug preventing Conversation API from working properly
 		if (Remain.isFolia())

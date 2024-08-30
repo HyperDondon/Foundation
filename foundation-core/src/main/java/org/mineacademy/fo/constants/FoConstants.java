@@ -2,6 +2,7 @@ package org.mineacademy.fo.constants;
 
 import java.util.UUID;
 
+import org.mineacademy.fo.model.ChatPaginator;
 import org.mineacademy.fo.platform.Platform;
 
 /**
@@ -30,5 +31,10 @@ public final class FoConstants {
 		 * We use this in the sign update packet listener to handle sign updating.
 		 */
 		public static final String METADATA_OPENED_SIGN = Platform.getPlugin().getName() + "_OpenedSign";
+
+		/**
+		 * An internal metadata tag the player gets when we use {@link ChatPaginator}
+		 */
+		public static final String PAGINATION = "FoPages_" + Platform.getPlugin().getName();
 	}
 }

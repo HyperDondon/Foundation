@@ -1657,72 +1657,6 @@ public abstract class CommonCore {
 	}
 
 	/**
-	 * Creates a new {@link HashMap} with a single key-value pair.
-	 *
-	 * @param <A>        the type of the key.
-	 * @param <B>        the type of the value.
-	 * @param firstKey   the key of the first entry.
-	 * @param firstValue the value of the first entry.
-	 * @param secondKey
-	 * @param secondValue
-	 * @return a new {@link HashMap} with the specified key-value pair.
-	 */
-	public static <A, B> Map<A, B> newHashMap(final A firstKey, final B firstValue, final A secondKey, final B secondValue) {
-		final Map<A, B> map = new HashMap<>();
-		map.put(firstKey, firstValue);
-		map.put(secondKey, secondValue);
-
-		return map;
-	}
-
-	/**
-	 * Creates a new {@link HashMap} with a single key-value pair.
-	 *
-	 * @param <A>        the type of the key.
-	 * @param <B>        the type of the value.
-	 * @param firstKey   the key of the first entry.
-	 * @param firstValue the value of the first entry.
-	 * @param secondKey
-	 * @param secondValue
-	 * @param thirdKey
-	 * @param thirdValue
-	 * @return a new {@link HashMap} with the specified key-value pair.
-	 */
-	public static <A, B> Map<A, B> newHashMap(final A firstKey, final B firstValue, final A secondKey, final B secondValue, final A thirdKey, final B thirdValue) {
-		final Map<A, B> map = new HashMap<>();
-		map.put(firstKey, firstValue);
-		map.put(secondKey, secondValue);
-		map.put(thirdKey, thirdValue);
-
-		return map;
-	}
-
-	/**
-	 * Creates a new {@link HashMap} with a single key-value pair.
-	 *
-	 * @param <A>        the type of the key.
-	 * @param <B>        the type of the value.
-	 * @param firstKey   the key of the first entry.
-	 * @param firstValue the value of the first entry.
-	 * @param secondKey
-	 * @param secondValue
-	 * @param thirdKey
-	 * @param thirdValue
-	 * @param forthKey
-	 * @param forthValue
-	 * @return a new {@link HashMap} with the specified key-value pair.
-	 */
-	public static <A, B> Map<A, B> newHashMap(final A firstKey, final B firstValue, final A secondKey, final B secondValue, final A thirdKey, final B thirdValue, final A forthKey, final B forthValue) {
-		final Map<A, B> map = new HashMap<>();
-		map.put(firstKey, firstValue);
-		map.put(secondKey, secondValue);
-		map.put(thirdKey, thirdValue);
-		map.put(forthKey, forthValue);
-
-		return map;
-	}
-
-	/**
 	 * Create a map with multiple keys and values.
 	 * The keys and values must be in pairs and of the same type.
 	 *
@@ -1732,25 +1666,26 @@ public abstract class CommonCore {
 	 * @return
 	 */
 	@SafeVarargs
-	public static <K, V> Map<K, V> newHashMap(Object... entries) {
+	public static <K> Map<K, Object> newHashMap(Object... entries) {
 		if (entries == null || entries.length == 0)
 			return new HashMap<>();
 
 		if (entries.length % 2 != 0)
 			throw new FoException("Entries must be in pairs: " + Arrays.toString(entries));
 
-		final Map<K, V> map = new HashMap<>();
+		final Map<K, Object> map = new HashMap<>();
 
 		final K firstKey = (K) entries[0];
-		final V firstValue = (V) entries[1];
 
 		for (int i = 0; i < entries.length; i += 2) {
 			final K key = (K) entries[i];
-			final V value = (V) entries[i + 1];
+			final Object value = entries[i + 1];
 
-			if (!firstKey.getClass().isInstance(key) || !firstValue.getClass().isInstance(value))
-				throw new FoException("All keys and values must be of the same type. Got " + key.getClass() + " and "
-						+ value.getClass() + " instead. Expected " + firstKey.getClass() + " and " + firstValue.getClass());
+			if (key == null)
+				throw new FoException("Key cannot be null at index " + i);
+
+			if (!firstKey.getClass().isInstance(key))
+				throw new FoException("All keys must be a String. Got " + key.getClass().getSimpleName());
 
 			map.put(key, value);
 		}

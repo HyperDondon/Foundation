@@ -185,7 +185,7 @@ public final class OutgoingMessage extends Message {
 		try {
 			out.writeUTF(channel);
 			out.writeUTF(senderUid.toString());
-			out.writeUTF(Platform.getServerName());
+			out.writeUTF(Platform.getCustomServerName());
 			out.writeUTF(message.toString());
 
 		} catch (final IOException ex) {

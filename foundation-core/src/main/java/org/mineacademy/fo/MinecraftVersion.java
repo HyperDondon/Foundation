@@ -166,7 +166,7 @@ public final class MinecraftVersion {
 		serverVersion = Platform.getNMSVersion();
 
 		// Find the Bukkit version
-		final String bukkitVersion = Platform.getServerVersion(); // 1.20.6-R0.1-SNAPSHOT
+		final String bukkitVersion = Platform.getPlatformVersion(); // 1.20.6-R0.1-SNAPSHOT
 		final String versionString = bukkitVersion.split("\\-")[0]; // 1.20.6
 		final String[] versions = versionString.split("\\.");
 		ValidCore.checkBoolean(versions.length == 2 || versions.length == 3, "Foundation cannot read Bukkit version '" + bukkitVersion + "', expected '-' and a version number");

@@ -22,7 +22,6 @@ import org.mineacademy.fo.exception.InvalidCommandArgException;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.SimpleTime;
 import org.mineacademy.fo.model.Task;
-import org.mineacademy.fo.model.Variables;
 import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.settings.SimpleLocalization;
@@ -482,7 +481,8 @@ public abstract class SimpleCommandCore {
 			final SimpleComponent component = SimpleComponent.empty();
 
 			for (int i = 0; i < legacy.length; i++) {
-				component.appendMini(legacy[i]);
+				final String line = legacy[i];
+				component.appendMini(line == null ? "" : this.colorizeUsage(line));
 
 				if (i < legacy.length - 1)
 					component.appendNewLine();
@@ -567,7 +567,7 @@ public abstract class SimpleCommandCore {
 	 * message for player if the condition does not meet
 	 */
 	/*public final void checkArgs(final boolean condition) {
-		this.checkBoolean(condition, SimpleLocalization.Commands.INVALID_ARGUMENT.replaceBracket("label", this.getLabel())));
+		this.checkBoolean(condition, SimpleLocalization.Commands.INVALID_ARGUMENT);
 	}*/
 
 	/**
@@ -1085,7 +1085,7 @@ public abstract class SimpleCommandCore {
 	 * message for player
 	 */
 	protected final void returnInvalidArgs() {
-		this.tellError(SimpleLocalization.Commands.INVALID_ARGUMENT.replaceBracket("label", this.getLabel()));
+		this.tellError(SimpleLocalization.Commands.INVALID_ARGUMENT);
 
 		throw new CommandException();
 	}
@@ -1173,7 +1173,7 @@ public abstract class SimpleCommandCore {
 
 		// Replace {X} with arguments
 		for (int i = 0; i < this.args.length; i++)
-			component.replaceBracket(String.valueOf(i), CommonCore.getOrEmpty(this.args[i]));
+			component = component.replaceBracket(String.valueOf(i), CommonCore.getOrEmpty(this.args[i]));
 
 		return component;
 	}
@@ -1190,13 +1190,10 @@ public abstract class SimpleCommandCore {
 	 * @return
 	 */
 	private SimpleComponent replaceBasicPlaceholders0(SimpleComponent component) {
-
 		component = component.replaceBracket("label", this.label);
 		component = component.replaceBracket("current_label", CommonCore.getOrDefault(this.currentLabel, this.label));
 		component = component.replaceBracket("sublabel", this instanceof SimpleSubCommandCore ? ((SimpleSubCommandCore) this).getSublabels()[0] : this.args != null && this.args.length > 0 ? this.args[0] : this.label);
 		component = component.replaceBracket("current_sublabel", this instanceof SimpleSubCommandCore ? ((SimpleSubCommandCore) this).getSublabel() : this.args != null && this.args.length > 0 ? this.args[0] : this.label);
-
-		component = Variables.replace(component, this.sender);
 
 		return component;
 	}
@@ -1571,7 +1568,19 @@ public abstract class SimpleCommandCore {
 	 * @param usage
 	 */
 	protected final void setUsage(String usage) {
-		this.setUsage(SimpleComponent.fromMini(usage));
+		this.setUsage(SimpleComponent.fromMini(this.colorizeUsage(usage)));
+	}
+
+	/*
+	 * Replace <> and [] with appropriate color codes
+	 */
+	private String colorizeUsage(String usage) {
+		return usage
+				.replace("<", "&6<")
+				.replace(">", "&6>&f")
+				.replace("[", "&2[")
+				.replace("]", "&2]&f")
+				.replaceAll(" \\-([a-zA-Z])", " &3-$1");
 	}
 
 	/**

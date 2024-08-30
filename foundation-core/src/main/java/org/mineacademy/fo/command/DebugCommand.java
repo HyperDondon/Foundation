@@ -77,7 +77,7 @@ public final class DebugCommand extends SimpleSubCommandCore {
 				" Debug log generated " + TimeUtil.getFormattedDate(),
 				CommonCore.consoleLine(),
 				"Plugin: " + Platform.getPlugin().getName(),
-				"Server Version: " + Platform.getServerVersion(),
+				"Server Version: " + Platform.getPlatformVersion(),
 				"Java: " + System.getProperty("java.version") + " (" + System.getProperty("java.specification.vendor") + "/" + System.getProperty("java.vm.vendor") + ")",
 				"OS: " + System.getProperty("os.name") + " " + System.getProperty("os.version"),
 				"Players Online: " + Platform.getOnlinePlayers().size(),

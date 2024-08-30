@@ -354,7 +354,7 @@ public class MessengerCore {
 	 * Internal method to perform the sending
 	 */
 	private static void tell(final FoundationPlayer sender, final SimpleComponent prefix, @NonNull String message) {
-		prefix.appendMini(message).send(sender);
+		tell(sender, prefix, SimpleComponent.fromMini(message));
 	}
 
 	/*

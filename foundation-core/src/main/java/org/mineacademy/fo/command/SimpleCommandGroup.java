@@ -253,8 +253,8 @@ public abstract class SimpleCommandGroup {
 		final List<SimpleComponent> messages = new ArrayList<>();
 
 		messages.add(SimpleComponent.fromAndCharacter("&8" + CommonCore.chatLineSmooth()));
-		messages.add(SimpleComponent.fromMini(this.getHeaderPrefix() + "  " + Platform.getPlugin().getName() + "&r" + this.getTrademark() + " &7" + Platform.getPlugin().getVersion()));
-		messages.add(SimpleComponent.empty());
+		messages.add(SimpleComponent.fromMini("   " + this.getHeaderPrefix() + Platform.getPlugin().getName() + "&r" + this.getTrademark() + " &7" + Platform.getPlugin().getVersion()));
+		messages.add(SimpleComponent.newLine());
 
 		final String authors = Platform.getPlugin().getAuthors();
 
@@ -268,7 +268,6 @@ public abstract class SimpleCommandGroup {
 
 		messages.add(SimpleComponent.fromAndCharacter("&8" + CommonCore.chatLineSmooth()));
 
-		// join with new line
 		return messages;
 	}
 
@@ -445,6 +444,7 @@ public abstract class SimpleCommandGroup {
 
 			// Building help can be heavy so do it off of the main thread
 			Platform.runTaskAsync(0, () -> {
+				
 				if (SimpleCommandGroup.this.subcommands.isEmpty()) {
 					this.tellError(SimpleLocalization.Commands.HEADER_NO_SUBCOMMANDS);
 
@@ -454,17 +454,16 @@ public abstract class SimpleCommandGroup {
 				final List<SimpleComponent> lines = new ArrayList<>();
 
 				final boolean atLeast17 = MinecraftVersion.atLeast(V.v1_7);
-				final boolean atLeast13 = MinecraftVersion.atLeast(V.v1_13);
+				final boolean atLeast113 = MinecraftVersion.atLeast(V.v1_13);
 
 				for (final SimpleSubCommandCore subcommand : SimpleCommandGroup.this.subcommands) {
-					System.out.print("Subcommand: " + subcommand.getSublabel() + ", can show in help ? " + subcommand.showInHelp() + ", has permission '" + subcommand.getPermission() + "'? " + this.hasPerm(subcommand.getPermission()));
-
+					
 					if (subcommand.showInHelp() && this.hasPerm(subcommand.getPermission())) {
 
 						// Simulate the sender to enable permission checks in getMultilineHelp for ex.
 						subcommand.sender = this.sender;
 
-						final SimpleComponent usage = this.colorizeUsage(subcommand.getUsage());
+						final SimpleComponent usage = subcommand.getUsage();
 						final SimpleComponent desc = subcommand.getDescription() == null ? SimpleComponent.empty() : subcommand.getDescription();
 						final SimpleComponent plainMessage = Variables.replace(SimpleCommandGroup.this.getSubcommandDescription(), null, CommonCore.newHashMap(
 								"label", this.getLabel(),
@@ -485,7 +484,7 @@ public abstract class SimpleCommandGroup {
 							if (subcommand.getMultilineUsage() != null) {
 								hover.add(SimpleLocalization.Commands.HELP_TOOLTIP_USAGE);
 
-								hover.add(SimpleComponent.fromAndCharacter("&f").append(this.replacePlaceholders(this.colorizeUsage(subcommand.getMultilineUsage().replaceBracket("sublabel", subcommand.getSublabel())))));
+								hover.add(SimpleComponent.fromAndCharacter("&f").append(this.replacePlaceholders(subcommand.getMultilineUsage())));
 
 							} else
 								hover.add(this.replacePlaceholders(SimpleLocalization.Commands.HELP_TOOLTIP_USAGE.append(usage.isEmpty() ? SimpleComponent.fromPlain(command) : usage)));
@@ -493,13 +492,14 @@ public abstract class SimpleCommandGroup {
 							final List<String> hoverShortened = new ArrayList<>();
 
 							for (final SimpleComponent hoverLine : hover)
-								for (final String hoverLineSplit : CommonCore.split(hoverLine.toLegacy(), atLeast13 ? 100 : 55))
+								for (final String hoverLineSplit : CommonCore.split(hoverLine.toLegacy(), atLeast113 ? 100 : 55))
 									hoverShortened.add(hoverLineSplit);
 
 							plainMessage.onHover(hoverShortened);
 							plainMessage.onClickSuggestCmd("/" + this.getLabel() + " " + subcommand.getSublabel());
 						}
 
+						System.out.println("Adding: " + plainMessage);
 						lines.add(plainMessage);
 					}
 				}
@@ -521,22 +521,6 @@ public abstract class SimpleCommandGroup {
 				} else
 					this.tellError(SimpleLocalization.Commands.HEADER_NO_SUBCOMMANDS_PERMISSION);
 			});
-		}
-
-		/**
-		 * Replaces some usage parameters such as <> or [] with colorized brackets
-		 *
-		 * @param message
-		 * @return
-		 */
-		private SimpleComponent colorizeUsage(final SimpleComponent message) {
-			return message == null ? SimpleComponent.empty()
-					: message
-							.replaceLiteral("<", "&6<")
-							.replaceLiteral(">", "&6>&f")
-							.replaceLiteral("[", "&2[")
-							.replaceLiteral("]", "&2]&f");
-			//.replaceAll(" \\-([a-zA-Z])", " &3-$1");
 		}
 
 		/**

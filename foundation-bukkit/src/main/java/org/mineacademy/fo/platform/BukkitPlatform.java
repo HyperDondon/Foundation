@@ -82,19 +82,19 @@ public class BukkitPlatform extends FoundationPlatform {
 		/*public SimpleComponent onHover(@NonNull final ItemStack item) {
 			if (CompMaterial.isAir(item.getType()))
 				return this.onHover("Air");
-
+		
 			try {
 				this.modifyLastComponent(component -> component.hoverEvent(Remain.convertItemStackToHoverEvent(item)));
-
+		
 			} catch (final Throwable t) {
 				CommonCore.logFramed(
 						"Error parsing ItemStack to simple component!",
 						"Item: " + item,
 						"Error: " + t.getMessage());
-
+		
 				t.printStackTrace();
 			}
-
+		
 			return this;
 		}*/
 
@@ -347,8 +347,13 @@ public class BukkitPlatform extends FoundationPlatform {
 	}
 
 	@Override
-	public String getServerVersion() {
+	public String getPlatformVersion() {
 		return Bukkit.getBukkitVersion();
+	}
+
+	@Override
+	public String getPlatformName() {
+		return Bukkit.getName();
 	}
 
 	@Override

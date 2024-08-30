@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
 
 import org.mineacademy.fo.ChatUtil;
 import org.mineacademy.fo.CommonCore;
@@ -43,7 +42,7 @@ public final class ChatPaginator {
 	 * receives the given page and return true if sending was successful.
 	 */
 	@Setter
-	private static BiFunction<FoundationPlayer, Integer, Boolean> customSender;
+	private static Sender customSender;
 
 	/**
 	 * How many lines per page? Maximum on screen is 20 minus header and footer.
@@ -248,7 +247,7 @@ public final class ChatPaginator {
 	}
 
 	private void send0(FoundationPlayer audience, int page) {
-		if (customSender != null && customSender.apply(audience, page)) {
+		if (customSender != null && customSender.send(audience, page, this)) {
 			// Successful sending upstream
 
 		} else {
@@ -266,11 +265,7 @@ public final class ChatPaginator {
 		}
 	}
 
-	public static String getPageNbtTag() {
-		return "FoPages_" + Platform.getPlugin().getName();
-	}
-
 	public interface Sender {
-		void send(FoundationPlayer audience, int page);
+		boolean send(FoundationPlayer audience, int page, ChatPaginator instance);
 	}
 }

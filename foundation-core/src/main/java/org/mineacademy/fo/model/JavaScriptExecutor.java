@@ -202,7 +202,7 @@ public final class JavaScriptExecutor {
 				replacements = new HashMap<>();
 
 			// Mohist is unsupported
-			if (Platform.getServerName().equals("Mohist"))
+			if (Platform.getPlatformName().equals("Mohist"))
 				return null;
 
 			// Speed up

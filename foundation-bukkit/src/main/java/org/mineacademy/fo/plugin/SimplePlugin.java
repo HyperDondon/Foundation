@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.BiFunction;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
@@ -28,6 +27,7 @@ import org.mineacademy.fo.command.RegionCommand;
 import org.mineacademy.fo.command.SimpleCommandCore;
 import org.mineacademy.fo.command.SimpleCommandGroup;
 import org.mineacademy.fo.command.SimpleSubCommand;
+import org.mineacademy.fo.constants.FoConstants;
 import org.mineacademy.fo.debug.Debugger;
 import org.mineacademy.fo.enchant.SimpleEnchantment;
 import org.mineacademy.fo.event.SimpleListener;
@@ -59,7 +59,6 @@ import org.mineacademy.fo.proxy.message.OutgoingMessage;
 import org.mineacademy.fo.region.DiskRegion;
 import org.mineacademy.fo.remain.CompMetadata;
 import org.mineacademy.fo.remain.Remain;
-import org.mineacademy.fo.settings.Lang;
 
 import net.kyori.adventure.text.Component;
 
@@ -237,23 +236,14 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 				Common.log(this.getStartupLogo());
 
 			// Add a handler for chat paginator
-			ChatPaginator.setCustomSender(new BiFunction<FoundationPlayer, Integer, Boolean>() {
+			ChatPaginator.setCustomSender(new ChatPaginator.Sender() {
 
 				@Override
-				public Boolean apply(FoundationPlayer audience, Integer page) {
-
+				public boolean send(FoundationPlayer audience, int page, ChatPaginator instance) {
 					if (audience.isPlayer()) {
 						final Player player = ((BukkitPlayer) audience).getPlayer();
 
-						// Remove old FoPages to prevent conflicts when two or more plugins use Foundation shaded
-						if (player.hasMetadata("FoPages")) {
-							final org.bukkit.plugin.Plugin owningPlugin = player.getMetadata("FoPages").get(0).getOwningPlugin();
-
-							player.removeMetadata("FoPages", owningPlugin);
-						}
-
-						player.setMetadata("FoPages", new FixedMetadataValue(SimplePlugin.getInstance(), SimplePlugin.this.getName()));
-						player.setMetadata(ChatPaginator.getPageNbtTag(), new FixedMetadataValue(SimplePlugin.getInstance(), this));
+						player.setMetadata(FoConstants.NBT.PAGINATION, new FixedMetadataValue(SimplePlugin.getInstance(), instance));
 
 						player.chat("/#flp " + page);
 						return true;
@@ -672,8 +662,6 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 			AutoRegisterScanner.reloadSettings();
 
 			this.onPluginReload();
-
-			Lang.reloadLang();
 
 			if (this.areRegionsEnabled())
 				DiskRegion.loadRegions();

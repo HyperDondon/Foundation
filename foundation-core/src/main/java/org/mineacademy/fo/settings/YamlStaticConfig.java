@@ -41,7 +41,7 @@ public abstract class YamlStaticConfig {
 	/**
 	 * The temporary {@link YamlConfig} instance we store here to get values from
 	 */
-	private static YamlConfig TEMPORARY_INSTANCE;
+	static YamlConfig TEMPORARY_INSTANCE;
 
 	/**
 	 * Internal use only: Create a new {@link YamlConfig} instance and link it to load fields via

@@ -249,7 +249,6 @@ public abstract class FileConfig {
 	 * @param path
 	 * @return
 	 */
-	// TODO see serializeutil whether we deserialize using minimessage
 	public final SimpleComponent getComponent(final String path) {
 		return this.getComponent(path, null);
 	}
@@ -263,7 +262,9 @@ public abstract class FileConfig {
 	 * @return
 	 */
 	public final SimpleComponent getComponent(final String path, final SimpleComponent def) {
-		return this.get(path, SimpleComponent.class, def);
+		final String string = this.getString(path);
+
+		return string != null ? SimpleComponent.fromMini(string) : def;
 	}
 
 	/**
@@ -456,7 +457,7 @@ public abstract class FileConfig {
 	public final TitleHelper getTitle(final String path, final String defTitle, final String defSubtitle) {
 		final String title = this.getString(path + ".Title", defTitle);
 		final String subtitle = this.getString(path + ".Subtitle", defSubtitle);
-
+	
 		return title != null ? new TitleHelper(title, subtitle) : null;
 	}*/
 
@@ -961,6 +962,10 @@ public abstract class FileConfig {
 	 */
 	public final void set(String path, Object value) {
 		path = this.buildPathPrefix(path);
+
+		if (value instanceof SimpleComponent)
+			value = ((SimpleComponent) value).toMini();
+
 		value = SerializeUtilCore.serialize(Mode.YAML, value);
 
 		this.section.store(path, value);
@@ -1455,34 +1460,34 @@ public abstract class FileConfig {
 	 * A helper to automatically send titles and subtitles to players.
 	 */
 	/*public static final class TitleHelper {
-
+	
 		private final String title, subtitle;
-
+	
 		private TitleHelper(final String title, final String subtitle) {
 			this.title = CommonCore.colorize(title);
 			this.subtitle = CommonCore.colorize(subtitle);
 		}
-
+	
 		public void playLong(final Player player) {
 			this.playLong(player, null);
 		}
-
+	
 		public void playLong(final Player player, final Function<String, String> replacer) {
 			this.play(player, 5, 4 * 20, 15, replacer);
 		}
-
+	
 		public void playShort(final Player player) {
 			this.playShort(player, null);
 		}
-
+	
 		public void playShort(final Player player, final Function<String, String> replacer) {
 			this.play(player, 3, 2 * 20, 5, replacer);
 		}
-
+	
 		public void play(final Player player, final int fadeIn, final int stay, final int fadeOut) {
 			this.play(player, fadeIn, stay, fadeOut, null);
 		}
-
+	
 		public void play(final Player player, final int fadeIn, final int stay, final int fadeOut, Function<String, String> replacer) {
 			RemainCore.sendTitle(player, fadeIn, stay, fadeOut, replacer != null ? replacer.apply(this.title) : this.title, replacer != null ? replacer.apply(this.subtitle) : this.subtitle);
 		}

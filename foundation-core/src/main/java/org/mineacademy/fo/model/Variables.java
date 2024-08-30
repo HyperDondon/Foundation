@@ -106,7 +106,9 @@ public final class Variables {
 		final Matcher matcher = BRACKET_VARIABLE_PATTERN.matcher(message);
 
 		while (matcher.find()) {
-			final String variable = matcher.group();
+			String variable = matcher.group();
+			variable = variable.substring(1, variable.length() - 1);
+
 			final SimpleComponent value = replaceVariable(variable, sender, replacements);
 
 			if (value != null)
@@ -122,10 +124,12 @@ public final class Variables {
 
 	public static SimpleComponent replace(SimpleComponent message, FoundationPlayer sender, Map<String, Object> replacements) {
 		return message.replaceMatch(BRACKET_VARIABLE_PATTERN, (result, input) -> {
-			final String variable = result.group();
+			String variable = result.group();
+			variable = variable.substring(1, variable.length() - 1);
+
 			final SimpleComponent value = replaceVariable(variable, sender, replacements);
 
-			return value == null ? SimpleComponent.empty() : message;
+			return value == null ? SimpleComponent.fromPlain(variable) : value;
 		});
 	}
 
@@ -185,8 +189,8 @@ public final class Variables {
 		replacements.put("announce", MessengerCore.getAnnouncePrefix());
 		replacements.put("announce_prefix", MessengerCore.getAnnouncePrefix());
 		replacements.put("prefix_announce", MessengerCore.getAnnouncePrefix());
-		replacements.put("server", Platform.hasServerName() ? Platform.getServerName() : "");
-		replacements.put("server_name", Platform.hasServerName() ? Platform.getServerName() : "");
+		replacements.put("server", Platform.hasCustomServerName() ? Platform.getCustomServerName() : "");
+		replacements.put("server_name", Platform.hasCustomServerName() ? Platform.getCustomServerName() : "");
 		replacements.put("date", TimeUtil.getFormattedDate());
 		replacements.put("date_short", TimeUtil.getFormattedDateShort());
 		replacements.put("date_month", TimeUtil.getFormattedDateMonth());
@@ -194,22 +198,24 @@ public final class Variables {
 		replacements.put("chat_line_smooth", CommonCore.chatLineSmooth());
 		replacements.put("label", Platform.getPlugin().getDefaultCommandGroup() != null ? Platform.getPlugin().getDefaultCommandGroup().getLabel() : SimpleLocalization.NONE);
 
-		replacements.put("sender_is_discord", audience.isDiscord() ? "true" : "false");
-		replacements.put("sender_is_console", audience.isConsole() ? "true" : "false");
+		replacements.put("sender_is_discord", audience != null && audience.isDiscord() ? "true" : "false");
+		replacements.put("sender_is_console", audience != null && audience.isConsole() ? "true" : "false");
 
 		// Replace JavaScript variables
-		if (replaceScript) {
-			final Variable javascriptKey = Variable.findVariable(variable, Variable.Type.FORMAT);
+		if (audience != null) {
+			if (replaceScript) {
+				final Variable javascriptKey = Variable.findVariable(variable, Variable.Type.FORMAT);
 
-			if (javascriptKey != null) {
-				final SimpleComponent value = javascriptKey.build(audience, replacements);
+				if (javascriptKey != null) {
+					final SimpleComponent value = javascriptKey.build(audience, replacements);
 
-				replacements.put(variable, value);
+					replacements.put(variable, value);
+				}
 			}
-		}
 
-		if (collector != null)
-			collector.addVariables(variable, audience, replacements);
+			if (collector != null)
+				collector.addVariables(variable, audience, replacements);
+		}
 
 		// Finally, do replace
 		for (final Map.Entry<String, Object> entry : replacements.entrySet()) {

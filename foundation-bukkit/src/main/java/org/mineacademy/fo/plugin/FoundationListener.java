@@ -21,6 +21,7 @@ import org.mineacademy.fo.Messenger;
 import org.mineacademy.fo.MinecraftVersion;
 import org.mineacademy.fo.MinecraftVersion.V;
 import org.mineacademy.fo.ReflectionUtilCore;
+import org.mineacademy.fo.constants.FoConstants;
 import org.mineacademy.fo.model.ChatPaginator;
 import org.mineacademy.fo.model.HookManager;
 import org.mineacademy.fo.model.SimpleComponent;
@@ -74,17 +75,11 @@ final class FoundationListener implements Listener {
 			return;
 		}
 
-		final String nbtPageTag = ChatPaginator.getPageNbtTag();
-
-		if (!player.hasMetadata(nbtPageTag)) {
+		if (!player.hasMetadata(FoConstants.NBT.PAGINATION)) {
 			event.setCancelled(true);
 
 			return;
 		}
-
-		// Prevent shading issue with multiple plugins having Foundation shaded
-		if (player.hasMetadata("FoPages") && !player.getMetadata("FoPages").get(0).asString().equals(SimplePlugin.getInstance().getName()))
-			return;
 
 		final String numberRaw = args[1];
 		int page = -1;
@@ -99,7 +94,7 @@ final class FoundationListener implements Listener {
 			return;
 		}
 
-		final ChatPaginator chatPages = (ChatPaginator) player.getMetadata(nbtPageTag).get(0).value();
+		final ChatPaginator chatPages = (ChatPaginator) player.getMetadata(FoConstants.NBT.PAGINATION).get(0).value();
 		final Map<Integer, List<? extends SimpleComponent>> pages = chatPages.getPages();
 
 		// Remove empty lines

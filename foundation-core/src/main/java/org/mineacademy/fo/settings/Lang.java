@@ -6,11 +6,12 @@ import java.util.List;
 import java.util.Map;
 
 import org.mineacademy.fo.CommonCore;
-import org.mineacademy.fo.MessengerCore;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.Variables;
+
+import lombok.NoArgsConstructor;
 
 /**
  * Represents the new way of internalization, with the greatest
@@ -19,90 +20,13 @@ import org.mineacademy.fo.model.Variables;
  * The downside is that keys are not checked during load so any
  * malformed or missing key will fail later and may be unnoticed.
  */
-public final class Lang extends YamlConfig {
+@NoArgsConstructor
+public final class Lang {
 
 	/**
 	 * The instance of this class
 	 */
-	private static Lang instance;
-
-	/*
-	 * Create a new instance and load the given file
-	 */
-	private Lang(String filePath) {
-		this.loadConfiguration(filePath);
-	}
-
-	// ------------------------------------------------------------------------------------------------------------
-	// Static access - loading
-	// ------------------------------------------------------------------------------------------------------------
-
-	/**
-	 * Call this method in your onPluginPreStart to use the Lang features,
-	 * the Lang class will use the given file in the path below:
-	 * "localization/messages_" + SimpleSettings.LOCALE_PREFIX ".yml"
-	 */
-	public static void init() {
-		init("localization/messages_" + SimpleSettings.LOCALE_PREFIX + ".yml");
-	}
-
-	/**
-	 * Call this method in your onPluginPreStart to use the Lang features,
-	 * the Lang class will use the given file in the given path.
-	 *
-	 * Example: "localization/messages_" + SimpleSettings.LOCALE_PREFIX ".yml"
-	 * @param filePath
-	 */
-	public static void init(String filePath) {
-		instance = new Lang(filePath);
-
-		loadPrefixes();
-	}
-
-	/**
-	 * Reload the language file
-	 *
-	 * @deprecated internal use only
-	 */
-	@Deprecated
-	public static void reloadLang() {
-		if (instance != null) {
-			instance.reload();
-			instance.save();
-
-			loadPrefixes();
-		}
-	}
-
-	/**
-	 * Reload prefixes from the locale file
-	 *
-	 * @deprecated internal use only
-	 */
-	@Deprecated
-	public static void loadPrefixes() {
-		if (instance != null) {
-			if (instance.isSet("Prefix.Announce"))
-				MessengerCore.setAnnouncePrefix(Lang.of("Prefix.Announce"));
-
-			if (instance.isSet("Prefix.Error"))
-				MessengerCore.setErrorPrefix(Lang.of("Prefix.Error"));
-
-			if (instance.isSet("Prefix.Info"))
-				MessengerCore.setInfoPrefix(Lang.of("Prefix.Info"));
-
-			if (instance.isSet("Prefix.Question"))
-				MessengerCore.setQuestionPrefix(Lang.of("Prefix.Question"));
-
-			if (instance.isSet("Prefix.Success"))
-				MessengerCore.setSuccessPrefix(Lang.of("Prefix.Success"));
-
-			if (instance.isSet("Prefix.Warn"))
-				MessengerCore.setWarnPrefix(Lang.of("Prefix.Warn"));
-
-			instance.save();
-		}
-	}
+	private static YamlConfig instance;
 
 	// ------------------------------------------------------------------------------------------------------------
 	// Getters
@@ -286,9 +210,15 @@ public final class Lang extends YamlConfig {
 	 * Check if this class has properly been initialized
 	 */
 	private static void checkInit() {
+		ValidCore.checkNotNull(instance, "Cannot use Lang class without localization/messages_x.yml file in your src/main/resources folder!");
+	}
 
-		// Automatically load when not loaded in onPluginPreStart
-		if (instance == null)
-			init();
+	/*
+	 * Sets the lang instance from the other instance we borrow from SimpleLocalization
+	 */
+	static void setInstance(YamlConfig instance) {
+		instance.setPathPrefix(null);
+
+		Lang.instance = instance;
 	}
 }

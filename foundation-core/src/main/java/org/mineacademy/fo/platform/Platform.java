@@ -48,24 +48,28 @@ public final class Platform {
 		return getInstance().getPluginFile(pluginName);
 	}
 
-	public static String getServerName() {
-		return getInstance().getServerName();
+	public static String getCustomServerName() {
+		return getInstance().getCustomServerName();
 	}
 
-	public static boolean hasServerName() {
-		return getInstance().hasServerName();
+	public static boolean hasCustomServerName() {
+		return getInstance().hasCustomServerName();
 	}
 
-	public static void setServerName(String serverName) {
-		getInstance().setServerName(serverName);
+	public static void setCustomServerName(String serverName) {
+		getInstance().setCustomServerName(serverName);
 	}
 
 	public static List<String> getServerPlugins() {
 		return getInstance().getServerPlugins();
 	}
 
-	public static String getServerVersion() {
-		return getInstance().getServerVersion();
+	public static String getPlatformVersion() {
+		return getInstance().getPlatformVersion();
+	}
+
+	public static String getPlatformName() {
+		return getInstance().getPlatformName();
 	}
 
 	public static boolean hasHexColorSupport() {

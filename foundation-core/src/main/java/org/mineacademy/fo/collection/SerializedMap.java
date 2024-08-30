@@ -1148,7 +1148,7 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 			throw new FoException("Expected JSONObject, got " + (parsed != null ? parsed.getClass() : "unknown class") + " from raw JSON input: " + json);
 
 		} catch (final Throwable secondThrowable) {
-			CommonCore.throwError(secondThrowable, "Failed to parse JSON from " + json);
+			CommonCore.throwError(secondThrowable, "SerializedMap failed to parse JSON from " + json);
 
 			return null;
 		}

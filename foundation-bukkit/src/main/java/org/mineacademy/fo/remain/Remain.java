@@ -65,6 +65,7 @@ import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Score;
 import org.mineacademy.fo.Common;
+import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.ItemUtil;
 import org.mineacademy.fo.MathUtil;
 import org.mineacademy.fo.MinecraftVersion;
@@ -162,8 +163,15 @@ public final class Remain extends RemainCore {
 	/**
 	 * Fields related to sending interactive chat components on legacy MC
 	 */
-	@Getter
 	private static Constructor<?> chatMessageConstructor;
+	private static Object enumTitle;
+	private static Object enumSubtitle;
+	private static Object enumReset;
+	private static Constructor<?> tabConstructor;
+	private static Constructor<?> titleTimesConstructor;
+	private static Constructor<?> titleConstructor;
+	private static Constructor<?> subtitleConstructor;
+	private static Constructor<?> resetTitleConstructor;
 
 	/**
 	 * Fields related to Folia
@@ -374,20 +382,40 @@ public final class Remain extends RemainCore {
 			hasPlayerOpenSignMethod = false;
 		}
 
-		if (MinecraftVersion.newerThan(V.v1_6) && MinecraftVersion.olderThan(V.v1_12))
-			try {
-				final Class<?> chatBaseComponent = ReflectionUtil.getNMSClass("IChatBaseComponent", "N/A");
-				final Class<?> chatPacket = ReflectionUtil.getNMSClass("PacketPlayOutChat", "N/A");
+		if (MinecraftVersion.newerThan(V.v1_6)) {
+			final Class<?> chatBaseComponent = ReflectionUtil.getNMSClass("IChatBaseComponent", "N/A");
 
-				if (MinecraftVersion.newerThan(V.v1_11))
-					chatMessageConstructor = chatPacket.getConstructor(chatBaseComponent, ReflectionUtil.getNMSClass("ChatMessageType", "N/A"));
-				else
-					chatMessageConstructor = MinecraftVersion.newerThan(V.v1_7) ? chatPacket.getConstructor(chatBaseComponent, byte.class) : chatPacket.getConstructor(chatBaseComponent);
+			try {
+				if (MinecraftVersion.olderThan(V.v1_12)) {
+					final Class<?> chatPacket = ReflectionUtil.getNMSClass("PacketPlayOutChat", "N/A");
+
+					if (MinecraftVersion.newerThan(V.v1_11))
+						chatMessageConstructor = chatPacket.getConstructor(chatBaseComponent, ReflectionUtil.getNMSClass("ChatMessageType", "N/A"));
+					else
+						chatMessageConstructor = MinecraftVersion.newerThan(V.v1_7) ? chatPacket.getConstructor(chatBaseComponent, byte.class) : chatPacket.getConstructor(chatBaseComponent);
+				}
+
+				if (MinecraftVersion.newerThan(V.v1_7)) {
+					final Class<?> titlePacket = ReflectionUtil.getNMSClass("PacketPlayOutTitle", "N/A");
+					final Class<?> enumAction = titlePacket.getDeclaredClasses()[0];
+
+					enumTitle = enumAction.getField("TITLE").get(null);
+					enumSubtitle = enumAction.getField("SUBTITLE").get(null);
+					enumReset = enumAction.getField("RESET").get(null);
+
+					tabConstructor = ReflectionUtil.getNMSClass("PacketPlayOutPlayerListHeaderFooter", "N/A").getConstructor(chatBaseComponent);
+
+					titleTimesConstructor = titlePacket.getConstructor(int.class, int.class, int.class);
+					titleConstructor = titlePacket.getConstructor(enumAction, chatBaseComponent);
+					subtitleConstructor = titlePacket.getConstructor(enumAction, chatBaseComponent);
+					resetTitleConstructor = titlePacket.getConstructor(enumAction, chatBaseComponent);
+				}
 
 			} catch (final ReflectiveOperationException ex) {
 				if (!isThermos)
 					Common.error(ex, "Unable to setup chat internals");
 			}
+		}
 
 		if (isFolia) {
 			foliaScheduler = ReflectionUtil.invoke("getGlobalRegionScheduler", org.bukkit.Bukkit.getServer());
@@ -2101,6 +2129,123 @@ public final class Remain extends RemainCore {
 
 			// Not using Paper or old MC version
 			return false;
+		}
+	}
+
+	/**
+	 * Sends an actionbar packet to the player
+	 * Used for legacy MC versions.
+	 * 
+	 * @param player
+	 * @param message
+	 */
+	public static void sendActionBarLegacyPacket(Player player, SimpleComponent message) {
+		Valid.checkBoolean(MinecraftVersion.olderThan(V.v1_13), "This method is unsupported on MC 1.13 and later");
+
+		try {
+			final Object iChatBaseComponent = convertJsonToIChatBase(message.toAdventureJson());
+			final Object packet;
+			final byte type = 2;
+
+			if (MinecraftVersion.atLeast(V.v1_12)) {
+				final Class<?> chatMessageTypeEnum = ReflectionUtil.getNMSClass("ChatMessageType", "net.minecraft.network.chat.ChatMessageType");
+
+				packet = chatMessageConstructor.newInstance(iChatBaseComponent, chatMessageTypeEnum.getMethod("a", byte.class).invoke(null, type));
+
+			} else
+				packet = chatMessageConstructor.newInstance(iChatBaseComponent, type);
+
+			Remain.sendPacket(player, packet);
+
+		} catch (final ReflectiveOperationException ex) {
+			CommonCore.error(ex, "Failed to send action bar to " + player.getName() + ", message: " + message);
+		}
+	}
+
+	public static void sendTitleLegacyPacket(Player player, int fadeIn, int stay, int fadeOut, SimpleComponent title, SimpleComponent subtitle) {
+		Valid.checkBoolean(MinecraftVersion.olderThan(V.v1_13), "This method is unsupported on MC 1.13 and later");
+
+		try {
+			if (titleConstructor == null)
+				return;
+
+			resetTitleLegacy(player);
+
+			if (titleTimesConstructor != null) {
+				final Object packet = titleTimesConstructor.newInstance(fadeIn, stay, fadeOut);
+
+				Remain.sendPacket(player, packet);
+			}
+
+			if (title != null) {
+				final Object chatTitle = convertJsonToIChatBase(title.toAdventureJson());
+				final Object packet = titleConstructor.newInstance(enumTitle, chatTitle);
+
+				Remain.sendPacket(player, packet);
+			}
+
+			if (subtitle != null) {
+				final Object chatSubtitle = convertJsonToIChatBase(subtitle.toAdventureJson());
+				final Object packet = subtitleConstructor.newInstance(enumSubtitle, chatSubtitle);
+
+				Remain.sendPacket(player, packet);
+			}
+
+		} catch (final ReflectiveOperationException ex) {
+			CommonCore.error(ex, "Error sending title to: " + player.getName() + ", title: " + title + ", subtitle: " + subtitle);
+		}
+	}
+
+	/**
+	 * Reset title for player
+	 *
+	 * @param player
+	 */
+	public static void resetTitleLegacy(final Player player) {
+		Valid.checkBoolean(MinecraftVersion.olderThan(V.v1_13), "This method is unsupported on MC 1.13 and later");
+
+		try {
+			if (resetTitleConstructor == null)
+				return;
+
+			final Object packet = resetTitleConstructor.newInstance(enumReset, null);
+
+			Remain.sendPacket(player, packet);
+
+		} catch (final ReflectiveOperationException ex) {
+			CommonCore.error(ex, "Error resetting title to: " + player.getName());
+		}
+	}
+
+	/**
+	 * Send tablist to player
+	 *
+	 * @param player
+	 * @param header
+	 * @param footer
+	 */
+	public static void sendTablistLegacyPacket(final Player player, final SimpleComponent header, final SimpleComponent footer) {
+		Valid.checkBoolean(MinecraftVersion.olderThan(V.v1_13), "This method is unsupported on MC 1.13 and later");
+
+		try {
+			if (tabConstructor == null)
+				return;
+
+			final Object headerIChatBase = convertJsonToIChatBase(header.toAdventureJson());
+			final Object packet = tabConstructor.newInstance(headerIChatBase);
+
+			if (footer != null) {
+				final Object footerIChatBase = convertJsonToIChatBase(footer.toAdventureJson());
+
+				final Field f = packet.getClass().getDeclaredField("b"); // setFooter
+				f.setAccessible(true);
+				f.set(packet, footerIChatBase);
+			}
+
+			Remain.sendPacket(player, packet);
+
+		} catch (final ReflectiveOperationException ex) {
+			Common.error(ex, "Failed to send tablist to " + player.getName() + ", title: " + header + " " + footer);
 		}
 	}
 

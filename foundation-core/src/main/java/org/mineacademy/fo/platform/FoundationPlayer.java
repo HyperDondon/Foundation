@@ -112,14 +112,6 @@ public abstract class FoundationPlayer {
 	 */
 	public abstract void sendTablist(final SimpleComponent header, final SimpleComponent footer);
 
-	/*public final void sendMessage(SimpleComponent component) {
-		component.send(this);
-	}*/
-
-	public final void sendMessage(String message) {
-		this.sendMessage(SimpleComponent.fromMini(message));
-	}
-
 	public final void sendMessage(SimpleComponent component) {
 		if (component == null)
 			return;
@@ -165,6 +157,8 @@ public abstract class FoundationPlayer {
 	}
 
 	public abstract void sendRawMessage(Component component);
+
+	public abstract void sendMessage(String message);
 
 	/**
 	 * Sends a JSON component message to the player

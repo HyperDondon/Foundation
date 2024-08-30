@@ -91,7 +91,7 @@ public abstract class SerializeUtilCore {
 			return ((RangedSimpleTime) object).toLine();
 
 		else if (object instanceof SimpleComponent)
-			return ((SimpleComponent) object).serialize().toJson();
+			throw new FoException("Serializing SimpleComponent is ambigious, if you want to serialize it literally, call SimpleComponent#serialize().toJson(), otherwise call SimpleComponent#toAdventureJson()");
 
 		else if (object instanceof Path)
 			throw new FoException("Cannot serialize Path " + object + ", did you mean to convert it into a name?");
@@ -341,7 +341,8 @@ public abstract class SerializeUtilCore {
 			object = UUID.fromString(object.toString());
 
 		else if (classOf == SimpleComponent.class)
-			object = SimpleComponent.deserialize(SerializedMap.fromJson(object.toString()));
+			throw new FoException("Deserializing SimpleComponet is ambigious, if you want to deserialize it literally from JSON, "
+					+ "use SimpleComponent$deserialize(SerializedMap.fromJson(object.toString())), otherwise call SimpleComponent#fromMini");
 
 		else if (Enum.class.isAssignableFrom(classOf)) {
 			object = ReflectionUtilCore.lookupEnum((Class<Enum>) classOf, object.toString());

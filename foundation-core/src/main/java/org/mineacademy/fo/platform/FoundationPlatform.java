@@ -14,7 +14,7 @@ public abstract class FoundationPlatform {
 	/**
 	 * The server-name from server.properties (is lacking on new Minecraft version so we have to readd it back)
 	 */
-	private String serverName;
+	private String customServerName;
 
 	// ----------------------------------------------------------------------------------------------------
 	// Server name
@@ -25,11 +25,11 @@ public abstract class FoundationPlatform {
 	 *
 	 * @return
 	 */
-	public final String getServerName() { // TODO check where this is called, was Bukkit#getName
-		if (!this.hasServerName())
-			throw new IllegalArgumentException("Please instruct developer of " + Platform.getPlugin().getName() + " to call Remain#setServerName");
+	public final String getCustomServerName() { // TODO check where this is called, was Bukkit#getName
+		if (!this.hasCustomServerName())
+			throw new IllegalArgumentException("Please instruct developer of " + Platform.getPlugin().getName() + " to call Platform#setCustomServerName");
 
-		return this.serverName;
+		return this.customServerName;
 	}
 
 	/**
@@ -37,8 +37,8 @@ public abstract class FoundationPlatform {
 	 *
 	 * @return
 	 */
-	public final boolean hasServerName() {
-		return this.serverName != null && !this.serverName.isEmpty() && !this.serverName.contains("mineacademy.org/server-properties") && !"undefined".equals(this.serverName) && !"Unknown Server".equals(this.serverName);
+	public final boolean hasCustomServerName() {
+		return this.customServerName != null && !this.customServerName.isEmpty() && !this.customServerName.contains("mineacademy.org/server-properties") && !"undefined".equals(this.customServerName) && !"Unknown Server".equals(this.customServerName);
 	}
 
 	/**
@@ -46,8 +46,8 @@ public abstract class FoundationPlatform {
 	 *
 	 * @param serverName
 	 */
-	public final void setServerName(String serverName) {
-		this.serverName = serverName;
+	public final void setCustomServerName(String serverName) {
+		this.customServerName = serverName;
 	}
 
 	public abstract FoundationPlayer toPlayer(Object sender);
@@ -68,7 +68,9 @@ public abstract class FoundationPlatform {
 
 	public abstract List<String> getServerPlugins();
 
-	public abstract String getServerVersion();
+	public abstract String getPlatformVersion();
+
+	public abstract String getPlatformName();
 
 	public abstract String getNMSVersion();
 

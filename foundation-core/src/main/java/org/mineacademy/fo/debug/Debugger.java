@@ -121,7 +121,7 @@ public final class Debugger {
 	 * @param messages
 	 */
 	public static void saveError(Throwable throwable, String... messages) {
-		final String systemInfo = "Running " + Platform.getServerName() + " " + Platform.getServerVersion() + " and Java " + System.getProperty("java.version");
+		final String systemInfo = "Running " + Platform.getPlatformName() + " " + Platform.getPlatformVersion() + " and Java " + System.getProperty("java.version");
 
 		try {
 			final List<String> lines = new ArrayList<>();
