@@ -9,15 +9,11 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.mineacademy.fo.CommonCore;
-import org.mineacademy.fo.MathUtilCore;
-import org.mineacademy.fo.MinecraftVersion;
-import org.mineacademy.fo.MinecraftVersion.V;
 import org.mineacademy.fo.ReflectionUtilCore;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.collection.StrictList;
 import org.mineacademy.fo.model.ChatPaginator;
 import org.mineacademy.fo.model.SimpleComponent;
-import org.mineacademy.fo.model.Variables;
 import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.remain.CompChatColor;
@@ -47,20 +43,20 @@ public abstract class SimpleCommandGroup {
 	 * The label to execute subcommands in this group, example: for ChatControl it's /chatcontrol
 	 */
 	@Getter
-	private String label;
+	private final String label;
 
 	/**
 	 * What other commands trigger this command group? Example: for ChatControl it's /chc and /chatc
 	 */
 	@Getter
-	private List<String> aliases;
+	private final List<String> aliases;
 
 	/**
 	 * The temporary sender that is currently about to see the command group, mostly used in
 	 * compiling info messages such as in {@link #getNoParamsHeader()}
 	 */
-	@Getter
-	protected FoundationPlayer sender;
+	//@Getter
+	//protected FoundationPlayer sender;
 
 	/**
 	 * Create a new simple command group using {@link SimpleSettings#MAIN_COMMAND_ALIASES}
@@ -75,8 +71,8 @@ public abstract class SimpleCommandGroup {
 	private static StrictList<String> findMainCommandAliases() {
 		final StrictList<String> aliases = SimpleSettings.MAIN_COMMAND_ALIASES;
 
-		ValidCore.checkBoolean(!aliases.isEmpty(), "Called SimpleCommandGroup with no args constructor which uses SimpleSettings' MAIN_COMMAND_ALIASES field WHICH WAS EMPTY."
-				+ " To make this work, make a settings class extending SimpleSettings and write 'Command_Aliases: [/yourmaincommand]' key-value pair with a list of aliases to your settings.yml file.");
+		ValidCore.checkBoolean(!aliases.isEmpty(), "Your class extending SimpleCommandGroup had a no args constructor, which resorts to pulling SimpleSettings' MAIN_COMMAND_ALIASES field"
+				+ " WHICH WAS EMPTY. To fix this, make settings.yml file write 'Command_Aliases: [/yourmaincommand]' there.");
 
 		return aliases;
 	}
@@ -86,14 +82,6 @@ public abstract class SimpleCommandGroup {
 	 */
 	protected SimpleCommandGroup(final StrictList<String> labelAndAliases) {
 		this(labelAndAliases.get(0), (labelAndAliases.size() > 1 ? labelAndAliases.range(1) : new StrictList<String>()).getSource());
-	}
-
-	/**
-	 * Create a new simple command group with the given label and aliases
-	 */
-	protected SimpleCommandGroup(final String label, final List<String> aliases) {
-		this.label = label;
-		this.aliases = aliases;
 	}
 
 	/**
@@ -107,6 +95,14 @@ public abstract class SimpleCommandGroup {
 
 		this.label = split[0];
 		this.aliases = split.length > 0 ? Arrays.asList(Arrays.copyOfRange(split, 1, split.length)) : new ArrayList<>();
+	}
+
+	/**
+	 * Create a new simple command group with the given label and aliases
+	 */
+	protected SimpleCommandGroup(final String label, final List<String> aliases) {
+		this.label = label;
+		this.aliases = aliases;
 	}
 
 	// ----------------------------------------------------------------------
@@ -206,95 +202,53 @@ public abstract class SimpleCommandGroup {
 	}
 
 	// ----------------------------------------------------------------------
-	// Setters
-	// ----------------------------------------------------------------------
-
-	/**
-	 * Updates the command label, only works if the command is not registered
-	 *
-	 * @param label the label to set
-	 */
-	public void setLabel(final String label) {
-		ValidCore.checkBoolean(!this.isRegistered(), "Cannot use setLabel(" + label + ") for already registered command /" + this.getLabel());
-
-		this.label = label;
-	}
-
-	/**
-	 * Updates the command aliases, only works if the command is not registered
-	 *
-	 * @param aliases the aliases to set
-	 */
-	public void setAliases(final List<String> aliases) {
-		ValidCore.checkBoolean(!this.isRegistered(), "Cannot use setAliases(" + aliases + ") for already registered command /" + this.getLabel());
-
-		this.aliases = aliases;
-	}
-
-	// ----------------------------------------------------------------------
 	// Functions
 	// ----------------------------------------------------------------------
 
 	/**
-	 * Return the message displayed when no parameter is given, by
-	 * default we give credits
-	 * <p>
-	 * If you specify "author" in your plugin.yml we display author information
-	 * If you override {@link SimplePlugin#getFoundedYear()} we display copyright
+	 * The message displayed when no arguments are given to the command
+	 * i.e. /boss
 	 *
-	 * @param sender the command sender that requested this to be shown to him
-	 *               may be null
 	 * @return
 	 */
-	protected List<SimpleComponent> getNoParamsHeader() {
-		final int foundedYear = Platform.getPlugin().getFoundedYear();
-		final int yearNow = Calendar.getInstance().get(Calendar.YEAR);
+	protected List<String> getNoParamsHeader() {
+		final List<String> messages = new ArrayList<>();
 
-		final List<SimpleComponent> messages = new ArrayList<>();
-
-		messages.add(SimpleComponent.fromAndCharacter("&8" + CommonCore.chatLineSmooth()));
-		messages.add(SimpleComponent.fromMini("   " + this.getHeaderPrefix() + Platform.getPlugin().getName() + "&r" + this.getTrademark() + " &7" + Platform.getPlugin().getVersion()));
-		messages.add(SimpleComponent.newLine());
+		messages.add("&8" + CommonCore.chatLineSmooth());
+		messages.add("  " + this.getHeaderPrefix() + Platform.getPlugin().getName() + " &r&7" + Platform.getPlugin().getVersion());
+		messages.add("  ");
 
 		final String authors = Platform.getPlugin().getAuthors();
 
-		if (!authors.isEmpty())
-			messages.add(SimpleComponent.fromAndCharacter("   &7").append(SimpleLocalization.Commands.LABEL_AUTHORS).appendMini(" &f" + authors + (foundedYear != -1 ? " &7\u00A9 " + foundedYear + (yearNow != foundedYear ? " - " + yearNow : "") : "")));
+		if (!authors.isEmpty()) {
+			final int foundedYear = Platform.getPlugin().getFoundedYear();
+			final int currentYear = Calendar.getInstance().get(Calendar.YEAR);
 
-		final String credits = this.getCredits();
+			messages.add("  &7" + SimpleLocalization.Commands.LABEL_AUTHORS + " &f" + authors + (foundedYear != -1 ? " &7\u00A9 " + foundedYear + (currentYear != foundedYear ? " - " + currentYear : "") : ""));
+		}
 
-		if (credits != null && !credits.isEmpty())
-			messages.add(SimpleComponent.fromMini("   " + credits));
-
-		messages.add(SimpleComponent.fromAndCharacter("&8" + CommonCore.chatLineSmooth()));
+		messages.add("  <gray>Visit <white><click:open_url:'https://mineacademy.org/plugins'>mineacademy.org/plugins</click> <gray>for more information");
+		messages.add("&8" + CommonCore.chatLineSmooth());
 
 		return messages;
 	}
 
 	/**
-	 * Should we send command helps instead of no-param header?
+	 * The message displayed when the user types "help" or "?" to the command
+	 * i.e. "/boss help" or "/boss ?"
 	 *
 	 * @return
 	 */
-
-	protected boolean sendHelpIfNoArgs() {
-		return false;
-	}
-
-	// Return the TM symbol in case we have it for kangarko's plugins
-	private String getTrademark() {
-		return Platform.getPlugin().getAuthors().contains("kangarko") ? "&8\u2122" : "";
-	}
-
-	/**
-	 * Get a part of the {@link #getNoParamsHeader()} typically showing
-	 * your website where the user can find more information about this command
-	 * or your plugin in general
-	 *
-	 * @return
-	 */
-	protected String getCredits() {
-		return "&7Visit &fmineacademy.org &7for more information.";
+	protected String[] getHelpHeader() {
+		return new String[] {
+				"  ",
+				"&8" + CommonCore.chatLineSmooth(),
+				"  " + this.getHeaderPrefix() + Platform.getPlugin().getName() + " &r&7" + Platform.getPlugin().getVersion(),
+				"  ",
+				"  &2[] &7= " + SimpleLocalization.Commands.LABEL_OPTIONAL_ARGS,
+				"  &6<> &7= " + SimpleLocalization.Commands.LABEL_REQUIRED_ARGS,
+				"  "
+		};
 	}
 
 	/**
@@ -307,34 +261,8 @@ public abstract class SimpleCommandGroup {
 	 *
 	 * @return
 	 */
-	protected List<String> getHelpLabel() {
+	protected List<String> getHelpArguments() {
 		return Arrays.asList("help", "?");
-	}
-
-	/**
-	 * Return the header messages used in /{label} help|? typically
-	 * used to tell all available subcommands from this command group
-	 *
-	 * @return
-	 */
-	protected SimpleComponent[] getHelpHeader() {
-		return new SimpleComponent[] {
-				SimpleComponent.empty(),
-				SimpleComponent.fromAndCharacter("&8" + CommonCore.chatLineSmooth()),
-				SimpleComponent.fromMini(this.getHeaderPrefix() + "  " + Platform.getPlugin().getName() + "&r" + this.getTrademark() + " &7" + Platform.getPlugin().getVersion()),
-				SimpleComponent.empty(),
-				SimpleComponent.fromAndCharacter("&2  [] &f= ").append(SimpleLocalization.Commands.LABEL_OPTIONAL_ARGS),
-				SimpleComponent.fromAndCharacter(this.getTheme() + "  <> &f= ").append(SimpleLocalization.Commands.LABEL_REQUIRED_ARGS),
-				SimpleComponent.empty()
-		};
-	}
-
-	/**
-	 * Return the subcommand description when listing all commands using the "help" or "?" subcommand
-	 * @return
-	 */
-	protected SimpleComponent getSubcommandDescription() {
-		return SimpleLocalization.Commands.LABEL_SUBCOMMAND_DESCRIPTION;
 	}
 
 	/**
@@ -344,25 +272,7 @@ public abstract class SimpleCommandGroup {
 	 * @return
 	 */
 	protected String getHeaderPrefix() {
-		return this.getTheme() + "" + CompChatColor.BOLD;
-	}
-
-	/**
-	 * Return the color used in some places of the automatically generated command help
-	 *
-	 * @return
-	 */
-	protected CompChatColor getTheme() {
-		return CompChatColor.GOLD;
-	}
-
-	/**
-	 * How many commands shall we display per page by default?
-	 *
-	 * Defaults to 12
-	 */
-	protected int getCommandsPerPage() {
-		return 12;
+		return "&6&l";
 	}
 
 	// ----------------------------------------------------------------------
@@ -397,44 +307,27 @@ public abstract class SimpleCommandGroup {
 		protected void onCommand() {
 
 			// Pass through sender to the command group itself
-			SimpleCommandGroup.this.sender = this.sender;
+			//SimpleCommandGroup.this.sender = this.sender;
 
 			// Print a special message on no arguments
 			if (this.args.length == 0) {
-				if (SimpleCommandGroup.this.sendHelpIfNoArgs())
-					this.tellSubcommandsHelp();
-				else
-					for (final SimpleComponent component : SimpleCommandGroup.this.getNoParamsHeader())
-						this.tell(component);
+				for (final String component : SimpleCommandGroup.this.getNoParamsHeader())
+					SimpleComponent.fromMini(component).send(this.sender);
 
 				return;
 			}
 
 			final String argument = this.args[0];
-			final SimpleSubCommandCore command = this.findSubcommand(argument);
+			final SimpleSubCommandCore subcommand = this.findSubcommand(argument);
 
-			// Handle subcommands
-			if (command != null) {
-				final String oldSublabel = command.getSublabel();
+			if (subcommand != null)
+				subcommand.delegateExecute(this.sender, this.getLabel(), this.compileSubcommandArgs());
 
-				try {
-					// Simulate our main label
-					command.setSublabel(argument);
-
-					// Run the command
-					command.delegateExecute(this.sender, this.getCurrentLabel(), this.args.length == 1 ? new String[] {} : Arrays.copyOfRange(this.args, 1, this.args.length));
-
-				} finally {
-					// Restore old sublabel after the command has been run
-					command.setSublabel(oldSublabel);
-				}
-			}
-
-			// Handle help argument
-			else if (!SimpleCommandGroup.this.getHelpLabel().isEmpty() && ValidCore.isInList(argument, SimpleCommandGroup.this.getHelpLabel()))
+			else if (!SimpleCommandGroup.this.getHelpArguments().isEmpty() && ValidCore.isInList(argument, SimpleCommandGroup.this.getHelpArguments()))
 				this.tellSubcommandsHelp();
+
 			else
-				this.returnInvalidArgs();
+				this.returnInvalidArgs(argument);
 		}
 
 		/**
@@ -443,8 +336,10 @@ public abstract class SimpleCommandGroup {
 		protected void tellSubcommandsHelp() {
 
 			// Building help can be heavy so do it off of the main thread
-			Platform.runTaskAsync(0, () -> {
-				
+			final long nanoTime = System.nanoTime();
+
+			try {
+
 				if (SimpleCommandGroup.this.subcommands.isEmpty()) {
 					this.tellError(SimpleLocalization.Commands.HEADER_NO_SUBCOMMANDS);
 
@@ -453,59 +348,54 @@ public abstract class SimpleCommandGroup {
 
 				final List<SimpleComponent> lines = new ArrayList<>();
 
-				final boolean atLeast17 = MinecraftVersion.atLeast(V.v1_7);
-				final boolean atLeast113 = MinecraftVersion.atLeast(V.v1_13);
-
 				for (final SimpleSubCommandCore subcommand : SimpleCommandGroup.this.subcommands) {
-					
-					if (subcommand.showInHelp() && this.hasPerm(subcommand.getPermission())) {
+					if (!subcommand.showInHelp() || !this.hasPerm(subcommand.getPermission()))
+						continue;
 
-						// Simulate the sender to enable permission checks in getMultilineHelp for ex.
-						subcommand.sender = this.sender;
+					// Simulate the sender to enable permission checks in getMultilineHelp for ex.
+					subcommand.sender = this.sender;
+					subcommand.args = this.compileSubcommandArgs();
 
-						final SimpleComponent usage = subcommand.getUsage();
-						final SimpleComponent desc = subcommand.getDescription() == null ? SimpleComponent.empty() : subcommand.getDescription();
-						final SimpleComponent plainMessage = Variables.replace(SimpleCommandGroup.this.getSubcommandDescription(), null, CommonCore.newHashMap(
-								"label", this.getLabel(),
-								"sublabel", (atLeast17 ? "&n" : "") + subcommand.getSublabel() + (atLeast17 ? "&r" : ""),
-								"usage", usage.toLegacy(),
-								"description", !desc.isEmpty() && !atLeast17 ? desc.toLegacy() : "",
-								"dash", !desc.isEmpty() && !atLeast17 ? "&e-" : ""));
+					final List<SimpleComponent> hover = new ArrayList<>();
 
-						if (!desc.isEmpty() && atLeast17) {
-							final String command = plainMessage.toPlain().substring(1);
-							final List<SimpleComponent> hover = new ArrayList<>();
+					if (subcommand.getDescription() != null)
+						hover.add(SimpleLocalization.Commands.HELP_TOOLTIP_DESCRIPTION.replaceBracket("description", subcommand.getDescription()));
 
-							hover.add(SimpleLocalization.Commands.HELP_TOOLTIP_DESCRIPTION.replaceBracket("description", desc));
+					if (subcommand.getPermission() != null)
+						hover.add(SimpleLocalization.Commands.HELP_TOOLTIP_PERMISSION.replaceBracket("permission", subcommand.getPermission()));
 
-							if (subcommand.getPermission() != null)
-								hover.add(SimpleLocalization.Commands.HELP_TOOLTIP_PERMISSION.replaceBracket("permission", subcommand.getPermission()));
+					final String[] legacyUsage = subcommand.getMultilineUsageMessage();
+					final SimpleComponent[] newUsage = subcommand.getMultilineUsage();
 
-							if (subcommand.getMultilineUsage() != null) {
-								hover.add(SimpleLocalization.Commands.HELP_TOOLTIP_USAGE);
+					if (legacyUsage != null || newUsage != null || subcommand.getUsage() != null)
+						hover.add(SimpleLocalization.Commands.HELP_TOOLTIP_USAGE
+								.replaceBracket("usage", legacyUsage != null || newUsage != null ? SimpleComponent.empty() : CommonCore.getOrDefault(subcommand.getUsage(), SimpleComponent.empty())));
 
-								hover.add(SimpleComponent.fromAndCharacter("&f").append(this.replacePlaceholders(subcommand.getMultilineUsage())));
+					if (legacyUsage != null)
+						for (final String line : legacyUsage)
+							for (final String subline : this.splitLine(CompChatColor.translateColorCodes(subcommand.colorizeUsage(line))))
+								hover.add(subcommand.replacePlaceholders(SimpleComponent.fromSection(subline)));
 
-							} else
-								hover.add(this.replacePlaceholders(SimpleLocalization.Commands.HELP_TOOLTIP_USAGE.append(usage.isEmpty() ? SimpleComponent.fromPlain(command) : usage)));
+					else if (newUsage != null)
+						for (final SimpleComponent component : newUsage)
+							for (final String subline : this.splitLine(component.toLegacy()))
+								hover.add(subcommand.replacePlaceholders(SimpleComponent.fromSection(subline)));
 
-							final List<String> hoverShortened = new ArrayList<>();
+					SimpleComponent line = SimpleComponent
+							.fromPlain("  /" + this.getLabel())
 
-							for (final SimpleComponent hoverLine : hover)
-								for (final String hoverLineSplit : CommonCore.split(hoverLine.toLegacy(), atLeast113 ? 100 : 55))
-									hoverShortened.add(hoverLineSplit);
+							.appendMini(" &n" + subcommand.getSublabel() + "&r ")
+							.onClickSuggestCmd("/" + this.getLabel() + " " + subcommand.getSublabel())
+							.onHover(hover);
 
-							plainMessage.onHover(hoverShortened);
-							plainMessage.onClickSuggestCmd("/" + this.getLabel() + " " + subcommand.getSublabel());
-						}
+					if (subcommand.getUsage() != null)
+						line = line.append(subcommand.getUsage());
 
-						System.out.println("Adding: " + plainMessage);
-						lines.add(plainMessage);
-					}
+					lines.add(line);
 				}
 
 				if (!lines.isEmpty()) {
-					final ChatPaginator pages = new ChatPaginator(MathUtilCore.range(0, lines.size(), SimpleCommandGroup.this.getCommandsPerPage()), CompChatColor.DARK_GRAY);
+					final ChatPaginator pages = new ChatPaginator(12);
 
 					if (SimpleCommandGroup.this.getHelpHeader() != null)
 						pages.setHeader(SimpleCommandGroup.this.getHelpHeader());
@@ -515,12 +405,28 @@ public abstract class SimpleCommandGroup {
 					// Allow "? <page>" page parameter
 					final int page = (this.args.length > 1 && ValidCore.isInteger(this.args[1]) ? Integer.parseInt(this.args[1]) : 1);
 
-					// Send the component on the main thread
-					Platform.runTask(0, () -> pages.send(this.sender, page));
+					pages.send(this.sender, page);
 
 				} else
 					this.tellError(SimpleLocalization.Commands.HEADER_NO_SUBCOMMANDS_PERMISSION);
-			});
+
+			} finally {
+				System.out.println("compile help took " + String.format("%.3f", (System.nanoTime() - nanoTime) / 1_000_000D) + "ms");
+			}
+		}
+
+		/*
+		 * Split the line if sender is a player
+		 */
+		private String[] splitLine(String message) {
+			return CommonCore.split(message, this.sender.isPlayer() ? 60 : Integer.MAX_VALUE);
+		}
+
+		/*
+		 * Compiles the arguments for the subcommand
+		 */
+		private String[] compileSubcommandArgs() {
+			return this.args.length == 1 ? new String[] {} : Arrays.copyOfRange(this.args, 1, this.args.length);
 		}
 
 		/**

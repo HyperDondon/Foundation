@@ -95,20 +95,15 @@ final class FoundationListener implements Listener {
 		}
 
 		final ChatPaginator chatPages = (ChatPaginator) player.getMetadata(FoConstants.NBT.PAGINATION).get(0).value();
-		final Map<Integer, List<? extends SimpleComponent>> pages = chatPages.getPages();
+		final Map<Integer, List<SimpleComponent>> pages = chatPages.getPages();
 
 		// Remove empty lines
 		pages.entrySet().removeIf(entry -> entry.getValue().isEmpty());
 
 		if (pages.isEmpty() || !pages.containsKey(page)) {
-			final SimpleComponent playerMessage = pages.isEmpty() ? SimpleLocalization.Pages.NO_PAGES : SimpleLocalization.Pages.NO_PAGE;
-
-			if (Messenger.ENABLED)
-				Messenger.error(player, playerMessage);
-			else
-				playerMessage.send(sender);
-
+			Messenger.error(player, pages.isEmpty() ? SimpleLocalization.Pages.NO_PAGES : SimpleLocalization.Pages.NO_PAGE);
 			event.setCancelled(true);
+
 			return;
 		}
 
@@ -116,7 +111,7 @@ final class FoundationListener implements Listener {
 			for (final SimpleComponent component : chatPages.getHeader())
 				component.send(sender);
 
-			final List<? extends SimpleComponent> messagesOnPage = pages.get(page);
+			final List<SimpleComponent> messagesOnPage = pages.get(page);
 			int count = 1;
 
 			for (final SimpleComponent comp : messagesOnPage)
@@ -144,25 +139,33 @@ final class FoundationListener implements Listener {
 			final int pagesDigits = (int) (Math.log10(pages.size()) + 1);
 			final int multiply = 23 - (int) MathUtilCore.ceiling(pagesDigits);
 
-			final SimpleComponent pagination = SimpleComponent.fromMini(chatPages.getThemeColor() + "&m" + Common.duplicate("-", multiply) + "&r");
+			SimpleComponent clickableFooter = SimpleComponent
+					.fromMini("&8&m" + Common.duplicate("-", multiply) + "&r");
 
 			if (page == 0)
-				pagination.appendMini(" &7« ");
+				clickableFooter = clickableFooter.appendMini(" &7« ");
 			else
-				pagination.appendMini(" &6« ").onHover(SimpleLocalization.Pages.GO_TO_PAGE.replaceBracket("page", String.valueOf(page))).onClickRunCmd("/#flp " + page);
+				clickableFooter = clickableFooter
+						.appendMini(" &6« ")
+						.onHover(SimpleLocalization.Pages.GO_TO_PAGE.replaceBracket("page", String.valueOf(page)))
+						.onClickRunCmd("/#flp " + page);
 
-			pagination.appendMini("&f" + (page + 1)).onHover(SimpleLocalization.Pages.GO_TO_FIRST_PAGE).onClickRunCmd("/#flp 1");
-			pagination.appendMini("/").onHover(SimpleLocalization.Pages.TOOLTIP);
-			pagination.appendMini(pages.size() + "").onHover(SimpleLocalization.Pages.GO_TO_LAST_PAGE).onClickRunCmd("/#flp " + pages.size());
+			clickableFooter = clickableFooter
+					.appendMini("&f" + (page + 1)).onHover(SimpleLocalization.Pages.GO_TO_FIRST_PAGE).onClickRunCmd("/#flp 1")
+					.appendMini("&7/").onHover(SimpleLocalization.Pages.TOOLTIP)
+					.appendMini("&f" + pages.size() + "").onHover(SimpleLocalization.Pages.GO_TO_LAST_PAGE).onClickRunCmd("/#flp " + pages.size());
 
 			if (page + 1 >= pages.size())
-				pagination.appendMini(" &7» ");
+				clickableFooter = clickableFooter.appendMini(" &7» ");
 			else
-				pagination.appendMini(" &6» ").onHover(SimpleLocalization.Pages.GO_TO_PAGE.replaceBracket("page", String.valueOf(page + 2))).onClickRunCmd("/#flp " + (page + 2));
+				clickableFooter = clickableFooter
+						.appendMini(" &6» ")
+						.onHover(SimpleLocalization.Pages.GO_TO_PAGE.replaceBracket("page", String.valueOf(page + 2)))
+						.onClickRunCmd("/#flp " + (page + 2));
 
-			pagination.appendMini(chatPages.getThemeColor() + "&m" + Common.duplicate("-", multiply));
-
-			pagination.send(sender);
+			clickableFooter
+					.appendMini("&8&m" + Common.duplicate("-", multiply))
+					.send(sender);
 		}
 
 		// Prevent "Unknown command message"

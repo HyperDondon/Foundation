@@ -17,6 +17,7 @@ import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.exception.EventHandledException;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.plugin.SimplePlugin;
+import org.mineacademy.fo.remain.CompChatColor;
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.ListenerPriority;
@@ -35,7 +36,7 @@ import com.google.gson.Gson;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import net.kyori.adventure.text.Component;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.chat.ComponentSerializer;
@@ -160,7 +161,7 @@ public abstract class PacketListener {
 		int count = 0;
 
 		for (final String hoverText : hoverTexts) {
-			final String colorized = SimpleComponent.fromMini(hoverText).toLegacy();
+			final String colorized = CompChatColor.translateColorCodes(hoverText);
 			WrappedGameProfile profile;
 
 			try {
@@ -248,8 +249,8 @@ public abstract class PacketListener {
 				return;
 			}
 
-			// Ignore dummy instances and rare reload case
-			if (!this.player.isOnline() || SimplePlugin.getInstance().isReloading())
+			// Ignore dummy instances and disabled plugin
+			if (!this.player.isOnline() || !SimplePlugin.getInstance().isEnabled())
 				return;
 
 			// Prevent deadlock
@@ -318,19 +319,12 @@ public abstract class PacketListener {
 					}
 
 					try {
-						final StructureModifier<Object> adventureModifier = event.getPacket().getModifier().withType(AdventureComponentConverter.getComponentClass());
+						final StructureModifier<Component> adventureModifier = event.getPacket().getModifier().withType(Component.class);
 
 						if (!adventureModifier.getFields().isEmpty()) {
-							final Object comp = adventureModifier.read(0);
+							final Component component = adventureModifier.read(0);
 
-							final Class<?> serializerClass = ReflectionUtil.lookupClass("net.kyori.adventure.text.serializer.gson.GsonComponentSerializer");
-							final Object gsonInstance = ReflectionUtil.invokeStatic(serializerClass, "gson");
-
-							final Class<?> componentClass = ReflectionUtil.lookupClass("net.kyori.adventure.text.Component");
-							final Method gsonMethod = ReflectionUtil.getMethod(gsonInstance.getClass(), "serialize", componentClass);
-
-							final String json = ReflectionUtil.invoke(gsonMethod, gsonInstance, comp);
-							this.jsonMessage = WrappedChatComponent.fromJson(json).getJson();
+							this.jsonMessage = SimpleComponent.fromAdventure(component).toAdventureJson();
 						}
 
 					} catch (final Throwable ignored) {
@@ -440,7 +434,7 @@ public abstract class PacketListener {
 			final PacketContainer packet = event.getPacket();
 
 			if (!this.editJson())
-				this.jsonMessage = GsonComponentSerializer.gson().serialize(SimpleComponent.fromAndCharacter(message).toAdventure());
+				this.jsonMessage = SimpleComponent.fromMini(message).toAdventureJson();
 
 			if (this.systemChat) {
 

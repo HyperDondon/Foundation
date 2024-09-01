@@ -21,7 +21,6 @@ import org.mineacademy.fo.model.ChatPaginator;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.plugin.SimplePlugin;
 import org.mineacademy.fo.region.DiskRegion;
-import org.mineacademy.fo.remain.CompChatColor;
 import org.mineacademy.fo.settings.SimpleSettings;
 import org.mineacademy.fo.visual.VisualizedRegion;
 
@@ -52,8 +51,8 @@ public class RegionCommand extends SimpleSubCommand {
 	 * @see org.mineacademy.fo.command.SimpleCommandCore#getMultilineUsageMessage()
 	 */
 	@Override
-	protected SimpleComponent getMultilineUsage() {
-		return Param.generateUsages();
+	protected SimpleComponent[] getMultilineUsage() {
+		return Param.generateUsages(this);
 	}
 
 	/**
@@ -86,19 +85,19 @@ public class RegionCommand extends SimpleSubCommand {
 						.fromPlain(" ")
 
 						.appendMini("&8[&4X&8]")
-						.onHover("&7Click to remove permanently.")
+						.onHover("Click to remove permanently.")
 						.onClickRunCmd("/" + this.getLabel() + " " + this.getSublabel() + " " + Param.REMOVE + " " + otherRegion.getName() + " -list")
 
 						.appendPlain(" ")
 
 						.appendMini("&8[&2?&8]")
-						.onHover("&7Click to visualize.")
+						.onHover("Click to visualize.")
 						.onClickRunCmd("/" + this.getLabel() + " " + this.getSublabel() + " " + Param.VIEW + " " + otherRegion.getName() + " -list")
 
 						.appendPlain(" ")
 
 						.appendMini("&8[&3>&8]")
-						.onHover("&7Click to teleport to the center.")
+						.onHover("Click to teleport to the center.")
 						.onClickRunCmd("/" + this.getLabel() + " " + this.getSublabel() + " " + Param.TELEPORT + " " + otherRegion.getName() + " -list")
 
 						.appendPlain(" ")
@@ -110,7 +109,7 @@ public class RegionCommand extends SimpleSubCommand {
 								"&7Size: &2" + otherRegion.getBlocks().size() + " blocks"));
 			}
 
-			new ChatPaginator(CompChatColor.DARK_RED)
+			new ChatPaginator()
 					.setFoundationHeader("Listing " + CommonCore.plural(regions.size(), "Region"))
 					.setPages(components)
 					.send(this.sender);
@@ -135,7 +134,7 @@ public class RegionCommand extends SimpleSubCommand {
 
 			DiskRegion.createRegion(regionName, createdRegion);
 
-			this.tellSuccess("Region '" + regionName + "' has been created.");
+			this.tellSuccess("Region '&2" + regionName + "&7' has been created.");
 			return;
 
 		} else if (param == Param.TOOL) {
@@ -148,17 +147,7 @@ public class RegionCommand extends SimpleSubCommand {
 
 		} else if (param == Param.PRIMARY || param == Param.SECONDARY) {
 			this.checkConsole();
-
-			final VisualizedRegion createdRegion = DiskRegion.getCreatedRegion(getPlayer());
-			final Location location = this.getPlayer().getLocation();
-
-			if (param == Param.PRIMARY)
-				createdRegion.setPrimary(location);
-			else
-				createdRegion.setSecondary(location);
-
-			this.tellSuccess("Set the " + (param == Param.PRIMARY ? "primary" : "secondary") + " region point."
-					+ (createdRegion.isWhole() ? " Use /{label} {sublabel} new <name> to create the region." : ""));
+			RegionTool.getInstance().simulateClick(this.getPlayer(), param == Param.PRIMARY, this.getPlayer().getLocation());
 
 			return;
 		}
@@ -167,7 +156,7 @@ public class RegionCommand extends SimpleSubCommand {
 			this.checkConsole();
 
 			if (this.args.length > 1) {
-				this.checkNotNull(region, "&cRegion '" + regionName + "' doesn't exists.");
+				this.checkNotNull(region, "Region '" + regionName + "' doesn't exists.");
 
 				RegionMenu.showTo(this.getPlayer(), region);
 			} else
@@ -178,14 +167,14 @@ public class RegionCommand extends SimpleSubCommand {
 
 		// Require region name for all params below, except view, but when it is provided, check it
 		if (param != Param.VIEW || (param == Param.VIEW && regionName != null)) {
-			this.checkNotNull(regionName, "&cPlease specify the region name.");
-			this.checkNotNull(region, "&cRegion '" + regionName + "' doesn't exists.");
+			this.checkNotNull(regionName, "Please specify the region name.");
+			this.checkNotNull(region, "Region '" + regionName + "' doesn't exists.");
 		}
 
 		if (param == Param.REMOVE) {
 			DiskRegion.removeRegion(region);
 
-			this.tellAndList(region, "&7Removed region named '&2" + regionName + "&7'");
+			this.tellSuccess("Removed region '&2" + regionName + "&7'.");
 		}
 
 		else if (param == Param.VIEW) {
@@ -194,7 +183,7 @@ public class RegionCommand extends SimpleSubCommand {
 			if (region != null) {
 				region.visualize(this.getPlayer());
 
-				this.tellAndList(region, "&7Region '&2" + regionName + "&7' is being visualized for 10 seconds.");
+				this.tellAndList(region, "Region '&2" + regionName + "&7' is being visualized for 10 seconds.");
 			}
 
 			else {
@@ -208,7 +197,7 @@ public class RegionCommand extends SimpleSubCommand {
 						count++;
 					}
 
-				this.tellSuccess("&7Visualized " + CommonCore.plural(count, "region") + " nearby for 10 seconds.");
+				this.tellSuccess("Visualized " + CommonCore.plural(count, "region") + " nearby for 10 seconds.");
 			}
 
 		}
@@ -216,7 +205,7 @@ public class RegionCommand extends SimpleSubCommand {
 		else if (param == Param.TELEPORT) {
 			region.teleportToCenter(this.getPlayer());
 
-			this.tellAndList(region, "&7Teleported to the center of region '&2" + regionName + "&7'");
+			this.tellAndList(region, "Teleported to the center of region '&2" + regionName + "&7'");
 		}
 
 		else
@@ -233,14 +222,10 @@ public class RegionCommand extends SimpleSubCommand {
 		if (this.isPlayer() && this.args.length > 2 && "-list".equals(this.args[2]))
 			this.getPlayer().performCommand(this.getLabel() + " " + this.getSublabel() + " " + Param.LIST);
 
-		MessengerCore
-				.getInfoPrefix()
-				.appendMini(message)
+		MessengerCore.info(this.sender, SimpleComponent.fromMini(message)
 				.appendPlain(" Click here to open its menu.")
 				.onHover("&7Click to open region menu.")
-				.onClickRunCmd("/" + SimpleSettings.MAIN_COMMAND_ALIASES.get(0) + " region menu " + region.getName())
-
-				.send(this.sender);
+				.onClickRunCmd("/" + SimpleSettings.MAIN_COMMAND_ALIASES.get(0) + " region menu " + region.getName()));
 	}
 
 	@Override
@@ -278,22 +263,22 @@ public class RegionCommand extends SimpleSubCommand {
 		/**
 		 * Remove a region.
 		 */
-		REMOVE("remove", "rm", "<name>", "Delete a region."),
+		REMOVE("rem", "rm", "<name>", "Delete a region."),
 
 		/**
 		 * Show particles around region.
 		 */
-		VIEW("view", "v", "[name]", "Visualize region border if center is < 100 blocks from you."),
+		VIEW("view", "v", "[name]", "Visualize region border if center is less than 100 blocks from you."),
 
 		/**
 		 * Teleport to a region.
 		 */
-		TELEPORT("teleport", "tp", "<name>", "Teleport to a region's center."),
+		TELEPORT("tp", null, "<name>", "Teleport to a region's center."),
 
 		/**
 		 * Show region menu.
 		 */
-		MENU("menu", "m", "[name]", "Show region menu."),
+		MENU("menu", null, "[name]", "Show region menu."),
 
 		/**
 		 * List installed regions.
@@ -356,31 +341,24 @@ public class RegionCommand extends SimpleSubCommand {
 		 *
 		 * @return
 		 */
-		public static SimpleComponent generateUsages() {
+		public static SimpleComponent[] generateUsages(RegionCommand command) {
 			final Param[] params = Param.values();
-			final SimpleComponent component = SimpleComponent.empty();
+			final List<SimpleComponent> components = new ArrayList<>();
 
 			for (int i = 0; i < params.length; i++) {
 				final Param param = params[i];
 
 				// Format usage. Replace [] with &2 and <> with &6
-				String usage = param.usage;
+				final String usage = param.usage;
+				final String suggestable = "/" + command.getLabel() + " " + command.getSublabel() + " " + param.label;
 
-				if (!usage.isEmpty()) {
-					usage = usage.replace("[", "&2[");
-					usage = usage.replace("]", "]");
-					usage = usage.replace("<", "&6<");
-					usage = usage.replace(">", ">");
-					usage = usage + " ";
-				}
-
-				component.append(SimpleComponent.fromAndCharacter("&c /{label} {sublabel} " + param.label + " " + usage + "&c- " + param.description));
-
-				if (i < params.length - 1)
-					component.appendNewLine();
+				components.add(SimpleComponent
+						.fromSection(" " + command.colorizeUsage(suggestable + (!usage.isEmpty() ? " " + usage : "") + " - " + param.description))
+						.onHover("Click to copy.")
+						.onClickSuggestCmd(suggestable));
 			}
 
-			return component;
+			return components.toArray(new SimpleComponent[components.size()]);
 		}
 
 		/**

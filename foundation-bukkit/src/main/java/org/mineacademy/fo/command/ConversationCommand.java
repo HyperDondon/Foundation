@@ -1,5 +1,7 @@
 package org.mineacademy.fo.command;
 
+import java.util.List;
+
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.settings.SimpleLocalization;
 
@@ -15,7 +17,7 @@ import org.mineacademy.fo.settings.SimpleLocalization;
 public final class ConversationCommand extends SimpleSubCommand {
 
 	public ConversationCommand() {
-		super("conversation|conv");
+		super("conversation");
 
 		this.setDescription("Reply to a server's conversation manually.");
 		this.setUsage("<message ...>");
@@ -25,8 +27,13 @@ public final class ConversationCommand extends SimpleSubCommand {
 	@Override
 	protected void onCommand() {
 		this.checkConsole();
-		this.checkBoolean(this.getPlayer().isConversing(), SimpleLocalization.Conversation.CONVERSATION_NOT_CONVERSING);
+		this.checkBoolean(this.getPlayer().isConversing(), SimpleLocalization.Conversation.NOT_CONVERSING);
 
 		this.getPlayer().acceptConversationInput(CommonCore.joinRange(0, this.args));
+	}
+
+	@Override
+	protected List<String> tabComplete() {
+		return NO_COMPLETE;
 	}
 }

@@ -9,6 +9,12 @@ import com.google.gson.Gson;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.ComponentLike;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
 /**
  * Our main cross-version compatibility class.
@@ -34,9 +40,9 @@ public abstract class RemainCore {
 	 * @param component
 	 * @return
 	 */
-	/*public static String convertAdventureToJson(Component component) {
-		return GsonComponentSerializer.gson().serialize(component);
-	}*/
+	public static String convertAdventureToJson(ComponentLike component) {
+		return GsonComponentSerializer.gson().serialize(component.asComponent());
+	}
 
 	/**
 	 * Serializes the component into legacy text
@@ -44,9 +50,9 @@ public abstract class RemainCore {
 	 * @param component
 	 * @return
 	 */
-	/*public static String convertAdventureToLegacy(Component component) {
-		return LegacyComponentSerializer.legacySection().serialize(component);
-	}*/
+	public static String convertAdventureToLegacy(ComponentLike component) {
+		return LegacyComponentSerializer.legacySection().serialize(component.asComponent());
+	}
 
 	/**
 	 * Serializes the component into mini message
@@ -54,9 +60,9 @@ public abstract class RemainCore {
 	 * @param component
 	 * @return
 	 */
-	/*public static String convertAdventureToMini(Component component) {
-		return MiniMessage.miniMessage().serialize(component);
-	}*/
+	public static String convertAdventureToMini(ComponentLike component) {
+		return MiniMessage.miniMessage().serialize(component.asComponent());
+	}
 
 	/**
 	 * Serializes the component into plain text
@@ -64,9 +70,9 @@ public abstract class RemainCore {
 	 * @param component
 	 * @return
 	 */
-	/*public static String convertAdventureToPlain(Component component) {
-		return PlainTextComponentSerializer.plainText().serialize(component).trim();
-	}*/
+	public static String convertAdventureToPlain(ComponentLike component) {
+		return PlainTextComponentSerializer.plainText().serialize(component.asComponent());
+	}
 
 	/**
 	 * Converts a json string to Adventure component
@@ -74,18 +80,18 @@ public abstract class RemainCore {
 	 * @param json
 	 * @return
 	 */
-	/*public static Component convertJsonToAdventure(String json) {
+	public static Component convertJsonToAdventure(String json) {
 		return GsonComponentSerializer.gson().deserialize(json);
-	}*/
+	}
 
 	/**
 	 *
 	 * @param componentJson
 	 * @return
 	 */
-	/*public static String convertJsonToLegacy(String componentJson) {
+	public static String convertJsonToLegacy(String componentJson) {
 		return convertAdventureToLegacy(convertJsonToAdventure(componentJson));
-	}*/
+	}
 
 	/**
 	 * Creates a new adventure component from legacy text with {@link CompChatColor#COLOR_CHAR} colors replaced
@@ -93,9 +99,9 @@ public abstract class RemainCore {
 	 * @param legacyText
 	 * @return
 	 */
-	/*public static Component convertLegacyToAdventure(String legacyText) {
+	public static Component convertLegacyToAdventure(String legacyText) {
 		return LegacyComponentSerializer.legacySection().deserialize(legacyText);
-	}*/
+	}
 
 	/**
 	 * Converts chat message with color codes to Json chat components e.g. &6Hello
@@ -104,9 +110,9 @@ public abstract class RemainCore {
 	 * @param message
 	 * @return
 	 */
-	/*public static String convertLegacyToJson(final String message) {
+	public static String convertLegacyToJson(String message) {
 		return GsonComponentSerializer.gson().serialize(convertLegacyToAdventure(message));
-	}*/
+	}
 
 	/**
 	 * Convert the given json into list

@@ -11,7 +11,6 @@ import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.Listener;
-import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.messaging.Messenger;
 import org.mineacademy.fo.ChatUtil;
@@ -27,7 +26,6 @@ import org.mineacademy.fo.command.RegionCommand;
 import org.mineacademy.fo.command.SimpleCommandCore;
 import org.mineacademy.fo.command.SimpleCommandGroup;
 import org.mineacademy.fo.command.SimpleSubCommand;
-import org.mineacademy.fo.constants.FoConstants;
 import org.mineacademy.fo.debug.Debugger;
 import org.mineacademy.fo.enchant.SimpleEnchantment;
 import org.mineacademy.fo.event.SimpleListener;
@@ -40,15 +38,12 @@ import org.mineacademy.fo.menu.MenuListener;
 import org.mineacademy.fo.menu.tool.RegionTool;
 import org.mineacademy.fo.menu.tool.Tool;
 import org.mineacademy.fo.menu.tool.ToolsListener;
-import org.mineacademy.fo.model.ChatPaginator;
 import org.mineacademy.fo.model.DiscordListener;
 import org.mineacademy.fo.model.HookManager;
 import org.mineacademy.fo.model.PacketListener;
 import org.mineacademy.fo.model.SimpleScoreboard;
 import org.mineacademy.fo.model.Tuple;
 import org.mineacademy.fo.platform.BukkitPlatform;
-import org.mineacademy.fo.platform.BukkitPlayer;
-import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.FoundationPlugin;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.plugin.AutoRegisterScanner.AutoRegisterHandler;
@@ -132,11 +127,6 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 	 * The default proxy listener, used in {@link ProxyUtil} and {@link OutgoingMessage} if no listener is provided there
 	 */
 	private ProxyListener defaultProxyListener;
-
-	/**
-	 * An internal flag to indicate that the plugin is being reloaded.
-	 */
-	private boolean reloading = false;
 
 	// ----------------------------------------------------------------------------------------
 	// Main methods
@@ -234,24 +224,6 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 		try {
 			if (this.getStartupLogo() != null)
 				Common.log(this.getStartupLogo());
-
-			// Add a handler for chat paginator
-			ChatPaginator.setCustomSender(new ChatPaginator.Sender() {
-
-				@Override
-				public boolean send(FoundationPlayer audience, int page, ChatPaginator instance) {
-					if (audience.isPlayer()) {
-						final Player player = ((BukkitPlayer) audience).getPlayer();
-
-						player.setMetadata(FoConstants.NBT.PAGINATION, new FixedMetadataValue(SimplePlugin.getInstance(), instance));
-
-						player.chat("/#flp " + page);
-						return true;
-					}
-
-					return false;
-				}
-			});
 
 			// Expand auto register functionality
 			AutoRegisterScanner.setCustomRegisterHandler(new AutoRegisterHandler() {
@@ -641,17 +613,11 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 	// Reloading and disabling
 	// ----------------------------------------------------------------------------------------
 
-	@Override
-	public final boolean isReloading() {
-		return this.reloading;
-	}
-
 	/**
 	 * Reload this plugin's settings files.
 	 */
 	@Override
 	public final void reload() {
-		this.reloading = true;
 
 		try {
 			if (CompMetadata.isLegacy() && CompMetadata.ENABLE_LEGACY_FILE_STORAGE)
@@ -668,9 +634,6 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 
 		} catch (final Throwable t) {
 			Common.throwError(t, "Error reloading " + this.getName() + " " + this.getVersion());
-
-		} finally {
-			reloading = false;
 		}
 	}
 

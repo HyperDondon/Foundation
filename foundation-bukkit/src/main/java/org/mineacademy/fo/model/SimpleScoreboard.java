@@ -302,7 +302,7 @@ public class SimpleScoreboard {
 		final List<String> lines = new ArrayList<>();
 
 		for (final String line : entries)
-			lines.add(line == null ? "" : SimpleComponent.fromMini(line).toLegacy());
+			lines.add(line == null ? "" : CompChatColor.translateColorCodes(line));
 
 		this.rows.addAll(lines);
 	}
@@ -445,7 +445,7 @@ public class SimpleScoreboard {
 	 * @param player
 	 */
 	private void reloadEntries(Player player) throws IllegalArgumentException {
-		final String colorizedTitle = SimpleComponent.fromMini(this.title).toLegacy();
+		final String colorizedTitle = CompChatColor.translateColorCodes(this.title);
 		final Scoreboard scoreboard = player.getScoreboard();
 		final List<String> rowsDone = new ArrayList<>();
 		Objective mainboard = scoreboard.getObjective("mainboard");
@@ -470,7 +470,7 @@ public class SimpleScoreboard {
 				final String scoreboardLineRaw = this.rows.get(lineNumber).replace("{player}", player.getName());
 				final boolean mc1_13 = MinecraftVersion.atLeast(MinecraftVersion.V.v1_13);
 				final boolean mc1_18 = MinecraftVersion.atLeast(MinecraftVersion.V.v1_18);
-				final String finishedRow = SimpleComponent.fromMini(replaceTheme(this.replaceVariables(player, scoreboardLineRaw))).toLegacy();
+				final String finishedRow = CompChatColor.translateColorCodes(replaceTheme(this.replaceVariables(player, scoreboardLineRaw)));
 				final boolean rowUsed = rowsDone.contains(finishedRow);
 				final int[] splitPoints = { mc1_13 ? 64 : 16, mc1_18 ? 32767 : 40, mc1_13 ? 64 : 16 };
 

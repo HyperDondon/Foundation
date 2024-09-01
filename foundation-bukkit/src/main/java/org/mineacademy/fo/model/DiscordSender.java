@@ -16,13 +16,13 @@ import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.Plugin;
 import org.mineacademy.fo.Common;
 import org.mineacademy.fo.exception.FoException;
+import org.mineacademy.fo.remain.CompChatColor;
 
 import github.scarsz.discordsrv.dependencies.jda.api.entities.Message;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.MessageChannel;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.User;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.kyori.adventure.text.Component;
 
 /**
  * Represents a Discord command sender for Discord integration
@@ -124,7 +124,7 @@ public final class DiscordSender implements CommandSender {
 
 	@Override
 	public void sendMessage(String message) {
-		final String finalMessage = Common.stripColorCodes(message);
+		final String finalMessage = CompChatColor.stripColorCodes(message);
 
 		Common.runAsync(() -> {
 			final Message sentMessage = this.channel.sendMessage(finalMessage).complete();
@@ -145,11 +145,6 @@ public final class DiscordSender implements CommandSender {
 	@Override
 	public String getName() {
 		return this.name;
-	}
-
-	@Override
-	public Component name() {
-		return Component.text(this.name);
 	}
 
 	@Override

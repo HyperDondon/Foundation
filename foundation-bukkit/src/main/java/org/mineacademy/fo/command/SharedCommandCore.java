@@ -222,10 +222,9 @@ public interface SharedCommandCore {
 		}
 
 		final World world = Bukkit.getWorld(name);
-
 		this.checkNotNull(world, SimpleLocalization.Commands.INVALID_WORLD
-				.replaceBracket("world}", name)
-				.replaceBracket("available}", CommonCore.join(Bukkit.getWorlds())));
+				.replaceBracket("world", name)
+				.replaceBracket("available", CommonCore.join(Bukkit.getWorlds(), otherWorld -> otherWorld.getName())));
 
 		return world;
 	}

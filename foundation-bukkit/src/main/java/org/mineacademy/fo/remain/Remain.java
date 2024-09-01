@@ -66,6 +66,7 @@ import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Score;
 import org.mineacademy.fo.Common;
 import org.mineacademy.fo.CommonCore;
+import org.mineacademy.fo.EntityUtil;
 import org.mineacademy.fo.ItemUtil;
 import org.mineacademy.fo.MathUtil;
 import org.mineacademy.fo.MinecraftVersion;
@@ -80,6 +81,7 @@ import org.mineacademy.fo.collection.StrictMap;
 import org.mineacademy.fo.constants.FoConstants;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.model.CompToastStyle;
+import org.mineacademy.fo.model.HookManager;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.SimpleRunnable;
 import org.mineacademy.fo.model.SimpleTask;
@@ -96,11 +98,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.nbt.api.BinaryTagHolder;
-import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.event.HoverEventSource;
 import net.kyori.adventure.text.serializer.bungeecord.BungeeComponentSerializer;
 import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.chat.ComponentSerializer;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class Remain extends RemainCore {
@@ -741,23 +744,23 @@ public final class Remain extends RemainCore {
 	 * @param component
 	 * @return
 	 */
-	public static Object convertAdventureToIChatBase(Component component) {
-		return convertJsonToIChatBase(SimpleComponent.fromAdventure(component).toAdventureJson());
-	}
+	/*public static Object convertAdventureToIChatBase(ComponentLike component) {
+		return convertJsonToIChatBase(SimpleComponent.fromAdventure(component.asComponent()).toAdventureJson());
+	}*/
 
 	/**
 	 * Return IChatBaseComponent from the given JSON
 	 *
-	 * @param json
+	 * @param legacy
 	 * @return
 	 */
-	public static Object convertJsonToIChatBase(String json) {
+	private static Object convertLegacyToIChatBase(String legacy) {
 		Valid.checkBoolean(MinecraftVersion.atLeast(V.v1_7), "Serializing chat components requires Minecraft 1.7.10 and greater");
 
 		final Class<?> chatSerializer = ReflectionUtil.getNMSClass((MinecraftVersion.equals(V.v1_7) ? "" : "IChatBaseComponent$") + "ChatSerializer", "net.minecraft.network.chat.IChatBaseComponent$ChatSerializer");
 		final Method a = ReflectionUtil.getMethod(chatSerializer, "a", String.class);
 
-		return ReflectionUtil.invoke(a, null, json);
+		return ReflectionUtil.invoke(a, null, "{\"text\":\"" + legacy + "\"}");
 	}
 
 	/**
@@ -767,7 +770,7 @@ public final class Remain extends RemainCore {
 	 * @return
 	 */
 	public static BaseComponent[] convertJsonToBungee(String json) {
-		return net.md_5.bungee.chat.ComponentSerializer.parse(json);
+		return ComponentSerializer.parse(json);
 	}
 
 	/**
@@ -776,8 +779,8 @@ public final class Remain extends RemainCore {
 	 * @param component
 	 * @return
 	 */
-	public static BaseComponent[] convertAdventureToBungee(Component component) {
-		return BungeeComponentSerializer.get().serialize(component);
+	public static BaseComponent[] convertAdventureToBungee(ComponentLike component) {
+		return BungeeComponentSerializer.get().serialize(component.asComponent());
 	}
 
 	/**
@@ -786,11 +789,11 @@ public final class Remain extends RemainCore {
 	 * @param legacyText
 	 * @return
 	 */
-	public static Object convertLegacyToIChatBase(String legacyText) {
-		final String json = SimpleComponent.fromSection(legacyText).toAdventureJson();
+	/*public static Object convertLegacyToIChatBase(String legacyText) {
+		final String json = SimpleComponent.fromMini(legacyText).toAdventureJson();
 
 		return convertJsonToIChatBase(json);
-	}
+	}*/
 
 	/**
 	 * Return the biome at the given location
@@ -1104,7 +1107,7 @@ public final class Remain extends RemainCore {
 	 * @param entity
 	 * @return
 	 */
-	public static String getName(final Entity entity) {
+	public static String getEntityName(final Entity entity) {
 		try {
 			return entity.getName();
 
@@ -1279,7 +1282,7 @@ public final class Remain extends RemainCore {
 	public static Score getScore(final Objective obj, String entry) {
 		Valid.checkNotNull(obj, "Objective cannot be null");
 
-		entry = SimpleComponent.fromMini(entry).toLegacy();
+		entry = CompChatColor.translateColorCodes(entry);
 
 		try {
 			return obj.getScore(entry);
@@ -1738,7 +1741,7 @@ public final class Remain extends RemainCore {
 					Common.sleep(100);
 
 					Common.runLater(() -> {
-						final String colorized = SimpleComponent.fromMini(message.apply(receiver)).toLegacy();
+						final String colorized = CompChatColor.translateColorCodes(message.apply(receiver));
 
 						if (!colorized.isEmpty()) {
 							final AdvancementAccessor accessor = new AdvancementAccessor(colorized, icon.toString().toLowerCase(), style);
@@ -1751,7 +1754,7 @@ public final class Remain extends RemainCore {
 			});
 		else
 			for (final Player receiver : receivers) {
-				final String colorized = SimpleComponent.fromMini(message.apply(receiver)).toLegacy();
+				final String colorized = CompChatColor.translateColorCodes(message.apply(receiver));
 
 				if (!colorized.isEmpty())
 					receiver.sendMessage(colorized);
@@ -1798,7 +1801,7 @@ public final class Remain extends RemainCore {
 	 */
 	public static void sendToast(final Player receiver, final String message, final CompMaterial icon, final CompToastStyle toastStyle) {
 		if (message != null && !message.isEmpty()) {
-			final String colorized = SimpleComponent.fromMini(message).toLegacy();
+			final String colorized = CompChatColor.translateColorCodes(message);
 
 			if (!colorized.isEmpty()) {
 				Valid.checkSync("Toasts may only be sent from the main thread");
@@ -1921,7 +1924,7 @@ public final class Remain extends RemainCore {
 			entity.setCustomNameVisible(visible);
 
 			if (name != null)
-				entity.setCustomName(SimpleComponent.fromMini(name).toLegacy());
+				entity.setCustomName(CompChatColor.translateColorCodes(name));
 
 		} catch (final NoSuchMethodError er) {
 			Valid.checkBoolean(MinecraftVersion.atLeast(V.v1_7), "setCustomName requires Minecraft 1.7.10+");
@@ -1931,7 +1934,7 @@ public final class Remain extends RemainCore {
 			nbt.setInteger("CustomNameVisible", visible ? 1 : 0);
 
 			if (name != null)
-				nbt.setString("CustomName", SimpleComponent.fromMini(name).toLegacy());
+				nbt.setString("CustomName", CompChatColor.translateColorCodes(name));
 		}
 	}
 
@@ -2030,12 +2033,11 @@ public final class Remain extends RemainCore {
 		}
 
 		try {
-			final BungeeComponentSerializer serializer = BungeeComponentSerializer.get();
 			final List<BaseComponent[]> spigotPages = new ArrayList<>();
 
 			for (final SimpleComponent component : pages)
 				try {
-					spigotPages.add(serializer.serialize(component.toAdventure()));
+					spigotPages.add(Remain.convertAdventureToBungee(component));
 
 				} catch (final Throwable t) {
 					Common.error(t, "Failed to turn simple component into bungee component: " + component);
@@ -2048,7 +2050,7 @@ public final class Remain extends RemainCore {
 				final List<Object> chatComponentPages = (List<Object>) ReflectionUtil.getFieldContent(ReflectionUtil.getOBCClass("inventory.CraftMetaBook"), "pages", meta);
 
 				for (final SimpleComponent component : pages)
-					chatComponentPages.add(convertJsonToIChatBase(component.toAdventureJson()));
+					chatComponentPages.add(convertLegacyToIChatBase(component.toLegacy()));
 
 			} catch (final Exception e) {
 				e.printStackTrace();
@@ -2135,7 +2137,7 @@ public final class Remain extends RemainCore {
 	/**
 	 * Sends an actionbar packet to the player
 	 * Used for legacy MC versions.
-	 * 
+	 *
 	 * @param player
 	 * @param message
 	 */
@@ -2143,7 +2145,7 @@ public final class Remain extends RemainCore {
 		Valid.checkBoolean(MinecraftVersion.olderThan(V.v1_13), "This method is unsupported on MC 1.13 and later");
 
 		try {
-			final Object iChatBaseComponent = convertJsonToIChatBase(message.toAdventureJson());
+			final Object iChatBaseComponent = convertLegacyToIChatBase(message.toLegacy());
 			final Object packet;
 			final byte type = 2;
 
@@ -2178,14 +2180,14 @@ public final class Remain extends RemainCore {
 			}
 
 			if (title != null) {
-				final Object chatTitle = convertJsonToIChatBase(title.toAdventureJson());
+				final Object chatTitle = convertLegacyToIChatBase(title.toLegacy());
 				final Object packet = titleConstructor.newInstance(enumTitle, chatTitle);
 
 				Remain.sendPacket(player, packet);
 			}
 
 			if (subtitle != null) {
-				final Object chatSubtitle = convertJsonToIChatBase(subtitle.toAdventureJson());
+				final Object chatSubtitle = convertLegacyToIChatBase(subtitle.toLegacy());
 				final Object packet = subtitleConstructor.newInstance(enumSubtitle, chatSubtitle);
 
 				Remain.sendPacket(player, packet);
@@ -2231,11 +2233,11 @@ public final class Remain extends RemainCore {
 			if (tabConstructor == null)
 				return;
 
-			final Object headerIChatBase = convertJsonToIChatBase(header.toAdventureJson());
+			final Object headerIChatBase = convertLegacyToIChatBase(header.toLegacy());
 			final Object packet = tabConstructor.newInstance(headerIChatBase);
 
 			if (footer != null) {
-				final Object footerIChatBase = convertJsonToIChatBase(footer.toAdventureJson());
+				final Object footerIChatBase = convertLegacyToIChatBase(footer.toLegacy());
 
 				final Field f = packet.getClass().getDeclaredField("b"); // setFooter
 				f.setAccessible(true);
@@ -2563,7 +2565,7 @@ public final class Remain extends RemainCore {
 			if (setTitle == null)
 				throw new NoSuchMethodError();
 
-			ReflectionUtil.invoke(setTitle, view, SimpleComponent.fromMini(title).toLegacy());
+			ReflectionUtil.invoke(setTitle, view, CompChatColor.translateColorCodes(title));
 
 		} catch (final NoSuchMethodError err) {
 
@@ -2578,7 +2580,7 @@ public final class Remain extends RemainCore {
 					final boolean is1_19 = MinecraftVersion.equals(V.v1_19);
 
 					final Object nmsPlayer = Remain.getHandleEntity(player);
-					final Object chatComponent = convertAdventureToIChatBase(SimpleComponent.fromMini(title).toAdventure());
+					final Object chatComponent = convertLegacyToIChatBase(CompChatColor.translateColorCodes(title));
 
 					final int inventorySize = topInventory.getSize() / 9;
 					String containerName;
@@ -2944,6 +2946,21 @@ public final class Remain extends RemainCore {
 		});
 	}
 
+	/**
+	 * Removes the entity with its passengers and the vehicle, if any,
+	 * as well as removes the NPC if it is a Citizens NPC
+	 *
+	 * @param entity
+	 */
+	public static void removeEntityWithPassengersAndNPC(Entity entity) {
+		EntityUtil.removeVehiclesAndPassengers(entity);
+
+		if (HookManager.isCitizensLoaded())
+			HookManager.destroyNPC(entity);
+
+		entity.remove();
+	}
+
 	// ----------------------------------------------------------------------------------------------------
 	// Getters for various server functions
 	// ----------------------------------------------------------------------------------------------------
@@ -3219,7 +3236,7 @@ final class PotionSetter {
 		if (MinecraftVersion.olderThan(V.v1_9)) {
 			if (item.getData().getData() == 0) {
 				final List<String> lore = new ArrayList<>();
-				final String potionLine = SimpleComponent.fromAndCharacter("&7" + ItemUtil.bountify(type) + " (" + TimeUtil.formatTimeColon(durationTicks / 20) + ")").toLegacy();
+				final String potionLine = CompChatColor.translateColorCodes("<gray>" + ItemUtil.bountify(type) + " (" + TimeUtil.formatTimeColon(durationTicks / 20) + ")");
 
 				lore.add(potionLine);
 
@@ -3230,7 +3247,7 @@ final class PotionSetter {
 
 				item.getData().setData((byte) 45);
 
-				meta.setDisplayName(SimpleComponent.fromAndCharacter("&rPotion Of " + ItemUtil.bountify(type)).toLegacy());
+				meta.setDisplayName(CompChatColor.translateColorCodes("<reset>Potion Of " + ItemUtil.bountify(type)));
 				meta.setLore(lore);
 			}
 		}

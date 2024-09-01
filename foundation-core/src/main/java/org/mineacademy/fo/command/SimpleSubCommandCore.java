@@ -3,12 +3,10 @@ package org.mineacademy.fo.command;
 import java.util.Arrays;
 
 import org.mineacademy.fo.ValidCore;
-import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.platform.Platform;
 
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
 
 /**
  * A simple subcommand belonging to a {@link SimpleCommandGroup}
@@ -25,9 +23,8 @@ public abstract class SimpleSubCommandCore extends SimpleCommandCore {
 	 * The latest sublabel used when the subcommand was run,
 	 * always updated on executing
 	 */
-	@Setter(value = AccessLevel.PROTECTED)
 	@Getter(value = AccessLevel.PROTECTED)
-	private String sublabel;
+	private final String sublabel;
 
 	/**
 	 * Create a new subcommand given the main plugin instance defines a main command group
@@ -78,15 +75,6 @@ public abstract class SimpleSubCommandCore extends SimpleCommandCore {
 	 */
 	protected boolean showInHelp() {
 		return true;
-	}
-
-	/**
-	 * Replace additional {sublabel} placeholder for this subcommand.
-	 * See {@link SimpleCommandCore#replacePlaceholders(String)}
-	 */
-	@Override
-	protected SimpleComponent replacePlaceholders(SimpleComponent message) {
-		return super.replacePlaceholders(message).replaceBracket("sublabel", this.getSublabel());
 	}
 
 	@Override

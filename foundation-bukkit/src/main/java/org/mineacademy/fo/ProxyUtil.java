@@ -72,7 +72,7 @@ public final class ProxyUtil {
 	 * OBS! The data written always start with:
 	 *
 	 * 1. The recipient UUID
-	 * 2. The server name gotten from Remain's class (please call {@link Platform#setServerName(String)} first)
+	 * 2. The server name gotten from Remain's class (please call {@link Platform#setCustomServerName(String)} first)
 	 * 3. The action parameter
 	 *
 	 * We find a random player through which we will send the message. If the server is
@@ -96,7 +96,7 @@ public final class ProxyUtil {
 	 *
 	 * 1. The channel name (String)
 	 * 2. The recipient UUID (String)
-	 * 3. The server name gotten from Remain's class (please call {@link Platform#setServerName(String)} first)
+	 * 3. The server name gotten from Remain's class (please call {@link Platform#setCustomServerName(String)} first)
 	 * 4. The action parameter (enum to String)
 	 *
 	 * @param <T>

@@ -11,11 +11,13 @@ import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.model.RangedValue;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.platform.FoundationPlayer;
+import org.mineacademy.fo.remain.CompChatColor;
 import org.mineacademy.fo.settings.SimpleLocalization;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import net.kyori.adventure.text.Component;
 
 /**
  * Utility class for checking conditions and throwing our safe exception that is
@@ -145,7 +147,7 @@ public abstract class ValidCore {
 	 */
 	public static boolean checkPermission(final FoundationPlayer sender, final String permission) {
 		if (!sender.hasPermission(permission)) {
-			sender.sendMessage(SimpleLocalization.NO_PERMISSION.replaceBracket("permission", SimpleComponent.fromPlain(permission)));
+			sender.sendMessage(SimpleLocalization.NO_PERMISSION.replaceBracket("permission", SimpleComponent.fromAdventure(Component.text(permission))));
 
 			return false;
 		}
@@ -475,7 +477,7 @@ public abstract class ValidCore {
 				return false;
 
 			if (firstElement != null && !firstElement.equals(secondElement))
-				if (!CommonCore.stripColorCodes(firstElement.toString()).equalsIgnoreCase(CommonCore.stripColorCodes(secondElement.toString())))
+				if (!CompChatColor.stripColorCodes(firstElement.toString()).equalsIgnoreCase(CompChatColor.stripColorCodes(secondElement.toString())))
 					return false;
 		}
 

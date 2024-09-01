@@ -1,6 +1,7 @@
 package org.mineacademy.fo.model;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,6 +19,7 @@ import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.debug.Debugger;
 import org.mineacademy.fo.exception.FoScriptException;
 import org.mineacademy.fo.platform.FoundationPlayer;
+import org.mineacademy.fo.remain.CompChatColor;
 import org.mineacademy.fo.remain.RemainCore;
 
 import lombok.AccessLevel;
@@ -30,10 +32,10 @@ import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEventSource;
+import net.kyori.adventure.text.format.Style;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.format.TextDecoration.State;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
 /**
  * A very simple way of sending interactive chat messages
@@ -43,7 +45,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	/**
 	 * Stores legacy colors
 	 */
-	private static final Map<String, String> LEGACY_COLOR_MAP = new HashMap<>();
+	private static final Map<String, String> LEGACY_TO_MINI = new HashMap<>();
 
 	/**
 	 * The pattern for matching MiniMessage tags
@@ -51,50 +53,51 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	private static final Pattern MINIMESSAGE_PATTERN = Pattern.compile("<[!?#]?[a-z0-9_-]*>");
 
 	static {
-		LEGACY_COLOR_MAP.put("&0", "<black>");
-		LEGACY_COLOR_MAP.put("&1", "<dark_blue>");
-		LEGACY_COLOR_MAP.put("&2", "<dark_green>");
-		LEGACY_COLOR_MAP.put("&3", "<dark_aqua>");
-		LEGACY_COLOR_MAP.put("&4", "<dark_red>");
-		LEGACY_COLOR_MAP.put("&5", "<dark_purple>");
-		LEGACY_COLOR_MAP.put("&6", "<gold>");
-		LEGACY_COLOR_MAP.put("&7", "<gray>");
-		LEGACY_COLOR_MAP.put("&8", "<dark_gray>");
-		LEGACY_COLOR_MAP.put("&9", "<blue>");
-		LEGACY_COLOR_MAP.put("&a", "<green>");
-		LEGACY_COLOR_MAP.put("&b", "<aqua>");
-		LEGACY_COLOR_MAP.put("&c", "<red>");
-		LEGACY_COLOR_MAP.put("&d", "<light_purple>");
-		LEGACY_COLOR_MAP.put("&e", "<yellow>");
-		LEGACY_COLOR_MAP.put("&f", "<white>");
-		LEGACY_COLOR_MAP.put("&n", "<u>");
-		LEGACY_COLOR_MAP.put("&m", "<st>");
-		LEGACY_COLOR_MAP.put("&k", "<obf>");
-		LEGACY_COLOR_MAP.put("&o", "<i>");
-		LEGACY_COLOR_MAP.put("&l", "<b>");
-		LEGACY_COLOR_MAP.put("&r", "<reset>");
-		LEGACY_COLOR_MAP.put("§0", "<black>");
-		LEGACY_COLOR_MAP.put("§1", "<dark_blue>");
-		LEGACY_COLOR_MAP.put("§2", "<dark_green>");
-		LEGACY_COLOR_MAP.put("§3", "<dark_aqua>");
-		LEGACY_COLOR_MAP.put("§4", "<dark_red>");
-		LEGACY_COLOR_MAP.put("§5", "<dark_purple>");
-		LEGACY_COLOR_MAP.put("§6", "<gold>");
-		LEGACY_COLOR_MAP.put("§7", "<gray>");
-		LEGACY_COLOR_MAP.put("§8", "<dark_gray>");
-		LEGACY_COLOR_MAP.put("§9", "<blue>");
-		LEGACY_COLOR_MAP.put("§a", "<green>");
-		LEGACY_COLOR_MAP.put("§b", "<aqua>");
-		LEGACY_COLOR_MAP.put("§c", "<red>");
-		LEGACY_COLOR_MAP.put("§d", "<light_purple>");
-		LEGACY_COLOR_MAP.put("§e", "<yellow>");
-		LEGACY_COLOR_MAP.put("§f", "<white>");
-		LEGACY_COLOR_MAP.put("§n", "<u>");
-		LEGACY_COLOR_MAP.put("§m", "<st>");
-		LEGACY_COLOR_MAP.put("§k", "<obf>");
-		LEGACY_COLOR_MAP.put("§o", "<i>");
-		LEGACY_COLOR_MAP.put("§l", "<b>");
-		LEGACY_COLOR_MAP.put("§r", "<reset>");
+		LEGACY_TO_MINI.put("&0", "<black>");
+		LEGACY_TO_MINI.put("&1", "<dark_blue>");
+		LEGACY_TO_MINI.put("&2", "<dark_green>");
+		LEGACY_TO_MINI.put("&3", "<dark_aqua>");
+		LEGACY_TO_MINI.put("&4", "<dark_red>");
+		LEGACY_TO_MINI.put("&5", "<dark_purple>");
+		LEGACY_TO_MINI.put("&6", "<gold>");
+		LEGACY_TO_MINI.put("&7", "<gray>");
+		LEGACY_TO_MINI.put("&8", "<dark_gray>");
+		LEGACY_TO_MINI.put("&9", "<blue>");
+		LEGACY_TO_MINI.put("&a", "<green>");
+		LEGACY_TO_MINI.put("&b", "<aqua>");
+		LEGACY_TO_MINI.put("&c", "<red>");
+		LEGACY_TO_MINI.put("&d", "<light_purple>");
+		LEGACY_TO_MINI.put("&e", "<yellow>");
+		LEGACY_TO_MINI.put("&f", "<white>");
+		LEGACY_TO_MINI.put("&n", "<u>");
+		LEGACY_TO_MINI.put("&m", "<st>");
+		LEGACY_TO_MINI.put("&k", "<obf>");
+		LEGACY_TO_MINI.put("&o", "<i>");
+		LEGACY_TO_MINI.put("&l", "<b>");
+		LEGACY_TO_MINI.put("&r", "<reset>");
+
+		LEGACY_TO_MINI.put("§0", "<black>");
+		LEGACY_TO_MINI.put("§1", "<dark_blue>");
+		LEGACY_TO_MINI.put("§2", "<dark_green>");
+		LEGACY_TO_MINI.put("§3", "<dark_aqua>");
+		LEGACY_TO_MINI.put("§4", "<dark_red>");
+		LEGACY_TO_MINI.put("§5", "<dark_purple>");
+		LEGACY_TO_MINI.put("§6", "<gold>");
+		LEGACY_TO_MINI.put("§7", "<gray>");
+		LEGACY_TO_MINI.put("§8", "<dark_gray>");
+		LEGACY_TO_MINI.put("§9", "<blue>");
+		LEGACY_TO_MINI.put("§a", "<green>");
+		LEGACY_TO_MINI.put("§b", "<aqua>");
+		LEGACY_TO_MINI.put("§c", "<red>");
+		LEGACY_TO_MINI.put("§d", "<light_purple>");
+		LEGACY_TO_MINI.put("§e", "<yellow>");
+		LEGACY_TO_MINI.put("§f", "<white>");
+		LEGACY_TO_MINI.put("§n", "<u>");
+		LEGACY_TO_MINI.put("§m", "<st>");
+		LEGACY_TO_MINI.put("§k", "<obf>");
+		LEGACY_TO_MINI.put("§o", "<i>");
+		LEGACY_TO_MINI.put("§l", "<b>");
+		LEGACY_TO_MINI.put("§r", "<reset>");
 	}
 
 	@Setter
@@ -103,7 +106,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	/**
 	 * The components we are creating
 	 */
-	private final List<ConditionalComponent> componentsImmutable;
+	private final List<ConditionalComponent> subcomponents;
 
 	/**
 	 * Shall this component ignore empty components? Defaults to false
@@ -112,12 +115,17 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	private boolean ignoreEmpty = false;
 
 	/**
-	 * Create a new interactive chat component
-	 *
-	 * @param components
+	 * The last style used, null if none
 	 */
+	private Style lastStyle = null;
+
 	private SimpleComponent(final List<ConditionalComponent> components) {
-		this.componentsImmutable = Collections.unmodifiableList(components);
+		this(components, null);
+	}
+
+	private SimpleComponent(final List<ConditionalComponent> components, Style lastStyle) {
+		this.subcomponents = Collections.unmodifiableList(components);
+		this.lastStyle = lastStyle;
 	}
 
 	// --------------------------------------------------------------------
@@ -130,8 +138,8 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	 * @param lines
 	 * @return
 	 */
-	public SimpleComponent onHover(final Collection<String> lines) {
-		return this.onHover(String.join("\n", lines));
+	public SimpleComponent onHover(final Collection<SimpleComponent> lines) {
+		return this.onHover(lines.toArray(new SimpleComponent[lines.size()]));
 	}
 
 	/**
@@ -141,7 +149,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	 * @return
 	 */
 	public SimpleComponent onHover(final String... lines) {
-		return this.onHover(String.join("\n", lines));
+		return this.onHover(CommonCore.convertToArray(lines, SimpleComponent::fromMini));
 	}
 
 	/**
@@ -151,7 +159,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	 * @return
 	 */
 	public SimpleComponent onHover(final String hover) {
-		return modifyLastComponentAndReturn(component -> component.hoverEvent(fromMini(hover).toAdventure()));
+		return this.onHover(fromMini(hover));
 	}
 
 	/**
@@ -161,17 +169,16 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	 * @return
 	 */
 	public SimpleComponent onHover(final SimpleComponent... components) {
-		SimpleComponent joined = SimpleComponent.empty();
+		Component joined = Component.empty();
 
 		for (int i = 0; i < components.length; i++) {
 			joined = joined.append(components[i]);
 
 			if (i < components.length - 1)
-				joined = joined.appendNewLine();
+				joined = joined.append(Component.newline());
 		}
 
 		final Component finalComponent = joined.asComponent();
-
 		return modifyLastComponentAndReturn(component -> component.hoverEvent(finalComponent));
 	}
 
@@ -242,7 +249,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	 * @return
 	 */
 	public SimpleComponent viewCondition(final String viewCondition) {
-		this.componentsImmutable.get(this.componentsImmutable.size() - 1).setViewCondition(viewCondition);
+		this.subcomponents.get(this.subcomponents.size() - 1).setViewCondition(viewCondition);
 
 		return this;
 	}
@@ -254,7 +261,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	 * @return
 	 */
 	public SimpleComponent viewPermission(final String viewPermission) {
-		this.componentsImmutable.get(this.componentsImmutable.size() - 1).setViewPermission(viewPermission);
+		this.subcomponents.get(this.subcomponents.size() - 1).setViewPermission(viewPermission);
 
 		return this;
 	}
@@ -268,7 +275,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	 * @return
 	 */
 	public SimpleComponent replaceBracket(final String variable, final String value) {
-		return this.replaceBracket(variable, fromMini(value));
+		return this.replaceBracket(variable, fromPlain(value));
 	}
 
 	/**
@@ -291,7 +298,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	 * @return
 	 */
 	public SimpleComponent replaceLiteral(final String variable, final String value) {
-		return this.replaceLiteral(variable, fromMini(value));
+		return this.replaceLiteral(variable, fromPlain(value));
 	}
 
 	/**
@@ -304,7 +311,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	public SimpleComponent replaceLiteral(final String variable, final SimpleComponent value) {
 		final List<ConditionalComponent> copy = new ArrayList<>();
 
-		for (final ConditionalComponent component : this.componentsImmutable) {
+		for (final ConditionalComponent component : this.subcomponents) {
 			final Component innerComponent = component.getComponent().replaceText(b -> b.matchLiteral(variable).replacement(value));
 
 			copy.add(new ConditionalComponent(innerComponent, component.getViewPermission(), component.getViewCondition()));
@@ -324,7 +331,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	public SimpleComponent replaceMatch(final Pattern pattern, final BiFunction<MatchResult, TextComponent.Builder, ComponentLike> replacement) {
 		final List<ConditionalComponent> copy = new ArrayList<>();
 
-		for (final ConditionalComponent component : this.componentsImmutable) {
+		for (final ConditionalComponent component : this.subcomponents) {
 			final Component innerComponent = component.getComponent().replaceText(b -> b.match(pattern).replacement(replacement));
 
 			copy.add(new ConditionalComponent(innerComponent, component.getViewPermission(), component.getViewCondition()));
@@ -344,7 +351,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	public SimpleComponent replaceMatch(final Pattern pattern, String replacement) {
 		final List<ConditionalComponent> copy = new ArrayList<>();
 
-		for (final ConditionalComponent component : this.componentsImmutable) {
+		for (final ConditionalComponent component : this.subcomponents) {
 			final Component innerComponent = component.getComponent().replaceText(b -> b.match(pattern).replacement(replacement));
 
 			copy.add(new ConditionalComponent(innerComponent, component.getViewPermission(), component.getViewCondition()));
@@ -364,7 +371,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	public SimpleComponent replaceMatch(final Pattern pattern, SimpleComponent replacement) {
 		final List<ConditionalComponent> copy = new ArrayList<>();
 
-		for (final ConditionalComponent component : this.componentsImmutable) {
+		for (final ConditionalComponent component : this.subcomponents) {
 			final Component innerComponent = component.getComponent().replaceText(b -> b.match(pattern).replacement(replacement));
 
 			copy.add(new ConditionalComponent(innerComponent, component.getViewPermission(), component.getViewCondition()));
@@ -408,39 +415,38 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	}
 
 	/**
+	 * Append a new line on the end of this component
+	 *
+	 * @return
+	 */
+	public SimpleComponent appendNewLine() {
+		return this.append(newLine());
+	}
+
+	/**
 	 * Append a new simple component
 	 *
 	 * @param newComponent
 	 * @return
 	 */
 	public SimpleComponent append(final SimpleComponent newComponent) {
+
 		final List<ConditionalComponent> copy = new ArrayList<>();
 
-		for (final ConditionalComponent component : this.componentsImmutable)
-			copy.add(component);
+		for (final ConditionalComponent oldSubcomponent : this.subcomponents)
+			copy.add(oldSubcomponent);
 
-		for (final ConditionalComponent component : newComponent.componentsImmutable)
-			copy.add(new ConditionalComponent(component.getComponent(), component.getViewPermission(), component.getViewCondition()));
+		for (int i = 0; i < newComponent.subcomponents.size(); i++) {
+			final ConditionalComponent newSubcomponent = newComponent.subcomponents.get(i);
+			Component adventure = newSubcomponent.getComponent();
 
-		return new SimpleComponent(copy);
-	}
+			// Why I prefer legacy over Adventure > last style is not properly kept, i.e. "&c[Prefix]&7" resets the gray, so we have
+			// to manually save it and reapply it later
+			if (i == 0 && this.lastStyle != null)
+				adventure = adventure.style(this.lastStyle);
 
-	/**
-	 * Append a new line on the end of this component
-	 *
-	 * @return
-	 */
-	public SimpleComponent appendNewLine() {
-		return this.append0(ConditionalComponent.fromComponent(Component.newline()));
-	}
-
-	private SimpleComponent append0(ConditionalComponent conditional) {
-		final List<ConditionalComponent> copy = new ArrayList<>();
-
-		for (final ConditionalComponent component : this.componentsImmutable)
-			copy.add(component);
-
-		copy.add(conditional);
+			copy.add(new ConditionalComponent(adventure, newSubcomponent.getViewPermission(), newSubcomponent.getViewCondition()));
+		}
 
 		return new SimpleComponent(copy);
 	}
@@ -451,7 +457,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	 * @return
 	 */
 	public boolean isEmpty() {
-		return this.componentsImmutable.isEmpty() || this.toPlain().isEmpty();
+		return this.subcomponents.isEmpty() || this.toPlain().isEmpty();
 	}
 
 	/**
@@ -461,16 +467,29 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	 * @return
 	 */
 	public String toLegacy() {
-		return LegacyComponentSerializer.legacySection().serialize(this.toAdventure());
+
+		// Append tail from the last style
+		String suffix = "";
+
+		if (this.lastStyle != null) {
+			if (this.lastStyle.color() != null)
+				suffix = CompChatColor.of(this.lastStyle.color().asHexString()).toString();
+
+			for (final Map.Entry<TextDecoration, State> entry : this.lastStyle.decorations().entrySet())
+				if (entry.getValue() == State.TRUE)
+					suffix += CompChatColor.of(entry.getKey().name()).toString();
+		}
+
+		return RemainCore.convertAdventureToLegacy(this) + suffix;
 	}
 
 	/**
 	 * Return the minimessage representation of the component
-	 * 
+	 *
 	 * @return
 	 */
 	public String toMini() {
-		return MiniMessage.miniMessage().serialize(this.toAdventure());
+		return RemainCore.convertAdventureToMini(this);
 	}
 
 	/**
@@ -482,7 +501,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	 * @return
 	 */
 	public String toPlain() {
-		return PlainTextComponentSerializer.plainText().serialize(this.toAdventure());
+		return RemainCore.convertAdventureToPlain(this);
 	}
 
 	/**
@@ -490,7 +509,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	 * @return
 	 */
 	public String toAdventureJson() {
-		return GsonComponentSerializer.gson().serialize(this.toAdventure());
+		return RemainCore.convertAdventureToJson(this);
 	}
 
 	/**
@@ -537,7 +556,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	private Component buildToAdventure(FoundationPlayer sender, FoundationPlayer receiver) {
 		Component main = null;
 
-		for (final ConditionalComponent part : this.componentsImmutable) {
+		for (final ConditionalComponent part : this.subcomponents) {
 			final Component component = part.build(receiver);
 
 			if (component != null) {
@@ -601,11 +620,10 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	protected SimpleComponent modifyLastComponentAndReturn(Function<Component, Component> editor) {
 		final List<ConditionalComponent> copy = new ArrayList<>();
 
-		for (int i = 0; i < this.componentsImmutable.size(); i++) {
+		for (int i = 0; i < this.subcomponents.size(); i++) {
+			ConditionalComponent component = this.subcomponents.get(i);
 
-			ConditionalComponent component = this.componentsImmutable.get(i);
-
-			if (i == this.componentsImmutable.size() - 1)
+			if (i == this.subcomponents.size() - 1)
 				component = ConditionalComponent.fromComponent(editor.apply(component.getComponent()));
 
 			copy.add(component);
@@ -620,7 +638,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	@Override
 	public SerializedMap serialize() {
 		return SerializedMap.ofArray(
-				"Components", this.componentsImmutable,
+				"Components", this.subcomponents,
 				"Ignore_Empty", this.ignoreEmpty);
 	}
 
@@ -629,7 +647,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	 */
 	@Override
 	public String toString() {
-		return this.toAdventureJson();
+		return this.toMini();
 	}
 
 	// --------------------------------------------------------------------
@@ -658,7 +676,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 
 	/**
 	 * Replaces & color codes and MiniMessage tags in the message.
-	 * Also replaces {prefix}, {plugin_name} and {plugin_version} with their respective values.
+	 * Also replaces {plugin_prefix}, {plugin_name} and {plugin_version} with their respective values.
 	 *
 	 * @param message
 	 * @return
@@ -674,8 +692,8 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 			if (i + 1 < message.length() && (message.charAt(i) == '&' || message.charAt(i) == '§')) {
 				final String code = message.substring(i, i + 2);
 
-				if (LEGACY_COLOR_MAP.containsKey(code)) {
-					result.append(LEGACY_COLOR_MAP.get(code));
+				if (LEGACY_TO_MINI.containsKey(code)) {
+					result.append(LEGACY_TO_MINI.get(code));
 					i++;
 
 					continue;
@@ -693,7 +711,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 		}
 
 		message = result.toString();
-		message = escapeInvalidTags(message);
+		//message = escapeInvalidTags(message);
 
 		Component mini;
 
@@ -707,27 +725,24 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 			return null;
 		}
 
+		Style lastStyle = null;
+
 		// if message ends with color code from the above map, add an empty component at the end with the same color
 		if (!message.endsWith(" "))
-			for (final String value : LEGACY_COLOR_MAP.values()) {
+			for (final String value : LEGACY_TO_MINI.values()) {
 				if (message.endsWith(value)) {
-					mini = mini.append(Component.text(" ").color(MiniMessage.miniMessage().deserialize(value).color()));
+					lastStyle = MiniMessage.miniMessage().deserialize(value).style();
+
+					mini = Component
+							.text("")
+							.style(lastStyle)
+							.children(Arrays.asList(mini));
 
 					break;
 				}
 			}
 
-		return fromAdventure(mini);
-	}
-
-	/**
-	 * Create a new interactive chat component from a legacy text with & color codes
-	 *
-	 * @param message
-	 * @return
-	 */
-	public static SimpleComponent fromAndCharacter(String message) {
-		return fromAdventure(LegacyComponentSerializer.legacyAmpersand().deserialize(message));
+		return new SimpleComponent(CommonCore.newList(ConditionalComponent.fromComponent(mini)), lastStyle);
 	}
 
 	/*
@@ -800,7 +815,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 		final List<ConditionalComponent> children = new ArrayList<>();
 
 		for (final SimpleComponent component : components)
-			children.addAll(component.componentsImmutable);
+			children.addAll(component.subcomponents);
 
 		return new SimpleComponent(children);
 	}
@@ -902,7 +917,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 		 * @return
 		 */
 		static ConditionalComponent fromSection(String text) {
-			return new ConditionalComponent(LegacyComponentSerializer.legacySection().deserialize(text));
+			return new ConditionalComponent(RemainCore.convertLegacyToAdventure(text));
 		}
 
 		/**

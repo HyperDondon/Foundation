@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.mineacademy.fo.command.SimpleCommandCore;
 import org.mineacademy.fo.model.Task;
+import org.mineacademy.fo.model.Tuple;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -60,7 +61,7 @@ public final class Platform {
 		getInstance().setCustomServerName(serverName);
 	}
 
-	public static List<String> getServerPlugins() {
+	public static List<Tuple<String, String>> getServerPlugins() {
 		return getInstance().getServerPlugins();
 	}
 

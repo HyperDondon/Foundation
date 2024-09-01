@@ -18,6 +18,7 @@ import org.mineacademy.fo.Common;
 import org.mineacademy.fo.collection.StrictSet;
 import org.mineacademy.fo.debug.Debugger;
 import org.mineacademy.fo.plugin.SimplePlugin;
+import org.mineacademy.fo.remain.CompChatColor;
 import org.mineacademy.fo.remain.Remain;
 
 import github.scarsz.discordsrv.DiscordSRV;
@@ -328,7 +329,7 @@ public abstract class DiscordListener implements Listener {
 	 * @param message
 	 */
 	public final void flashMessage(TextChannel channel, String message) {
-		final String finalMessage = Common.stripColorCodes(message);
+		final String finalMessage = CompChatColor.stripColorCodes(message);
 
 		Common.runAsync(() -> {
 			final Message sentMessage = channel.sendMessage(finalMessage).complete();

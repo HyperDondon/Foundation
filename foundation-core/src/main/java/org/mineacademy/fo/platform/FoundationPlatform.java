@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.mineacademy.fo.command.SimpleCommandCore;
 import org.mineacademy.fo.model.Task;
+import org.mineacademy.fo.model.Tuple;
 
 import net.kyori.adventure.text.event.HoverEventSource;
 
@@ -66,7 +67,7 @@ public abstract class FoundationPlatform {
 
 	public abstract File getPluginFile(String pluginName);
 
-	public abstract List<String> getServerPlugins();
+	public abstract List<Tuple<String, String>> getServerPlugins();
 
 	public abstract String getPlatformVersion();
 

@@ -24,7 +24,7 @@ public final class BoxedMessage {
 	/**
 	 * The top and bottom line itself
 	 */
-	private static final SimpleComponent LINE = SimpleComponent.fromAndCharacter("&8" + CommonCore.chatLineSmooth());
+	private static final SimpleComponent LINE = SimpleComponent.fromMini("<dark_gray>" + CommonCore.chatLineSmooth());
 
 	/**
 	 * All message recipients

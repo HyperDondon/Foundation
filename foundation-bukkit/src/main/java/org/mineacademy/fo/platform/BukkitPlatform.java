@@ -45,6 +45,7 @@ import org.mineacademy.fo.model.HookManager;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.SimpleSound;
 import org.mineacademy.fo.model.Task;
+import org.mineacademy.fo.model.Tuple;
 import org.mineacademy.fo.model.Variables;
 import org.mineacademy.fo.plugin.BukkitVariableCollector;
 import org.mineacademy.fo.plugin.SimplePlugin;
@@ -82,19 +83,19 @@ public class BukkitPlatform extends FoundationPlatform {
 		/*public SimpleComponent onHover(@NonNull final ItemStack item) {
 			if (CompMaterial.isAir(item.getType()))
 				return this.onHover("Air");
-		
+
 			try {
 				this.modifyLastComponent(component -> component.hoverEvent(Remain.convertItemStackToHoverEvent(item)));
-		
+
 			} catch (final Throwable t) {
 				CommonCore.logFramed(
 						"Error parsing ItemStack to simple component!",
 						"Item: " + item,
 						"Error: " + t.getMessage());
-		
+
 				t.printStackTrace();
 			}
-		
+
 			return this;
 		}*/
 
@@ -365,8 +366,8 @@ public class BukkitPlatform extends FoundationPlatform {
 	}
 
 	@Override
-	public List<String> getServerPlugins() {
-		return Common.convert(Bukkit.getPluginManager().getPlugins(), Plugin::getName);
+	public List<Tuple<String, String>> getServerPlugins() {
+		return Common.convert(Bukkit.getPluginManager().getPlugins(), plugin -> new Tuple<>(plugin.getName(), plugin.getDescription().getVersion()));
 	}
 
 	@Override

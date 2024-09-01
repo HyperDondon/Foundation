@@ -109,7 +109,7 @@ public final class PermsCommand extends SimpleSubCommandCore {
 			throw new FoException("Please place @PermissionGroup over " + clazz);
 
 		messages.add(SimpleComponent
-				.fromAndCharacter("&7- ").append(messages.isEmpty() ? Commands.PERMS_MAIN : SimpleComponent.fromMini(group.value())).appendPlain(" ").append(Commands.PERMS_PERMISSIONS)
+				.fromMini("&7- ").append(messages.isEmpty() ? Commands.PERMS_MAIN : SimpleComponent.fromPlain(group.value()))
 				.onClickOpenUrl(""));
 
 		for (final Field field : clazz.getDeclaredFields()) {
@@ -129,11 +129,11 @@ public final class PermsCommand extends SimpleSubCommandCore {
 			if (node.contains("{plugin_name}") || node.contains("{plugin}"))
 				throw new FoException("Forgotten unsupported variable in " + info + " for field " + field + " in " + clazz);
 
-			final boolean has = this.sender == null ? false : this.hasPerm(node);
+			final boolean has = this.sender == null ? false : this.hasPerm(node.replaceAll("\\.\\{.*?\\}", ""));
 
 			if (phrase == null || node.contains(phrase))
 				messages.add(SimpleComponent
-						.fromAndCharacter("  " + (has ? "&a" : "&7") + node).append(def ? SimpleComponent.fromPlain(" ").append(Commands.PERMS_TRUE_BY_DEFAULT) : SimpleComponent.empty())
+						.fromMini("  " + (has ? "&a" : "&7") + node).append(def ? SimpleComponent.fromPlain(" ").append(Commands.PERMS_TRUE_BY_DEFAULT) : SimpleComponent.empty())
 						.onClickOpenUrl("")
 						.onHover(Commands.PERMS_INFO.toLegacy() + info,
 								Commands.PERMS_DEFAULT.append(def ? Commands.PERMS_YES : Commands.PERMS_NO).toLegacy(),
@@ -141,7 +141,7 @@ public final class PermsCommand extends SimpleSubCommandCore {
 		}
 
 		for (final Class<?> inner : clazz.getDeclaredClasses()) {
-			messages.add(SimpleComponent.fromAndCharacter("&r "));
+			messages.add(SimpleComponent.fromMini("&r "));
 
 			this.listIn(inner, messages, phrase);
 		}

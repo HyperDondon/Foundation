@@ -1,9 +1,7 @@
 package org.mineacademy.fo.settings;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.ValidCore;
@@ -139,12 +137,14 @@ public final class Lang {
 	 * @return
 	 */
 	public static SimpleComponent ofNumericVars(String path, Object... replacements) {
-		final Map<String, Object> replacementMap = new HashMap<>();
+		final List<Object> replacementsList = new ArrayList<>();
 
-		for (int i = 0; i < replacements.length; i++)
-			replacementMap.put(String.valueOf(i), replacements[i]);
+		for (int i = 0; i < replacements.length; i++) {
+			replacementsList.add(String.valueOf(i));
+			replacementsList.add(replacements[i]);
+		}
 
-		return ofVars(path, replacementMap);
+		return ofVars(path, replacementsList.toArray());
 	}
 
 	/**
@@ -200,10 +200,31 @@ public final class Lang {
 
 		final List<SimpleComponent> components = new ArrayList<>();
 
-		for (final SimpleComponent component : instance.getList(path, SimpleComponent.class))
-			components.add(Variables.replace(component, null, CommonCore.newHashMap(replacements)));
+		for (final String mini : instance.getStringList(path))
+			components.add(Variables.replace(SimpleComponent.fromMini(mini), null, CommonCore.newHashMap(replacements)));
 
 		return components.toArray(new SimpleComponent[components.size()]);
+	}
+
+	/**
+	 * Return an array from the localization file with {0} {1} etc. variables replaced.
+	 *
+	 * @param path
+	 * @param replacements
+	 * @return
+	 */
+	public static String[] ofLegacyArrayVars(String path, Object... replacements) {
+		checkInit();
+
+		if (!instance.isSet(path))
+			throw new FoException("Missing localization key '" + path + "' from " + instance.getFileName());
+
+		final List<String> lines = new ArrayList<>();
+
+		for (final String line : instance.getStringList(path))
+			lines.add(Variables.replace(line, null, CommonCore.newHashMap(replacements)));
+
+		return CommonCore.toArray(lines);
 	}
 
 	/*

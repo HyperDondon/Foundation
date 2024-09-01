@@ -10,6 +10,8 @@ public interface FoundationPlugin {
 
 	void disable();
 
+	String getAuthors();
+
 	File getDataFolder();
 
 	SimpleCommandGroup getDefaultCommandGroup();
@@ -18,6 +20,8 @@ public interface FoundationPlugin {
 
 	File getFile();
 
+	int getFoundedYear();
+
 	String getName();
 
 	ClassLoader getPluginClassLoader();
@@ -25,8 +29,6 @@ public interface FoundationPlugin {
 	String getVersion();
 
 	boolean isEnabled();
-
-	boolean isReloading();
 
 	boolean isRegexCaseInsensitive();
 
@@ -40,17 +42,13 @@ public interface FoundationPlugin {
 
 	void loadLibrary(String groupId, String artifactId, String version);
 
-	void reload();
-
-	int getFoundedYear();
-
-	String getAuthors();
-
-	void setDefaultCommandGroup(SimpleCommandGroup group);
+	void registerCommand(SimpleCommandCore instance);
 
 	void registerCommands(SimpleCommandGroup group);
 
-	void registerCommand(SimpleCommandCore instance);
+	void reload();
+
+	void setDefaultCommandGroup(SimpleCommandGroup group);
 
 	void setDefaultProxyListener(ProxyListener instance);
 }

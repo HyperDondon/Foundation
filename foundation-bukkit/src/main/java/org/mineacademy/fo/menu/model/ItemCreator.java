@@ -31,7 +31,7 @@ import org.mineacademy.fo.MinecraftVersion.V;
 import org.mineacademy.fo.ReflectionUtil;
 import org.mineacademy.fo.Valid;
 import org.mineacademy.fo.enchant.SimpleEnchantment;
-import org.mineacademy.fo.model.SimpleComponent;
+import org.mineacademy.fo.remain.CompChatColor;
 import org.mineacademy.fo.remain.CompColor;
 import org.mineacademy.fo.remain.CompEnchantment;
 import org.mineacademy.fo.remain.CompItemFlag;
@@ -103,7 +103,7 @@ public final class ItemCreator {
 	/**
 	 * The lore for this item (& color codes are replaced automatically).
 	 */
-	private final List<SimpleComponent> lores = new ArrayList<>();
+	private final List<String> lores = new ArrayList<>();
 
 	/**
 	 * The enchants applied to the item.
@@ -280,7 +280,11 @@ public final class ItemCreator {
 	 * @return
 	 */
 	public ItemCreator lore(String... lore) {
-		return this.lore(Arrays.asList(lore));
+		for (final String line : lore)
+			for (final String subpart : line.split("\n"))
+				this.lores.add(subpart);
+
+		return this;
 	}
 
 	/**
@@ -290,27 +294,9 @@ public final class ItemCreator {
 	 * @return
 	 */
 	public ItemCreator lore(List<String> lore) {
-		return this.loreComponent(Common.convert(lore, SimpleComponent::fromMini));
-	}
-
-	/**
-	 * Append the given lore to the end of existing item lore.
-	 *
-	 * @param lore
-	 * @return
-	 */
-	public ItemCreator loreComponent(SimpleComponent... lore) {
-		return this.loreComponent(Arrays.asList(lore));
-	}
-
-	/**
-	 * Append the given lore to the end of existing item lore.
-	 *
-	 * @param lore
-	 * @return
-	 */
-	public ItemCreator loreComponent(List<SimpleComponent> lore) {
-		this.lores.addAll(lore);
+		for (final String line : lore)
+			for (final String subpart : line.split("\n"))
+				this.lores.add(subpart);
 
 		return this;
 	}
@@ -700,7 +686,7 @@ public final class ItemCreator {
 				final List<String> colorizedPages = new ArrayList<>();
 
 				for (final String page : this.bookPages)
-					colorizedPages.add(SimpleComponent.fromMini(page).toLegacy());
+					colorizedPages.add(CompChatColor.translateColorCodes(page));
 
 				bookMeta.setPages(colorizedPages);
 			}
@@ -741,13 +727,13 @@ public final class ItemCreator {
 			}
 
 			if (this.name != null && !"".equals(this.name))
-				((ItemMeta) compiledMeta).setDisplayName(SimpleComponent.fromAndCharacter("&r&f" + this.name).toLegacy());
+				((ItemMeta) compiledMeta).setDisplayName(CompChatColor.translateColorCodes("<reset><white>" + this.name));
 
 			if (!this.lores.isEmpty()) {
 				final List<String> coloredLores = new ArrayList<>();
 
-				for (final SimpleComponent lore : this.lores)
-					coloredLores.add((lorePrefix != null ? lorePrefix : "") + lore.toLegacy());
+				for (final String lore : this.lores)
+					coloredLores.add(CompChatColor.translateColorCodes((lorePrefix != null ? lorePrefix : "") + lore));
 
 				((ItemMeta) compiledMeta).setLore(coloredLores);
 			}

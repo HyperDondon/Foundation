@@ -13,6 +13,7 @@ import org.mineacademy.fo.Messenger;
 import org.mineacademy.fo.Valid;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.menu.Menu;
+import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.Variables;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.settings.SimpleLocalization;
@@ -169,6 +170,17 @@ public abstract class SimplePrompt extends ValidatingPrompt {
 	}
 
 	/**
+	 * Sends the message to the player later
+	 *
+	 * @param delayTicks
+	 * @param conversable
+	 * @param message
+	 */
+	protected final void tellLater(final int delayTicks, final Conversable conversable, final SimpleComponent message) {
+		Common.tellLater(delayTicks, Platform.toPlayer(conversable), SimpleComponent.fromMini(this.getCustomPrefix() != null ? this.getCustomPrefix() : "").append(message));
+	}
+
+	/**
 	 * Called when the whole conversation is over. This is called before onConversationEnd
 	 *
 	 * @param conversation
@@ -191,7 +203,7 @@ public abstract class SimplePrompt extends ValidatingPrompt {
 				final String failPrompt = this.getFailedValidationText(context, input);
 
 				if (failPrompt != null)
-					this.tellLater(0, context.getForWhom(), Variables.replace("&c" + failPrompt, Platform.toPlayer(this.getPlayer(context))));
+					this.tellLater(0, context.getForWhom(), Variables.replace(SimpleLocalization.Prefix.ERROR.appendMini(" " + failPrompt), Platform.toPlayer(this.getPlayer(context))));
 
 				// Redisplay this prompt to the user to re-collect input
 				return this;
@@ -243,14 +255,10 @@ public abstract class SimplePrompt extends ValidatingPrompt {
 
 			@Override
 			protected void onConversationEnd(ConversationAbandonedEvent event, boolean canceledFromInactivity) {
-				final String message = canceledFromInactivity ? SimpleLocalization.Conversation.CONVERSATION_CANCELLED_INACTIVE : SimpleLocalization.Conversation.CONVERSATION_CANCELLED;
 				final Player player = SimplePrompt.this.getPlayer(event.getContext());
 
 				if (!event.gracefulExit())
-					if (Messenger.ENABLED)
-						Messenger.warn(player, message);
-					else
-						Platform.toPlayer(player).sendMessage(message);
+					Messenger.warn(player, canceledFromInactivity ? SimpleLocalization.Conversation.CANCELLED_INACTIVE : SimpleLocalization.Conversation.CANCELLED);
 			}
 		};
 

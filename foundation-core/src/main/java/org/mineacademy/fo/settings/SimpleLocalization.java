@@ -2,14 +2,12 @@ package org.mineacademy.fo.settings;
 
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.FileUtil;
-import org.mineacademy.fo.MessengerCore;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.command.DebugCommand;
 import org.mineacademy.fo.command.PermsCommand;
 import org.mineacademy.fo.command.ReloadCommand;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.platform.Platform;
-import org.mineacademy.fo.remain.CompChatColor;
 import org.mineacademy.fo.settings.FileConfig.AccusativeHelper;
 
 /**
@@ -131,9 +129,7 @@ public class SimpleLocalization extends YamlStaticConfig {
 		/**
 		 * Keys below indicate an invalid action or input
 		 */
-		public static SimpleComponent INVALID_ARGUMENT = SimpleComponent.fromMini("Invalid argument. Run <gold>/{label} ? <red>for help.");
-		public static SimpleComponent INVALID_SUB_ARGUMENT = SimpleComponent.fromMini("Invalid argument. Run '/{label} {0}' for help.");
-		public static SimpleComponent INVALID_ARGUMENT_MULTILINE = SimpleComponent.fromMini("Invalid argument. Usage:");
+		public static SimpleComponent INVALID_ARGUMENT = SimpleComponent.fromMini("Invalid argument(s) '{arguments}'. Run <gold>{help_command} <red>for help.");
 		public static SimpleComponent INVALID_TIME = SimpleComponent.fromMini("Expected time such as '3 hours' or '15 minutes'. Got: '{input}'");
 		public static SimpleComponent INVALID_NUMBER = SimpleComponent.fromMini("The number must be a whole or a decimal number. Got: '{input}'");
 		public static SimpleComponent INVALID_STRING = SimpleComponent.fromMini("Invalid string. Got: '{input}'");
@@ -144,27 +140,27 @@ public class SimpleLocalization extends YamlStaticConfig {
 		/**
 		 * The authors label
 		 */
-		public static SimpleComponent LABEL_AUTHORS = SimpleComponent.fromMini("Made by");
+		public static String LABEL_AUTHORS = "Made by";
 
 		/**
 		 * The description label
 		 */
-		public static SimpleComponent LABEL_DESCRIPTION = SimpleComponent.fromMini("<red><bold>Description:");
+		public static SimpleComponent LABEL_DESCRIPTION = SimpleComponent.fromMini("<red>Description: {description}");
 
 		/**
 		 * The optional arguments label
 		 */
-		public static SimpleComponent LABEL_OPTIONAL_ARGS = SimpleComponent.fromMini("optional arguments");
+		public static String LABEL_OPTIONAL_ARGS = "optional arguments";
 
 		/**
 		 * The required arguments label
 		 */
-		public static SimpleComponent LABEL_REQUIRED_ARGS = SimpleComponent.fromMini("required arguments");
+		public static String LABEL_REQUIRED_ARGS = "required arguments";
 
 		/**
 		 * The usage label
 		 */
-		public static SimpleComponent LABEL_USAGE = SimpleComponent.fromMini("&c&lUsage:");
+		public static SimpleComponent LABEL_USAGE = SimpleComponent.fromMini("&cUsage: {usage}");
 
 		/**
 		 * The help for label
@@ -172,23 +168,18 @@ public class SimpleLocalization extends YamlStaticConfig {
 		public static SimpleComponent LABEL_HELP_FOR = SimpleComponent.fromMini("Help for /{label}");
 
 		/**
-		 * The label shown when building subcommands
-		 */
-		public static SimpleComponent LABEL_SUBCOMMAND_DESCRIPTION = SimpleComponent.fromMini(" &f/{label} {sublabel} {usage+}{dash+}{description}");
-
-		/**
 		 * The keys below are shown as hover tooltip on /command help menu.
 		 */
 		public static SimpleComponent HELP_TOOLTIP_DESCRIPTION = SimpleComponent.fromMini("&7Description: &f{description}");
 		public static SimpleComponent HELP_TOOLTIP_PERMISSION = SimpleComponent.fromMini("&7Permission: &f{permission}");
-		public static SimpleComponent HELP_TOOLTIP_USAGE = SimpleComponent.fromMini("&7Usage: &f");
+		public static SimpleComponent HELP_TOOLTIP_USAGE = SimpleComponent.fromMini("&7Usage: &f{usage}");
 
 		/**
 		 * The keys below are used in the {@link ReloadCommand}
 		 */
 		public static SimpleComponent RELOAD_DESCRIPTION = SimpleComponent.fromMini("Reload the configuration.");
 		public static SimpleComponent RELOAD_STARTED = SimpleComponent.fromMini("Reloading plugin's data, please wait..");
-		public static SimpleComponent RELOAD_SUCCESS = SimpleComponent.fromMini("&6{plugin_name} {plugin_version} has been reloaded.");
+		public static SimpleComponent RELOAD_SUCCESS = SimpleComponent.fromMini("{plugin_name} {plugin_version} has been reloaded.");
 		public static SimpleComponent RELOAD_FILE_LOAD_ERROR = SimpleComponent.fromMini("&4Oups, &cthere was a problem loading files from your disk! See the console for more information. {plugin_name} has not been reloaded.");
 		public static SimpleComponent RELOAD_FAIL = SimpleComponent.fromMini("&4Oups, &creloading failed! See the console for more information. Error: {error}");
 
@@ -208,21 +199,6 @@ public class SimpleLocalization extends YamlStaticConfig {
 		public static SimpleComponent HEADER_NO_SUBCOMMANDS_PERMISSION = SimpleComponent.fromMini("&cYou don't have permissions to view any subcommands.");
 
 		/**
-		 * The primary color shown in the ----- COMMAND ----- header
-		 */
-		public static CompChatColor HEADER_COLOR = CompChatColor.GOLD;
-
-		/**
-		 * The secondary color shown in the ----- COMMAND ----- header such as in /chc ?
-		 */
-		public static CompChatColor HEADER_SECONDARY_COLOR = CompChatColor.RED;
-
-		/**
-		 * The format of the header
-		 */
-		public static String HEADER_FORMAT = "&r\n{theme_color}&m<center>&r{theme_color} {title} &m\n&r";
-
-		/**
 		 * The center character of the format in case \<center\> is used
 		 */
 		public static String HEADER_CENTER_LETTER = "-";
@@ -231,11 +207,6 @@ public class SimpleLocalization extends YamlStaticConfig {
 		 * The padding of the header in case \<center\> is used
 		 */
 		public static Integer HEADER_CENTER_PADDING = 130;
-
-		/**
-		 * Key for when plugin is reloading
-		 */
-		public static SimpleComponent RELOADING = SimpleComponent.fromMini("reloading");
 
 		/**
 		 * Key for when plugin is disabled
@@ -256,19 +227,18 @@ public class SimpleLocalization extends YamlStaticConfig {
 		 * The keys below are used in the {@link DebugCommand}
 		 */
 		public static SimpleComponent DEBUG_DESCRIPTION = SimpleComponent.fromMini("ZIP your settings for reporting bugs.");
-		public static SimpleComponent DEBUG_PREPARING = SimpleComponent.fromMini("&6Preparing debug log...");
-		public static SimpleComponent DEBUG_SUCCESS = SimpleComponent.fromMini("&2Successfuly copied {amount} file(s) to debug.zip. Your sensitive MySQL information has been removed from yml files. Please upload it via ufile.io and send it to us for review.");
-		public static SimpleComponent DEBUG_COPY_FAIL = SimpleComponent.fromMini("&cCopying files failed on file {file} and it was stopped. See console for more information.");
-		public static SimpleComponent DEBUG_ZIP_FAIL = SimpleComponent.fromMini("&cCreating a ZIP of your files failed, see console for more information. Please ZIP debug/ folder and send it to us via ufile.io manually.");
+		public static SimpleComponent DEBUG_PREPARING = SimpleComponent.fromMini("Preparing debug log...");
+		public static SimpleComponent DEBUG_SUCCESS = SimpleComponent.fromMini("Successfuly copied {amount} file(s) to debug.zip. Your sensitive MySQL information has been removed from yml files. Please upload it via ufile.io and send it to us for review.");
+		public static SimpleComponent DEBUG_COPY_FAIL = SimpleComponent.fromMini("Copying files failed on file {file} and it was stopped. See console for more information.");
+		public static SimpleComponent DEBUG_ZIP_FAIL = SimpleComponent.fromMini("Creating a ZIP of your files failed, see console for more information. Please ZIP debug/ folder and send it to us via ufile.io manually.");
 
 		/**
 		 * The keys below are used in the {@link PermsCommand}
 		 */
 		public static SimpleComponent PERMS_DESCRIPTION = SimpleComponent.fromMini("List all permissions the plugin has.");
-		public static SimpleComponent PERMS_USAGE = SimpleComponent.fromMini("[phrase]");
+		public static String PERMS_USAGE = "[phrase]";
 		public static SimpleComponent PERMS_HEADER = SimpleComponent.fromMini("Listing All {plugin_name} Permissions");
-		public static SimpleComponent PERMS_MAIN = SimpleComponent.fromMini("Main");
-		public static SimpleComponent PERMS_PERMISSIONS = SimpleComponent.fromMini("Permissions:");
+		public static SimpleComponent PERMS_MAIN = SimpleComponent.fromMini("Main Permissions");
 		public static SimpleComponent PERMS_TRUE_BY_DEFAULT = SimpleComponent.fromMini("&7[true by default]");
 		public static SimpleComponent PERMS_INFO = SimpleComponent.fromMini("&7Info: &f");
 		public static SimpleComponent PERMS_DEFAULT = SimpleComponent.fromMini("&7Default? ");
@@ -280,7 +250,11 @@ public class SimpleLocalization extends YamlStaticConfig {
 		 * The keys below are used in RegionTool
 		 */
 		public static SimpleComponent REGION_SET_PRIMARY = SimpleComponent.fromMini("Set the primary region point.");
+		public static SimpleComponent REGION_BLOCK_ALREADY_PRIMARY = SimpleComponent.fromMini("This block is already a primary point.");
+		public static SimpleComponent REGION_REMOVE_PRIMARY = SimpleComponent.fromMini("Removed the primary region point.");
 		public static SimpleComponent REGION_SET_SECONDARY = SimpleComponent.fromMini("Set the secondary region point.");
+		public static SimpleComponent REGION_BLOCK_ALREADY_SECONDARY = SimpleComponent.fromMini("This block is already a secondary point.");
+		public static SimpleComponent REGION_REMOVE_SECONDARY = SimpleComponent.fromMini("Removed the secondary region point.");
 
 		/**
 		 * Load the values -- this method is called automatically by reflection in the {@link YamlStaticConfig} class!
@@ -299,12 +273,6 @@ public class SimpleLocalization extends YamlStaticConfig {
 
 			if (isSetDefault("Invalid_Argument"))
 				INVALID_ARGUMENT = getComponent("Invalid_Argument");
-
-			if (isSetDefault("Invalid_Sub_Argument"))
-				INVALID_SUB_ARGUMENT = getComponent("Invalid_Sub_Argument");
-
-			if (isSetDefault("Invalid_Argument_Multiline"))
-				INVALID_ARGUMENT_MULTILINE = getComponent("Invalid_Argument_Multiline");
 
 			if (isSetDefault("Invalid_Time"))
 				INVALID_TIME = getComponent("Invalid_Time");
@@ -325,25 +293,22 @@ public class SimpleLocalization extends YamlStaticConfig {
 				INVALID_ENUM = getComponent("Invalid_Enum");
 
 			if (isSetDefault("Label_Authors"))
-				LABEL_AUTHORS = getComponent("Label_Authors");
+				LABEL_AUTHORS = getString("Label_Authors");
 
 			if (isSetDefault("Label_Description"))
 				LABEL_DESCRIPTION = getComponent("Label_Description");
 
 			if (isSetDefault("Label_Optional_Args"))
-				LABEL_OPTIONAL_ARGS = getComponent("Label_Optional_Args");
+				LABEL_OPTIONAL_ARGS = getString("Label_Optional_Args");
 
 			if (isSetDefault("Label_Required_Args"))
-				LABEL_REQUIRED_ARGS = getComponent("Label_Required_Args");
+				LABEL_REQUIRED_ARGS = getString("Label_Required_Args");
 
 			if (isSetDefault("Label_Usage"))
 				LABEL_USAGE = getComponent("Label_Usage");
 
 			if (isSetDefault("Label_Help_For"))
 				LABEL_HELP_FOR = getComponent("Label_Help_For");
-
-			if (isSetDefault("Label_Subcommand_Description"))
-				LABEL_SUBCOMMAND_DESCRIPTION = getComponent("Label_Subcommand_Description");
 
 			if (isSetDefault("Help_Tooltip_Description"))
 				HELP_TOOLTIP_DESCRIPTION = getComponent("Help_Tooltip_Description");
@@ -378,15 +343,6 @@ public class SimpleLocalization extends YamlStaticConfig {
 			if (isSetDefault("Header_No_Subcommands_Permission"))
 				HEADER_NO_SUBCOMMANDS_PERMISSION = getComponent("Header_No_Subcommands_Permission");
 
-			if (isSetDefault("Header_Color"))
-				HEADER_COLOR = get("Header_Color", CompChatColor.class);
-
-			if (isSetDefault("Header_Secondary_Color"))
-				HEADER_SECONDARY_COLOR = get("Header_Secondary_Color", CompChatColor.class);
-
-			if (isSetDefault("Header_Format"))
-				HEADER_FORMAT = getString("Header_Format");
-
 			if (isSetDefault("Header_Center_Letter")) {
 				HEADER_CENTER_LETTER = getString("Header_Center_Letter");
 
@@ -395,9 +351,6 @@ public class SimpleLocalization extends YamlStaticConfig {
 
 			if (isSetDefault("Header_Center_Padding"))
 				HEADER_CENTER_PADDING = getInteger("Header_Center_Padding");
-
-			if (isSet("Reloading"))
-				RELOADING = getComponent("Reloading");
 
 			if (isSet("Disabled"))
 				DISABLED = getComponent("Disabled");
@@ -427,16 +380,13 @@ public class SimpleLocalization extends YamlStaticConfig {
 				PERMS_DESCRIPTION = getComponent("Perms_Description");
 
 			if (isSetDefault("Perms_Usage"))
-				PERMS_USAGE = getComponent("Perms_Usage");
+				PERMS_USAGE = getString("Perms_Usage");
 
 			if (isSetDefault("Perms_Header"))
 				PERMS_HEADER = getComponent("Perms_Header");
 
 			if (isSetDefault("Perms_Main"))
 				PERMS_MAIN = getComponent("Perms_Main");
-
-			if (isSetDefault("Perms_Permissions"))
-				PERMS_PERMISSIONS = getComponent("Perms_Permissions");
 
 			if (isSetDefault("Perms_True_By_Default"))
 				PERMS_TRUE_BY_DEFAULT = getComponent("Perms_True_By_Default");
@@ -472,45 +422,37 @@ public class SimpleLocalization extends YamlStaticConfig {
 		/**
 		 * The key used when the player wants to converse but he is not conversing.
 		 */
-		public static SimpleComponent CONVERSATION_NOT_CONVERSING = SimpleComponent.fromMini("You must be conversing with the server!");
-
-		/**
-		 * Called when console attempts to start conversing
-		 */
-		public static String CONVERSATION_REQUIRES_PLAYER = "Only players may enter this conversation.";
+		public static SimpleComponent NOT_CONVERSING = SimpleComponent.fromMini("You can only use this command when you are asked to type something in the chat.");
 
 		/**
 		 * Called in the try-catch handling when an error occurs
 		 */
-		public static String CONVERSATION_ERROR = "&cOups! There was a problem in this conversation! Please contact the administrator to review the console for details.";
+		public static SimpleComponent CONVERSATION_ERROR = SimpleComponent.fromMini("Oups! There was a problem in this conversation! Please contact the administrator to review the console for details.");
 
 		/**
 		 * Called in SimplePrompt
 		 */
-		public static String CONVERSATION_CANCELLED = "Your pending chat answer has been canceled.";
+		public static SimpleComponent CANCELLED = SimpleComponent.fromMini("Your pending chat answer has been canceled.");
 
 		/**
 		 * Called in SimplePrompt
 		 */
-		public static String CONVERSATION_CANCELLED_INACTIVE = "Your pending chat answer has been canceled because you were inactive.";
+		public static SimpleComponent CANCELLED_INACTIVE = SimpleComponent.fromMini("Your pending chat answer has been canceled because you were inactive.");
 
 		private static void init() {
 			setPathPrefix("Conversation");
 
 			if (isSetDefault("Not_Conversing"))
-				CONVERSATION_NOT_CONVERSING = getComponent("Not_Conversing");
-
-			if (isSetDefault("Requires_Player"))
-				CONVERSATION_REQUIRES_PLAYER = getString("Requires_Player");
+				NOT_CONVERSING = getComponent("Not_Conversing");
 
 			if (isSetDefault("Conversation_Error"))
-				CONVERSATION_ERROR = getString("Error");
+				CONVERSATION_ERROR = getComponent("Error");
 
-			if (isSetDefault("Conversation_Cancelled"))
-				CONVERSATION_CANCELLED = getString("Conversation_Cancelled");
+			if (isSetDefault("Cancelled"))
+				CANCELLED = getComponent("Cancelled");
 
-			if (isSetDefault("Conversation_Cancelled_Inactive"))
-				CONVERSATION_CANCELLED_INACTIVE = getString("Conversation_Cancelled_Inactive");
+			if (isSetDefault("Cancelled_Inactive"))
+				CANCELLED_INACTIVE = getComponent("Cancelled_Inactive");
 		}
 	}
 
@@ -737,6 +679,64 @@ public class SimpleLocalization extends YamlStaticConfig {
 		}
 	}
 
+	public static class Prefix {
+
+		/**
+		 * The announce prefix
+		 */
+		public static SimpleComponent ANNOUNCE = SimpleComponent.fromMini("<dark_gray>[<dark_purple><bold>!<reset><dark_gray>]<light_purple>");
+
+		/**
+		 * The error prefix
+		 */
+		public static SimpleComponent ERROR = SimpleComponent.fromMini("<dark_gray>[<dark_red><bold>\u2715<reset><dark_gray>]<red>");
+
+		/**
+		 * The info prefix
+		 */
+		public static SimpleComponent INFO = SimpleComponent.fromMini("<dark_gray>[<blue><bold>i<reset><dark_gray>]<gray>");
+
+		/**
+		 * The question prefix
+		 */
+		public static SimpleComponent QUESTION = SimpleComponent.fromMini("<dark_gray>[<green><bold>?<reset><dark_gray>]<gray>");
+
+		/**
+		 * The success prefix
+		 */
+		public static SimpleComponent SUCCESS = SimpleComponent.fromMini("<dark_gray>[<dark_green><bold>\u2714<reset><dark_gray>]<gray>");
+
+		/**
+		 * The warn prefix
+		 */
+		public static SimpleComponent WARN = SimpleComponent.fromMini("<dark_gray>[<gold><bold>!<reset><dark_gray>]<gold>");
+
+		/**
+		 * Load the values -- this method is called automatically by reflection in the {@link YamlStaticConfig} class!
+		 */
+		private static void init() {
+			setPathPrefix("Prefix");
+
+			if (isSetDefault("Announce"))
+				ANNOUNCE = getComponent("Announce");
+
+			if (isSetDefault("Error"))
+				ERROR = getComponent("Error");
+
+			if (isSetDefault("Info"))
+				INFO = getComponent("Info");
+
+			if (isSetDefault("Question"))
+				QUESTION = getComponent("Question");
+
+			if (isSetDefault("Success"))
+				SUCCESS = getComponent("Success");
+
+			if (isSetDefault("Warn"))
+				WARN = getComponent("Warn");
+		}
+	}
+
 	/**
 	 * Denotes the "none" message
 	 */
@@ -785,24 +785,6 @@ public class SimpleLocalization extends YamlStaticConfig {
 
 		if (isSetDefault("None"))
 			NONE = getString("None");
-
-		if (isSetDefault("Prefix.Announce"))
-			MessengerCore.setAnnouncePrefix(getComponent("Prefix.Announce"));
-
-		if (isSetDefault("Prefix.Error"))
-			MessengerCore.setErrorPrefix(getComponent("Prefix.Error"));
-
-		if (isSetDefault("Prefix.Info"))
-			MessengerCore.setInfoPrefix(getComponent("Prefix.Info"));
-
-		if (isSetDefault("Prefix.Question"))
-			MessengerCore.setQuestionPrefix(getComponent("Prefix.Question"));
-
-		if (isSetDefault("Prefix.Success"))
-			MessengerCore.setSuccessPrefix(getComponent("Prefix.Success"));
-
-		if (isSetDefault("Prefix.Warn"))
-			MessengerCore.setWarnPrefix(getComponent("Prefix.Warn"));
 
 		localizationClassCalled = true;
 	}

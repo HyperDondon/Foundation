@@ -14,11 +14,7 @@ import org.mineacademy.fo.ReflectionUtilCore;
 import org.mineacademy.fo.TabUtil;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.collection.expiringmap.ExpiringMap;
-import org.mineacademy.fo.command.SimpleCommandGroup.MainCommand;
-import org.mineacademy.fo.debug.LagCatcher;
 import org.mineacademy.fo.exception.CommandException;
-import org.mineacademy.fo.exception.FoException;
-import org.mineacademy.fo.exception.InvalidCommandArgException;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.SimpleTime;
 import org.mineacademy.fo.model.Task;
@@ -26,8 +22,10 @@ import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.settings.SimpleLocalization;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 /**
  * A simple command used to replace all Bukkit/Spigot command functionality
@@ -50,15 +48,6 @@ public abstract class SimpleCommandCore {
 	 * The command label, eg. boss for /boss
 	 */
 	private final String label;
-
-	/**
-	 * The command label used at last command execution
-	 *
-	 * This variable is updated dynamically when the command is run with the
-	 * last known version of the label, e.g. /boss or /b will set it to boss or b
-	 * respectively
-	 */
-	private String currentLabel;
 
 	/**
 	 * Command aliases
@@ -91,6 +80,12 @@ public abstract class SimpleCommandCore {
 	 */
 	@Getter
 	private int minArguments = 0;
+
+	/**
+	 * Maximum arguments this command can have, or -1 for unlimited
+	 */
+	@Getter
+	private int maxArguments = -1;
 
 	/**
 	 * The command cooldown before we can run this command again
@@ -185,7 +180,6 @@ public abstract class SimpleCommandCore {
 		Platform.checkCommandUse(this);
 
 		this.label = label;
-		this.currentLabel = label;
 
 		if (aliases != null)
 			this.aliases = aliases;
@@ -302,130 +296,96 @@ public abstract class SimpleCommandCore {
 	 * checks permission and returns if the sender lacks it,
 	 * checks minimum arguments and finally passes the command to the child class.
 	 *
-	 * Also contains various error handling scenarios
-	 *
 	 * @deprecated internal use only
 	 */
 	@Deprecated
 	public final boolean delegateExecute(final FoundationPlayer sender, final String label, final String[] args) {
 
-		if (Platform.getPlugin().isReloading() || !Platform.getPlugin().isEnabled()) {
-			sender.sendMessage(SimpleLocalization.Commands.CANNOT_USE_WHILE_NULL.replaceBracket("state", Platform.getPlugin().isReloading() ? SimpleLocalization.Commands.RELOADING : SimpleLocalization.Commands.DISABLED));
+		if (!Platform.getPlugin().isEnabled()) {
+			sender.sendMessage(SimpleLocalization.Commands.CANNOT_USE_WHILE_NULL.replaceBracket("state", SimpleLocalization.Commands.DISABLED));
 
-			return false;
+			return true;
 		}
 
 		// Set variables to re-use later
 		this.sender = sender;
-		this.currentLabel = label;
 		this.args = args;
 
-		// Optional sublabel if this is a sub command
-		final String sublabel = this instanceof SimpleSubCommandCore ? " " + ((SimpleSubCommandCore) this).getSublabel() : "";
-
-		// Catch "errors" that contain a message to send to the player
-		// Measure performance of all commands
-		final String lagSection = "Command /" + this.getLabel() + sublabel + (args.length > 0 ? " " + String.join(" ", args) : "");
-
 		try {
-			// Prevent duplication since MainCommand delegates this
-			if (!(this instanceof MainCommand))
-				LagCatcher.start(lagSection);
-
 			// Check if sender has the proper permission
 			if (this.getPermission() != null)
 				this.checkPerm(this.getPermission());
-
-			// Check for minimum required arguments and print help
-			if (args.length < this.getMinArguments() || this.autoHandleHelp && args.length == 1 && ("help".equals(args[0]) || "?".equals(args[0]))) {
-				final List<SimpleComponent> messages = new ArrayList<>();
-
-				if (this.getDescription() != null) {
-					SimpleComponent descriptionLabel = SimpleLocalization.Commands.LABEL_DESCRIPTION;
-					final String descriptionPlain = descriptionLabel.toPlain();
-
-					final SimpleComponent description = this.getDescription();
-
-					if (!descriptionPlain.contains("{description}"))
-						descriptionLabel = descriptionLabel.append(description);
-					else
-						descriptionLabel = descriptionLabel.replaceBracket("description", description);
-
-					messages.add(descriptionLabel);
-				}
-
-				if (this.getMultilineUsage() != null) {
-					messages.add(SimpleLocalization.Commands.LABEL_USAGE);
-					messages.add(this.getMultilineUsage());
-
-				} else if (this.getUsage() != null) {
-					SimpleComponent usage = this.getUsage();
-					final String usagePlain = usage.toPlain();
-
-					if (!usagePlain.startsWith("/"))
-						usage = SimpleComponent.fromPlain("/{label} " + (this instanceof SimpleSubCommandCore ? "{sublabel} " : "")).append(usage);
-
-					messages.add(usage);
-
-				} else
-					throw new FoException("Either getUsage() or getMultilineUsageMessage() must be implemented for '/" + this.getLabel() + sublabel + "' command!");
-
-				for (final SimpleComponent message : messages)
-					this.replacePlaceholders(message).send(sender);
-
-				return true;
-			}
 
 			// Check if we can run this command in time
 			if (this.cooldownSeconds > 0)
 				this.handleCooldown();
 
+			// Check for maximum arguments
+			if (this.getMaxArguments() != -1 && args.length > this.getMaxArguments())
+				this.returnInvalidArgs(this.joinArgs(this.getMaxArguments()));
+
+			// Check for minimum required arguments and print help
+			if (args.length < this.getMinArguments() || this.autoHandleHelp && args.length == 1 && ("help".equals(args[0]) || "?".equals(args[0]))) {
+
+				final String[] legacyUsage = this.getMultilineUsageMessage();
+				final SimpleComponent[] newUsage = this.getMultilineUsage();
+
+				if (legacyUsage != null || newUsage != null)
+					this.tellNoPrefix("<dark_gray>" + CommonCore.chatLineSmooth());
+
+				if (this.getDescription() != null)
+					this.tellNoPrefix(SimpleLocalization.Commands.LABEL_DESCRIPTION.replaceBracket("description", this.getDescription()));
+
+				if (legacyUsage != null || newUsage != null || this.getUsage() != null) {
+					this.tellNoPrefix(SimpleLocalization.Commands.LABEL_USAGE.replaceBracket("usage",
+							SimpleComponent.fromPlain(this.getEffectiveCommand() + " ").append(CommonCore.getOrDefault(this.getUsage(), SimpleComponent.empty()))));
+
+					if (legacyUsage != null || newUsage != null) {
+						this.tellNoPrefix("<dark_gray>" + CommonCore.chatLineSmooth());
+
+						if (legacyUsage != null)
+							for (final String legacyLine : legacyUsage)
+								this.replacePlaceholders(SimpleComponent.fromMini(this.colorizeUsage(legacyLine))).send(this.sender);
+
+						else if (newUsage != null)
+							for (final SimpleComponent newLine : newUsage)
+								this.replacePlaceholders(newLine).send(this.sender);
+
+						this.tellNoPrefix("<dark_gray>" + CommonCore.chatLineSmooth());
+					}
+				}
+
+				return true;
+			}
+
 			this.onCommand();
 
 		} catch (final InvalidCommandArgException ex) {
-			if (this.getMultilineUsage() == null) {
-				this.dynamicTellError(ex.getComponent() != null ? ex.getComponent() : SimpleLocalization.Commands.INVALID_SUB_ARGUMENT);
-
-			} else {
-				this.dynamicTellError(SimpleLocalization.Commands.INVALID_ARGUMENT_MULTILINE);
-
-				this.tellNoPrefix(this.getMultilineUsage());
-			}
+			this.tellError(SimpleLocalization.Commands.INVALID_ARGUMENT
+					.replaceBracket("arguments", ex.getInvalidArgument())
+					.replaceBracket("help_command", SimpleComponent
+							.fromPlain(this.getEffectiveCommand() + " ?")
+							.onHover("Click to execute.")
+							.onClickRunCmd(this.getEffectiveCommand() + " ?")));
 
 		} catch (final CommandException ex) {
 			if (ex.getComponent() != null)
-				this.dynamicTellError(ex.getComponent());
+				this.tellError(ex.getComponent());
 
 		} catch (final Throwable t) {
-			this.dynamicTellError(SimpleLocalization.Commands.ERROR.replaceBracket("error", t.toString()));
+			this.tellError(SimpleLocalization.Commands.ERROR.replaceBracket("error", t.toString()));
 
-			CommonCore.error(t, "Failed to execute command /" + this.getLabel() + sublabel + " " + String.join(" ", args));
-
-		} finally {
-
-			// Prevent duplication since MainCommand delegates this
-			if (!(this instanceof MainCommand))
-				LagCatcher.end(lagSection, 8, "{section} took {time} ms");
+			CommonCore.error(t, "Error executing " + this.getEffectiveCommand() + " " + String.join(" ", args));
 		}
 
 		return true;
 	}
 
 	/*
-	 * If messenger is on, we send the message prefixed with Messenger.getErrorPrefix()
-	 * otherwise we just send a normal message
+	 * Get the effective command with sublabel if applicable
 	 */
-	/*private void dynamicTellError(final String... messages) {
-			for (final String message : messages)
-				this.tellError(message);
-	}*/
-
-	/*
-	 * If messenger is on, we send the message prefixed with Messenger.getErrorPrefix()
-	 * otherwise we just send a normal message
-	 */
-	private void dynamicTellError(final SimpleComponent component) {
-		this.tellError(component);
+	private String getEffectiveCommand() {
+		return "/" + this.getLabel() + (this instanceof SimpleSubCommandCore ? " " + ((SimpleSubCommandCore) this).getSublabel() : "");
 	}
 
 	/**
@@ -467,43 +427,6 @@ public abstract class SimpleCommandCore {
 	 * and use convenience checks in the simple command class.
 	 */
 	protected abstract void onCommand();
-
-	/**
-	 * Get a custom multilined usage message to be shown instead of the one line one
-	 * This calls {@link #getMultilineUsageMessage()} for backwards compatibility
-	 *
-	 * @return the multiline custom usage message, or null
-	 */
-	protected SimpleComponent getMultilineUsage() {
-		final String[] legacy = this.getMultilineUsageMessage();
-
-		if (legacy != null) {
-			final SimpleComponent component = SimpleComponent.empty();
-
-			for (int i = 0; i < legacy.length; i++) {
-				final String line = legacy[i];
-				component.appendMini(line == null ? "" : this.colorizeUsage(line));
-
-				if (i < legacy.length - 1)
-					component.appendNewLine();
-			}
-
-			return component;
-		}
-
-		return null;
-	}
-
-	/**
-	 * Get a custom usage message to be shown instead of the one line one
-	 *
-	 * @deprecated use {@link #getMultilineUsage()}
-	 * @return
-	 */
-	@Deprecated
-	protected String[] getMultilineUsageMessage() {
-		return null;
-	}
 
 	// ----------------------------------------------------------------------
 	// Convenience checks
@@ -671,7 +594,7 @@ public abstract class SimpleCommandCore {
 	 * @param enumType
 	 * @param enumValue
 	 * @param condition
-	
+
 	 * @return
 	 * @throws CommandException
 	 */
@@ -941,23 +864,23 @@ public abstract class SimpleCommandCore {
 	 * @param messages
 	 */
 	/*protected final void tell(String... messages) {
-	
+
 		if (messages == null)
 			return;
-	
+
 		final String oldTellPrefix = CommonCore.getTellPrefix();
-	
+
 		if (this.tellPrefix != null)
 			CommonCore.setTellPrefix(this.tellPrefix);
-	
+
 		try {
 			messages = this.replacePlaceholders(messages);
-	
+
 			if (messages.length > 2)
 				CommonCore.tellNoPrefix(this.sender, messages);
 			else
 				CommonCore.tell(this.sender, messages);
-	
+
 		} finally {
 			CommonCore.setTellPrefix(oldTellPrefix);
 		}
@@ -1081,13 +1004,10 @@ public abstract class SimpleCommandCore {
 	}
 
 	/**
-	 * Convenience method for returning the command with the {@link SimpleLocalization.Commands#INVALID_ARGUMENT}
-	 * message for player
+	 * Convenience method for returning the invalid arguments message for the player.
 	 */
-	protected final void returnInvalidArgs() {
-		this.tellError(SimpleLocalization.Commands.INVALID_ARGUMENT);
-
-		throw new CommandException();
+	protected final void returnInvalidArgs(String invalidArgs) {
+		throw new InvalidCommandArgException(invalidArgs);
 	}
 
 	/**
@@ -1135,9 +1055,9 @@ public abstract class SimpleCommandCore {
 	 *
 	 * @throws InvalidCommandArgException
 	 */
-	public final void returnUsage() throws InvalidCommandArgException {
+	/*public final void returnUsage() throws InvalidCommandArgException {
 		throw new InvalidCommandArgException();
-	}
+	}*/
 
 	// ----------------------------------------------------------------------
 	// Placeholder
@@ -1153,10 +1073,10 @@ public abstract class SimpleCommandCore {
 	/*public final String[] replacePlaceholders(final String[] messages) {
 		for (int i = 0; i < messages.length; i++)
 			messages[i] = this.replacePlaceholders(messages[i]);
-	
+
 		return messages;
 	}
-	
+
 	// TODO get rid of
 	protected String replacePlaceholders(String legacy) {
 		return RemainCore.convertAdventureToLegacy(replacePlaceholders(RemainCore.convertLegacyToAdventure(legacy)));
@@ -1190,10 +1110,11 @@ public abstract class SimpleCommandCore {
 	 * @return
 	 */
 	private SimpleComponent replaceBasicPlaceholders0(SimpleComponent component) {
+
+		component = component.replaceBracket("plugin_name", Platform.getPlugin().getName());
+		component = component.replaceBracket("plugin_version", Platform.getPlugin().getVersion());
 		component = component.replaceBracket("label", this.label);
-		component = component.replaceBracket("current_label", CommonCore.getOrDefault(this.currentLabel, this.label));
-		component = component.replaceBracket("sublabel", this instanceof SimpleSubCommandCore ? ((SimpleSubCommandCore) this).getSublabels()[0] : this.args != null && this.args.length > 0 ? this.args[0] : this.label);
-		component = component.replaceBracket("current_sublabel", this instanceof SimpleSubCommandCore ? ((SimpleSubCommandCore) this).getSublabel() : this.args != null && this.args.length > 0 ? this.args[0] : this.label);
+		component = component.replaceBracket("sublabel", this instanceof SimpleSubCommandCore ? ((SimpleSubCommandCore) this).getSublabel() : this.args != null && this.args.length > 0 ? this.args[0] : this.label);
 
 		return component;
 	}
@@ -1209,18 +1130,9 @@ public abstract class SimpleCommandCore {
 	/*protected final void setArg(final int position, final String value) {
 		if (this.args.length <= position)
 			this.args = Arrays.copyOf(this.args, position + 1);
-	
+
 		this.args[position] = value;
 	}*/
-
-	/**
-	 * Convenience method for returning the last word in arguments
-	 *
-	 * @return
-	 */
-	protected final String getLastArg() {
-		return this.args.length > 0 ? this.args[this.args.length - 1] : "";
-	}
 
 	/**
 	 * Copies and returns the arguments {@link #args} from the given range
@@ -1293,7 +1205,6 @@ public abstract class SimpleCommandCore {
 	@Deprecated
 	public final List<String> delegateTabComplete(final FoundationPlayer sender, final String label, final String[] args) {
 		this.sender = sender;
-		this.currentLabel = label;
 		this.args = args;
 
 		if (this.hasPerm(this.getPermission())) {
@@ -1390,6 +1301,15 @@ public abstract class SimpleCommandCore {
 		return TabUtil.complete(this.getLastArg(), list.toArray());
 	}
 
+	/*
+	 * Convenience method for returning the last word in arguments
+	 *
+	 * @return
+	 */
+	private final String getLastArg() {
+		return this.args.length > 0 ? this.args[this.args.length - 1] : "";
+	}
+
 	// ----------------------------------------------------------------------
 	// Temporary variables and safety
 	// ----------------------------------------------------------------------
@@ -1406,6 +1326,18 @@ public abstract class SimpleCommandCore {
 	}
 
 	/**
+	 * Shortcut method for setting the min-max arguments range
+	 * to automatically perform command argument validation.
+	 *
+	 * @param min
+	 * @param max
+	 */
+	protected final void setValidArguments(int min, int max) {
+		this.setMinArguments(min);
+		this.setMaxArguments(max);
+	}
+
+	/**
 	 * Sets the minimum number of arguments to run this command
 	 *
 	 * @param minArguments
@@ -1414,6 +1346,18 @@ public abstract class SimpleCommandCore {
 		ValidCore.checkBoolean(minArguments >= 0, "Minimum arguments must be 0 or greater");
 
 		this.minArguments = minArguments;
+	}
+
+	/**
+	 * Sets the maximum number of arguments to run this command
+	 *
+	 * @param maxArguments
+	 */
+	protected final void setMaxArguments(final int maxArguments) {
+		ValidCore.checkBoolean(maxArguments >= 0, "Maximum arguments must be 0 or greater");
+		ValidCore.checkBoolean(maxArguments >= this.minArguments, "Maximum arguments must be >= minimum arguments, got " + maxArguments + " < " + this.minArguments + " for " + this);
+
+		this.maxArguments = maxArguments;
 	}
 
 	/**
@@ -1524,14 +1468,36 @@ public abstract class SimpleCommandCore {
 	 * Get description for this command
 	 */
 	public final SimpleComponent getDescription() {
-		return this.description == null ? SimpleComponent.empty() : this.description;
+		return this.description;
 	}
 
 	/**
 	 * Get the usage message of this command
 	 */
 	public final SimpleComponent getUsage() {
-		return this.usage == null ? SimpleComponent.empty() : this.usage;
+		return this.usage;
+	}
+
+	/**
+	 * Get a custom multilined usage message to be shown instead of the one line one.
+	 * Defaults to null.
+	 *
+	 * @return the multiline custom usage message, or null
+	 */
+	protected SimpleComponent[] getMultilineUsage() {
+		return null;
+	}
+
+	/**
+	 * Get a custom usage message to be shown instead of the one line one. This is
+	 * prioritized over {@link #getMultilineUsage()}. Defaults to null.
+	 *
+	 * @deprecated use {@link #getMultilineUsage()}
+	 * @return
+	 */
+	@Deprecated
+	protected String[] getMultilineUsageMessage() {
+		return null;
 	}
 
 	/**
@@ -1539,15 +1505,6 @@ public abstract class SimpleCommandCore {
 	 */
 	public final String getLabel() {
 		return this.label;
-	}
-
-	/**
-	 * Get the label given when the command was created or last updated
-	 *
-	 * @return
-	 */
-	public final String getCurrentLabel() {
-		return CommonCore.getOrDefault(this.currentLabel, this.label);
 	}
 
 	/**
@@ -1568,19 +1525,23 @@ public abstract class SimpleCommandCore {
 	 * @param usage
 	 */
 	protected final void setUsage(String usage) {
-		this.setUsage(SimpleComponent.fromMini(this.colorizeUsage(usage)));
+		this.usage = usage == null || usage.isEmpty() ? null : SimpleComponent.fromMini(this.colorizeUsage(usage));
 	}
 
-	/*
-	 * Replace <> and [] with appropriate color codes
+	/**
+	 * Replace <> and [] with appropriate color codes, you can return the given string
+	 * without modification to disable this functionality.
+	 *
+	 * @param usage
+	 * @return
 	 */
-	private String colorizeUsage(String usage) {
+	final String colorizeUsage(String usage) {
 		return usage
-				.replace("<", "&6<")
-				.replace(">", "&6>&f")
-				.replace("[", "&2[")
-				.replace("]", "&2]&f")
-				.replaceAll(" \\-([a-zA-Z])", " &3-$1");
+				.replace("<", "§6<")
+				.replace(">", "§6>§f")
+				.replace("[", "§2[")
+				.replace("]", "§2]§f")
+				.replace("-", "§7-");
 	}
 
 	/**
@@ -1589,7 +1550,7 @@ public abstract class SimpleCommandCore {
 	 * @param usage
 	 */
 	protected final void setUsage(SimpleComponent usage) {
-		this.usage = usage;
+		this.usage = usage == null || usage.isEmpty() ? null : usage;
 	}
 
 	/**
@@ -1598,7 +1559,7 @@ public abstract class SimpleCommandCore {
 	 * @param description
 	 */
 	protected final void setDescription(String description) {
-		this.setDescription(SimpleComponent.fromMini(description));
+		this.description = description == null || description.isEmpty() ? null : SimpleComponent.fromMini(description);
 	}
 
 	/**
@@ -1607,7 +1568,7 @@ public abstract class SimpleCommandCore {
 	 * @param description
 	 */
 	protected final void setDescription(SimpleComponent description) {
-		this.description = description;
+		this.description = description == null || description.isEmpty() ? null : description;
 	}
 
 	/**
@@ -1695,5 +1656,15 @@ public abstract class SimpleCommandCore {
 	@Override
 	public String toString() {
 		return "Command{/" + this.label + "}";
+	}
+
+	/**
+	 * Thrown when a command has invalid argument
+	 */
+	@Getter
+	@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+	private final class InvalidCommandArgException extends CommandException {
+		private static final long serialVersionUID = 1L;
+		private final String invalidArgument;
 	}
 }

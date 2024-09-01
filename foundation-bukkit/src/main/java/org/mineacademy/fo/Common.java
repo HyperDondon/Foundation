@@ -43,7 +43,7 @@ public final class Common extends CommonCore {
 	}
 
 	/**
-	 * Sends a message to the audience. Supports {prefix} and {player} variable.
+	 * Sends a message to the audience. Supports {plugin_prefix} and {player} variable.
 	 * Supports \<actionbar\>, \<toast\>, \<title\>, \<bossbar\> and \<center\>.
 	 * Properly sends the message to the player if he is conversing with the server.
 	 *
@@ -55,7 +55,7 @@ public final class Common extends CommonCore {
 	}
 
 	/**
-	 * Sends a message to the audience. Supports {prefix} and {player} variable.
+	 * Sends a message to the audience. Supports {plugin_prefix} and {player} variable.
 	 * Supports \<actionbar\>, \<toast\>, \<title\>, \<bossbar\> and \<center\>.
 	 * Properly sends the message to the player if he is conversing with the server.
 	 *
@@ -70,7 +70,7 @@ public final class Common extends CommonCore {
 	}*/
 
 	/**
-	 * Sends a message to the audience. Supports {prefix} and {player} variable.
+	 * Sends a message to the audience. Supports {plugin_prefix} and {player} variable.
 	 * Supports \<actionbar\>, \<toast\>, \<title\>, \<bossbar\> and \<center\>.
 	 * Properly sends the message to the player if he is conversing with the server.
 	 *
@@ -95,7 +95,7 @@ public final class Common extends CommonCore {
 			return "";
 
 		else if (arg instanceof Entity)
-			return Remain.getName((Entity) arg);
+			return Remain.getEntityName((Entity) arg);
 
 		else if (arg instanceof CommandSender)
 			return ((CommandSender) arg).getName();

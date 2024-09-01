@@ -8,7 +8,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.mineacademy.fo.CommonCore;
-import org.mineacademy.fo.MessengerCore;
 import org.mineacademy.fo.TimeUtil;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.collection.StrictList;
@@ -124,10 +123,8 @@ public final class Variables {
 
 	public static SimpleComponent replace(SimpleComponent message, FoundationPlayer sender, Map<String, Object> replacements) {
 		return message.replaceMatch(BRACKET_VARIABLE_PATTERN, (result, input) -> {
-			String variable = result.group();
-			variable = variable.substring(1, variable.length() - 1);
-
-			final SimpleComponent value = replaceVariable(variable, sender, replacements);
+			final String variable = result.group();
+			final SimpleComponent value = replaceVariable(variable.substring(1, variable.length() - 1), sender, replacements);
 
 			return value == null ? SimpleComponent.fromPlain(variable) : value;
 		});
@@ -169,27 +166,13 @@ public final class Variables {
 				}
 			}
 
-		replacements.put("prefix", SimpleSettings.PLUGIN_PREFIX);
-		replacements.put("plugin_prefix", SimpleSettings.PLUGIN_PREFIX);
-		replacements.put("info", MessengerCore.getInfoPrefix());
-		replacements.put("info_prefix", MessengerCore.getInfoPrefix());
-		replacements.put("prefix_info", MessengerCore.getInfoPrefix());
-		replacements.put("success", MessengerCore.getSuccessPrefix());
-		replacements.put("success_prefix", MessengerCore.getSuccessPrefix());
-		replacements.put("prefix_success", MessengerCore.getSuccessPrefix());
-		replacements.put("warn", MessengerCore.getWarnPrefix());
-		replacements.put("warn_prefix", MessengerCore.getWarnPrefix());
-		replacements.put("prefix_warn", MessengerCore.getWarnPrefix());
-		replacements.put("error", MessengerCore.getErrorPrefix());
-		replacements.put("error_prefix", MessengerCore.getErrorPrefix());
-		replacements.put("prefix_error", MessengerCore.getErrorPrefix());
-		replacements.put("question", MessengerCore.getQuestionPrefix());
-		replacements.put("question_prefix", MessengerCore.getQuestionPrefix());
-		replacements.put("prefix_question", MessengerCore.getQuestionPrefix());
-		replacements.put("announce", MessengerCore.getAnnouncePrefix());
-		replacements.put("announce_prefix", MessengerCore.getAnnouncePrefix());
-		replacements.put("prefix_announce", MessengerCore.getAnnouncePrefix());
-		replacements.put("server", Platform.hasCustomServerName() ? Platform.getCustomServerName() : "");
+		replacements.put("prefix_plugin", SimpleSettings.PLUGIN_PREFIX);
+		replacements.put("prefix_info", SimpleLocalization.Prefix.INFO);
+		replacements.put("prefix_success", SimpleLocalization.Prefix.SUCCESS);
+		replacements.put("prefix_warn", SimpleLocalization.Prefix.WARN);
+		replacements.put("prefix_error", SimpleLocalization.Prefix.ERROR);
+		replacements.put("prefix_question", SimpleLocalization.Prefix.QUESTION);
+		replacements.put("prefix_announce", SimpleLocalization.Prefix.ANNOUNCE);
 		replacements.put("server_name", Platform.hasCustomServerName() ? Platform.getCustomServerName() : "");
 		replacements.put("date", TimeUtil.getFormattedDate());
 		replacements.put("date_short", TimeUtil.getFormattedDateShort());

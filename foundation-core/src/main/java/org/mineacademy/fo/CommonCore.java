@@ -17,7 +17,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.regex.Pattern;
@@ -25,8 +24,6 @@ import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
 import org.mineacademy.fo.collection.SerializedMap;
-import org.mineacademy.fo.collection.StrictList;
-import org.mineacademy.fo.collection.StrictMap;
 import org.mineacademy.fo.debug.Debugger;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.model.SimpleComponent;
@@ -59,46 +56,6 @@ public abstract class CommonCore {
 	 * See {@link #TIMED_TELL_CACHE}, but this is for sending messages to your console
 	 */
 	private static final Map<String, Long> TIMED_LOG_CACHE = new HashMap<>();
-
-	// ------------------------------------------------------------------------------------------------------------
-	// Plugin prefixes
-	// ------------------------------------------------------------------------------------------------------------
-
-	/**
-	 * Removes valid Minecraft color codes from a message. Valid color codes are sequences of
-	 * '§' or '&' followed by a character in the ranges 0-9, a-f, A-F, k-o, K-O, or r/R.
-	 *
-	 * @param message The input message potentially containing Minecraft color codes.
-	 * @return A new string with valid color codes removed.
-	 */
-	public static String stripColorCodes(String message) {
-		final int messageLength = message.length();
-		final char[] strippedMessage = new char[messageLength];
-		int resultIndex = 0;
-
-		for (int i = 0; i < messageLength; i++) {
-			final char currentChar = message.charAt(i);
-
-			if ((currentChar == '§' || currentChar == '&') && i + 1 < messageLength) {
-				final char nextChar = message.charAt(i + 1);
-
-				if ((nextChar >= '0' && nextChar <= '9') ||
-						(nextChar >= 'a' && nextChar <= 'f') ||
-						(nextChar >= 'A' && nextChar <= 'F') ||
-						(nextChar >= 'k' && nextChar <= 'o') ||
-						(nextChar >= 'K' && nextChar <= 'O') ||
-						nextChar == 'r' || nextChar == 'R') {
-					i++; // Skip the valid color code
-
-				} else
-					strippedMessage[resultIndex++] = currentChar;
-
-			} else
-				strippedMessage[resultIndex++] = currentChar;
-		}
-
-		return new String(strippedMessage, 0, resultIndex);
-	}
 
 	// ------------------------------------------------------------------------------------------------------------
 	// Plugin prefixes
@@ -315,7 +272,7 @@ public abstract class CommonCore {
 	 * @return
 	 */
 	public static boolean hasColorTags(final String message) {
-		return Pattern.compile("§([0-9a-fk-or])").matcher(SimpleComponent.fromMini(message).toLegacy().toLowerCase()).find();
+		return Pattern.compile("§([0-9a-fk-or])").matcher(CompChatColor.translateColorCodes(message)).find();
 	}
 
 	// ------------------------------------------------------------------------------------------------------------
@@ -641,7 +598,7 @@ public abstract class CommonCore {
 
 			// Workaround for JSON in tellraw getting HEX colors replaced
 			if (!command.startsWith("tellraw"))
-				command = SimpleComponent.fromMini(command).toLegacy();
+				command = CompChatColor.translateColorCodes(command);
 
 			final String finalCommand = command;
 
@@ -899,7 +856,7 @@ public abstract class CommonCore {
 	 * @return
 	 */
 	public static Pattern compilePattern(String regex) {
-		regex = Platform.getPlugin().isRegexStrippingColors() ? stripColorCodes(regex) : regex;
+		regex = Platform.getPlugin().isRegexStrippingColors() ? CompChatColor.stripColorCodes(regex) : regex;
 		regex = Platform.getPlugin().isRegexStrippingAccents() ? ChatUtil.replaceDiacritic(regex) : regex;
 
 		if (Platform.getPlugin().isRegexCaseInsensitive())
@@ -1242,101 +1199,12 @@ public abstract class CommonCore {
 
 		for (final OLD old : list) {
 			final NEW result = converter.convert(old);
+
 			if (result != null)
 				copy.add(converter.convert(old));
 		}
 
 		return copy;
-	}
-
-	/**
-	 * Converts a set having one type object into another
-	 *
-	 * @param list      the old list
-	 * @param converter the converter;
-	 * @return the new list
-	 */
-	public static <OLD, NEW> Set<NEW> convertSet(final Iterable<OLD> list, final TypeConverter<OLD, NEW> converter) {
-		final Set<NEW> copy = new HashSet<>();
-
-		for (final OLD old : list) {
-			final NEW result = converter.convert(old);
-			if (result != null)
-				copy.add(converter.convert(old));
-		}
-
-		return copy;
-	}
-
-	/**
-	 * Converts a list having one type object into another
-	 *
-	 * @param list      the old list
-	 * @param converter the converter
-	 * @return the new list
-	 */
-	public static <OLD, NEW> StrictList<NEW> convertStrict(final Iterable<OLD> list, final TypeConverter<OLD, NEW> converter) {
-		final StrictList<NEW> copy = new StrictList<>();
-
-		for (final OLD old : list)
-			copy.add(converter.convert(old));
-
-		return copy;
-	}
-
-	/**
-	 * Attempts to convert the given map into another map
-	 *
-	 * @param <OLD_KEY>
-	 * @param <OLD_VALUE>
-	 * @param <NEW_KEY>
-	 * @param <NEW_VALUE>
-	 * @param oldMap
-	 * @param converter
-	 * @return
-	 */
-	public static <OLD_KEY, OLD_VALUE, NEW_KEY, NEW_VALUE> Map<NEW_KEY, NEW_VALUE> convert(final Map<OLD_KEY, OLD_VALUE> oldMap, final MapToMapConverter<OLD_KEY, OLD_VALUE, NEW_KEY, NEW_VALUE> converter) {
-		final Map<NEW_KEY, NEW_VALUE> newMap = new HashMap<>();
-		oldMap.entrySet().forEach(e -> newMap.put(converter.convertKey(e.getKey()), converter.convertValue(e.getValue())));
-
-		return newMap;
-	}
-
-	/**
-	 * Attempts to convert the given map into another map
-	 *
-	 * @param <OLD_KEY>
-	 * @param <OLD_VALUE>
-	 * @param <NEW_KEY>
-	 * @param <NEW_VALUE>
-	 * @param oldMap
-	 * @param converter
-	 * @return
-	 */
-	public static <OLD_KEY, OLD_VALUE, NEW_KEY, NEW_VALUE> StrictMap<NEW_KEY, NEW_VALUE> convertStrict(final Map<OLD_KEY, OLD_VALUE> oldMap, final MapToMapConverter<OLD_KEY, OLD_VALUE, NEW_KEY, NEW_VALUE> converter) {
-		final StrictMap<NEW_KEY, NEW_VALUE> newMap = new StrictMap<>();
-		oldMap.entrySet().forEach(e -> newMap.put(converter.convertKey(e.getKey()), converter.convertValue(e.getValue())));
-
-		return newMap;
-	}
-
-	/**
-	 * Attempts to convert the gfiven map into a list
-	 *
-	 * @param <LIST_KEY>
-	 * @param <OLD_KEY>
-	 * @param <OLD_VALUE>
-	 * @param map
-	 * @param converter
-	 * @return
-	 */
-	public static <LIST_KEY, OLD_KEY, OLD_VALUE> StrictList<LIST_KEY> convertToList(final Map<OLD_KEY, OLD_VALUE> map, final MapToListConverter<LIST_KEY, OLD_KEY, OLD_VALUE> converter) {
-		final StrictList<LIST_KEY> list = new StrictList<>();
-
-		for (final Entry<OLD_KEY, OLD_VALUE> e : map.entrySet())
-			list.add(converter.convert(e.getKey(), e.getValue()));
-
-		return list;
 	}
 
 	/**
@@ -1358,6 +1226,80 @@ public abstract class CommonCore {
 	}
 
 	/**
+	 * Converts a set having one type object into another
+	 *
+	 * @param list      the old list
+	 * @param converter the converter;
+	 * @return the new list
+	 */
+	public static <OLD, NEW> Set<NEW> convertSet(final Iterable<OLD> list, final TypeConverter<OLD, NEW> converter) {
+		final Set<NEW> copy = new HashSet<>();
+
+		for (final OLD old : list) {
+			final NEW result = converter.convert(old);
+
+			if (result != null)
+				copy.add(converter.convert(old));
+		}
+
+		return copy;
+	}
+
+	/**
+	 * Attempts to convert the given map into another map
+	 *
+	 * @param <OldK>
+	 * @param <OldV>
+	 * @param <NewK>
+	 * @param <NewV>
+	 * @param oldMap
+	 * @param converter
+	 * @return
+	 */
+	public static <OldK, OldV, NewK, NewV> Map<NewK, NewV> convert(final Map<OldK, OldV> oldMap, final MapToMapConverter<OldK, OldV, NewK, NewV> converter) {
+		final Map<NewK, NewV> newMap = new HashMap<>();
+		oldMap.entrySet().forEach(e -> newMap.put(converter.convertKey(e.getKey()), converter.convertValue(e.getValue())));
+
+		return newMap;
+	}
+
+	/**
+	 * Attempts to convert an array into a different type
+	 *
+	 * @param <OldType>
+	 * @param <NewType>
+	 * @param oldArray
+	 * @param converter
+	 * @return
+	 */
+	public static <OldType, NewType> NewType[] convertToArray(final OldType[] oldArray, final TypeConverter<OldType, NewType> converter) {
+		final List<NewType> newList = new ArrayList<>();
+
+		for (final OldType old : oldArray)
+			newList.add(converter.convert(old));
+
+		return newList.toArray((NewType[]) Array.newInstance(newList.get(0).getClass(), newList.size()));
+	}
+
+	/**
+	 * Attempts to convert an array into a different type
+	 *
+	 * @param <OldType>
+	 * @param <NewType>
+	 * @param list
+	 * @param converter
+	 * @return
+	 */
+	public static <OldType, NewType> NewType[] convertToArray(final Iterable<OldType> list, final TypeConverter<OldType, NewType> converter) {
+		final List<NewType> newList = new ArrayList<>();
+
+		for (final OldType old : list)
+			newList.add(converter.convert(old));
+
+		return newList.toArray((NewType[]) Array.newInstance(newList.get(0).getClass(), newList.size()));
+	}
+
+	/**
 	 * Split the given string into array of the given max line length
 	 *
 	 * @param input
@@ -1367,19 +1309,24 @@ public abstract class CommonCore {
 	public static String[] split(String input, int maxLineLength) {
 		final StringTokenizer tok = new StringTokenizer(input, " ");
 		final StringBuilder output = new StringBuilder(input.length());
-
 		int lineLen = 0;
+		String lastColorCode = "";
 
 		while (tok.hasMoreTokens()) {
 			final String word = tok.nextToken();
 
 			if (lineLen + word.length() > maxLineLength) {
-				output.append("\n");
+				output.append("\n").append(lastColorCode);
 
 				lineLen = 0;
 			}
 
-			output.append(word + " ");
+			final String colorCode = CompChatColor.getLastColors(word);
+
+			if (!colorCode.isEmpty())
+				lastColorCode = colorCode;
+
+			output.append(word).append(" ");
 			lineLen += word.length() + 1;
 		}
 
@@ -1661,7 +1608,6 @@ public abstract class CommonCore {
 	 * The keys and values must be in pairs and of the same type.
 	 *
 	 * @param <K>
-	 * @param <V>
 	 * @param entries
 	 * @return
 	 */
@@ -1671,7 +1617,7 @@ public abstract class CommonCore {
 			return new HashMap<>();
 
 		if (entries.length % 2 != 0)
-			throw new FoException("Entries must be in pairs: " + Arrays.toString(entries));
+			throw new FoException("Entries must be in pairs: " + Arrays.toString(entries) + ", got " + entries.length + " entries.");
 
 		final Map<K, Object> map = new HashMap<>();
 

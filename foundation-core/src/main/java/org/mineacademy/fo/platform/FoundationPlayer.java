@@ -58,12 +58,14 @@ public abstract class FoundationPlayer {
 		final String replacedCommand = command.replace("{player}", this.getName());
 
 		Platform.runTask(0, () -> {
-			if (isPlayer())
+			if (this.isPlayer())
 				this.performPlayerCommand0(replacedCommand);
 			else
 				Platform.dispatchConsoleCommand(replacedCommand);
 		});
 	}
+
+	public abstract void setTempMetadata(String key, Object value);
 
 	protected abstract void performPlayerCommand0(String replacedCommand);
 
@@ -149,7 +151,7 @@ public abstract class FoundationPlayer {
 			if (plainMessage.startsWith("<center>")) {
 				final String centeredLegacyMessage = ChatUtil.center(component.toLegacy().replaceAll("\\<center\\>(\\s|)", ""));
 
-				this.sendRawMessage(SimpleComponent.fromSection(centeredLegacyMessage).toAdventure());
+				this.sendMessage(centeredLegacyMessage);
 
 			} else
 				this.sendRawMessage(component.toAdventure());

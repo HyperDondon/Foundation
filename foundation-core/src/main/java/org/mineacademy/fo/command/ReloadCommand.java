@@ -38,7 +38,7 @@ public final class ReloadCommand extends SimpleSubCommandCore {
 	@Override
 	protected void onCommand() {
 		try {
-			this.tell(Commands.RELOAD_STARTED);
+			this.tellInfo(Commands.RELOAD_STARTED);
 
 			// Syntax check YML files before loading
 			boolean syntaxParsed = true;
@@ -58,16 +58,16 @@ public final class ReloadCommand extends SimpleSubCommandCore {
 				}
 
 			if (!syntaxParsed) {
-				this.tell(SimpleLocalization.Commands.RELOAD_FILE_LOAD_ERROR);
+				this.tellError(SimpleLocalization.Commands.RELOAD_FILE_LOAD_ERROR);
 
 				return;
 			}
 
 			Platform.getPlugin().reload();
-			this.tell(SimpleLocalization.Commands.RELOAD_SUCCESS);
+			this.tellSuccess(SimpleLocalization.Commands.RELOAD_SUCCESS);
 
 		} catch (final Throwable t) {
-			this.tell(SimpleLocalization.Commands.RELOAD_FAIL.replaceBracket("error", t.getMessage() != null ? t.getMessage() : "unknown"));
+			this.tellError(SimpleLocalization.Commands.RELOAD_FAIL.replaceBracket("error", t.getMessage() != null ? t.getMessage() : "unknown"));
 
 			t.printStackTrace();
 		}

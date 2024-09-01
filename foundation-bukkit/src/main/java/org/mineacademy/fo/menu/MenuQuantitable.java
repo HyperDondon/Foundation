@@ -1,8 +1,5 @@
 package org.mineacademy.fo.menu;
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemStack;
@@ -11,7 +8,6 @@ import org.mineacademy.fo.Valid;
 import org.mineacademy.fo.menu.button.Button;
 import org.mineacademy.fo.menu.model.ItemCreator;
 import org.mineacademy.fo.menu.model.MenuQuantity;
-import org.mineacademy.fo.model.Variables;
 import org.mineacademy.fo.remain.CompMaterial;
 
 import lombok.NonNull;
@@ -154,24 +150,19 @@ public interface MenuQuantitable {
 	}
 
 	default ItemStack addLevelToItem(ItemStack item, String level) {
+		final String quantity = this.getCurrentQuantityPercent();
 
 		// Paint the item with the drop chance lore
-		final List<String> dropChanceLore = Variables.replaceArray(Arrays.asList(
-
-				// Lore
-				"",
-				this.getLevelLoreLabel() + ": &6{level}",
-				"",
-				"   &8(Mouse click)",
-				"  &7&l< &4-{quantity}    &2+{quantity} &7&l>"),
-
-				null, // sender
-
-				// Variables
-				"level", level,
-				"quantity", this.getCurrentQuantityPercent());
-
-		return ItemCreator.of(item.clone()).clearLore().lore(dropChanceLore).makeMenuTool();
+		return ItemCreator
+				.of(item.clone())
+				.clearLore()
+				.lore(
+						"",
+						this.getLevelLoreLabel() + ": &6" + level,
+						"",
+						"   &8(Mouse click)",
+						"  &7&l< &4-" + quantity + "    &2+" + quantity + " &7&l>")
+				.make();
 	}
 
 	default String getLevelLoreLabel() {

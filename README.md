@@ -77,7 +77,7 @@ If you want to compile a dependency to your jar, install it normally through the
 
     <!-- Change version to the latest one from
          https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-shade-plugin -->
-    <version>3.5.1</version>
+    <version>3.6.0</version>
     <executions>
         <execution>
             <phase>package</phase>

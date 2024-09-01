@@ -31,6 +31,7 @@ import java.util.zip.ZipOutputStream;
 
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.platform.Platform;
+import org.mineacademy.fo.remain.CompChatColor;
 import org.mineacademy.fo.remain.RemainCore;
 
 import lombok.AccessLevel;
@@ -262,7 +263,7 @@ public final class FileUtil {
 	 * @param message line, is split by \n
 	 */
 	public static void writeFormatted(String to, String prefix, String message) {
-		message = CommonCore.stripColorCodes(message);
+		message = CompChatColor.stripColorCodes(message);
 
 		if (!message.equalsIgnoreCase("none") && !message.isEmpty())
 			for (final String line : message.split("\n"))

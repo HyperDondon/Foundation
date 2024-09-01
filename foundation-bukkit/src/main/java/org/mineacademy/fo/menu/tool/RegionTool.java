@@ -14,7 +14,7 @@ import org.mineacademy.fo.menu.model.ItemCreator;
 import org.mineacademy.fo.region.DiskRegion;
 import org.mineacademy.fo.region.Region;
 import org.mineacademy.fo.remain.CompMaterial;
-import org.mineacademy.fo.settings.SimpleLocalization;
+import org.mineacademy.fo.settings.SimpleLocalization.Commands;
 import org.mineacademy.fo.visual.VisualTool;
 import org.mineacademy.fo.visual.VisualizedRegion;
 
@@ -33,7 +33,7 @@ public final class RegionTool extends VisualTool {
 	 * The singular tool instance
 	 */
 	@Getter
-	private static final Tool instance = new RegionTool();
+	private static final RegionTool instance = new RegionTool();
 
 	/**
 	 * The region point that is shown above the primary/secondary block when tool is held in hands
@@ -107,6 +107,17 @@ public final class RegionTool extends VisualTool {
 	}
 
 	/**
+	 * Simulate a click on the block
+	 *
+	 * @param player
+	 * @param primary
+	 * @param location
+	 */
+	public void simulateClick(final Player player, final boolean primary, final Location location) {
+		this.onBlockClick(player, primary ? ClickType.LEFT : ClickType.RIGHT, location.getBlock());
+	}
+
+	/**
 	 * @see org.mineacademy.fo.visual.VisualTool#handleBlockClick(org.bukkit.entity.Player, org.bukkit.event.inventory.ClickType, org.bukkit.block.Block)
 	 */
 	@Override
@@ -115,17 +126,44 @@ public final class RegionTool extends VisualTool {
 		final boolean primary = click == ClickType.LEFT;
 		final Region region = DiskRegion.getCreatedRegion(player);
 
-		if (primary)
-			region.setPrimary(location);
-		else
-			region.setSecondary(location);
+		boolean removed = false;
+
+		if (primary) {
+			if (region.isSecondary(location)) {
+				Messenger.error(player, Commands.REGION_BLOCK_ALREADY_SECONDARY);
+
+				return;
+			}
+
+			if (region.isPrimary(location)) {
+				region.setPrimary(null);
+
+				removed = true;
+			} else
+				region.setPrimary(location);
+
+		} else {
+
+			if (region.isPrimary(location)) {
+				Messenger.error(player, Commands.REGION_BLOCK_ALREADY_PRIMARY);
+
+				return;
+			}
+
+			if (region.isSecondary(location)) {
+				region.setSecondary(null);
+
+				removed = true;
+			} else
+				region.setSecondary(location);
+		}
 
 		final boolean whole = region.isWhole();
 
 		if (whole && !player.isConversing())
 			CreateRegionPrompt.showToOrHint(player);
 		else
-			Messenger.success(player, primary ? SimpleLocalization.Commands.REGION_SET_PRIMARY : SimpleLocalization.Commands.REGION_SET_SECONDARY);
+			Messenger.success(player, primary ? (removed ? Commands.REGION_REMOVE_PRIMARY : Commands.REGION_SET_PRIMARY) : (removed ? Commands.REGION_REMOVE_SECONDARY : Commands.REGION_SET_SECONDARY));
 	}
 
 	/**

@@ -216,6 +216,7 @@ public abstract class FileConfig {
 	private void copyDefault(final String path, final Class<?> type, boolean stored) {
 		if (this.defaults != null && !stored) {
 			final Object object = this.defaults.retrieve(path);
+
 			ValidCore.checkNotNull(object, "Inbuilt config " + this.getFileName() + " lacks " + (object == null ? "key" : object.getClass().getSimpleName()) + " at \"" + path + "\". Is it outdated?");
 
 			CommonCore.log("&7Updating " + this.getFileName() + " at &b\'&f" + path + "&b\' &7-> " + (object == null ? "&ckey removed" : "&b\'&f" + object.toString().replace("\n", ", ") + "&b\'") + "&r");

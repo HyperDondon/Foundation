@@ -41,6 +41,7 @@ import org.mineacademy.fo.Valid;
 import org.mineacademy.fo.collection.StrictSet;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.model.SimpleComponent;
+import org.mineacademy.fo.remain.CompChatColor;
 import org.mineacademy.fo.remain.CompEquipmentSlot;
 import org.mineacademy.fo.remain.Remain;
 
@@ -668,7 +669,7 @@ public abstract class SimpleEnchantment implements Listener {
 					final String lore = simpleEnchantment.getLore(entry.getValue());
 
 					if (lore != null && !lore.isEmpty())
-						customEnchants.add(SimpleComponent.fromMini(FO_ENCHANT_PREFIX + lore).toLegacy());
+						customEnchants.add(CompChatColor.translateColorCodes(FO_ENCHANT_PREFIX + lore));
 				}
 			}
 
@@ -683,7 +684,7 @@ public abstract class SimpleEnchantment implements Listener {
 							final String lore = simpleEnchantment.getLore(entry.getValue());
 
 							if (lore != null && !lore.isEmpty())
-								customEnchants.add(SimpleComponent.fromMini(FO_ENCHANT_PREFIX + lore).toLegacy());
+								customEnchants.add(CompChatColor.translateColorCodes(FO_ENCHANT_PREFIX + lore));
 						}
 					}
 				}
@@ -701,11 +702,11 @@ public abstract class SimpleEnchantment implements Listener {
 			final List<String> colorlessOriginals = new ArrayList<>();
 
 			for (final String original : originalLore)
-				colorlessOriginals.add(Common.stripColorCodes(original));
+				colorlessOriginals.add(CompChatColor.stripColorCodes(original));
 
 			// Place our enchants
 			for (final String customEnchant : customEnchants) {
-				final String colorlessEnchant = Common.stripColorCodes(customEnchant);
+				final String colorlessEnchant = CompChatColor.stripColorCodes(customEnchant);
 
 				if (!colorlessOriginals.contains(colorlessEnchant))
 					finalLore.add(customEnchant);

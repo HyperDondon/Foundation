@@ -48,7 +48,7 @@ public final class DebugCommand extends SimpleSubCommandCore {
 
 	@Override
 	protected void onCommand() {
-		this.tell(SimpleLocalization.Commands.DEBUG_PREPARING);
+		this.tellInfo(SimpleLocalization.Commands.DEBUG_PREPARING);
 
 		final File debugFolder = FileUtil.getFile("debug");
 		final List<File> files = this.listFilesRecursively(Platform.getPlugin().getDataFolder(), new ArrayList<>());
@@ -65,7 +65,7 @@ public final class DebugCommand extends SimpleSubCommandCore {
 		// Zip the folder
 		this.zipAndRemoveFolder(debugFolder);
 
-		this.tell(SimpleLocalization.Commands.DEBUG_SUCCESS.replaceBracket("amount", String.valueOf(files.size())));
+		this.tellSuccess(SimpleLocalization.Commands.DEBUG_SUCCESS.replaceBracket("amount", String.valueOf(files.size())));
 	}
 
 	/*
@@ -73,17 +73,17 @@ public final class DebugCommand extends SimpleSubCommandCore {
 	 */
 	private void writeDebugInformation() {
 
-		final List<String> lines = CommonCore.toList(CommonCore.consoleLine(),
-				" Debug log generated " + TimeUtil.getFormattedDate(),
-				CommonCore.consoleLine(),
-				"Plugin: " + Platform.getPlugin().getName(),
-				"Server Version: " + Platform.getPlatformVersion(),
+		final List<String> lines = CommonCore.toList(
+				"Date: " + TimeUtil.getFormattedDate(),
+				"Plugin: " + Platform.getPlugin().getName() + " " + Platform.getPlugin().getVersion(),
+				"Server: " + Platform.getPlatformName() + " " + Platform.getPlatformVersion(),
 				"Java: " + System.getProperty("java.version") + " (" + System.getProperty("java.specification.vendor") + "/" + System.getProperty("java.vm.vendor") + ")",
 				"OS: " + System.getProperty("os.name") + " " + System.getProperty("os.version"),
 				"Players Online: " + Platform.getOnlinePlayers().size(),
-				"Plugins: " + String.join(", ", Platform.getServerPlugins()));
+				"Plugins: " + CommonCore.join(Platform.getServerPlugins(), tuple -> tuple.getKey() + " " + tuple.getValue()));
 
 		lines.addAll(debugLines);
+
 		FileUtil.write("debug/general.txt", lines);
 	}
 

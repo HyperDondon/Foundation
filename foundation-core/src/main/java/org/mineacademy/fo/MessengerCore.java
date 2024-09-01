@@ -1,11 +1,17 @@
 package org.mineacademy.fo;
 
+import static org.mineacademy.fo.settings.SimpleLocalization.Prefix.ANNOUNCE;
+import static org.mineacademy.fo.settings.SimpleLocalization.Prefix.ERROR;
+import static org.mineacademy.fo.settings.SimpleLocalization.Prefix.INFO;
+import static org.mineacademy.fo.settings.SimpleLocalization.Prefix.QUESTION;
+import static org.mineacademy.fo.settings.SimpleLocalization.Prefix.SUCCESS;
+import static org.mineacademy.fo.settings.SimpleLocalization.Prefix.WARN;
+
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
 
 import lombok.AccessLevel;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
@@ -16,342 +22,247 @@ import lombok.NonNull;
 public class MessengerCore {
 
 	/**
-	 * Should we use messenger globally such as in commands & listeners?
-	 */
-	public static boolean ENABLED = true;
-
-	/**
-	 * The prefix send while sending info message
-	 */
-	@Getter
-	private static SimpleComponent infoPrefix = SimpleComponent.fromAndCharacter("&8[&9i&8]&7");
-
-	/**
-	 * The prefix send while sending success message
-	 */
-	@Getter
-	private static SimpleComponent successPrefix = SimpleComponent.fromAndCharacter("&8[&2\u2714&8]&7");
-
-	/**
-	 * The prefix send while sending warning message
-	 */
-	@Getter
-	private static SimpleComponent warnPrefix = SimpleComponent.fromAndCharacter("&8[&6!&8]&6");
-
-	/**
-	 * The prefix send while sending error message
-	 */
-	@Getter
-	private static SimpleComponent errorPrefix = SimpleComponent.fromAndCharacter("&8[&4\u2715&8]&c");
-
-	/**
-	 * The prefix send while sending questions
-	 */
-	@Getter
-	private static SimpleComponent questionPrefix = SimpleComponent.fromAndCharacter("&8[&a?&8]&7");
-
-	/**
-	 * The prefix send while sending announcements
-	 */
-	@Getter
-	private static SimpleComponent announcePrefix = SimpleComponent.fromAndCharacter("&8[&5!&8]&d");
-
-	/**
-	 * Set the prefix for info messages
-	 *
-	 * @param infoPrefix
-	 */
-	public static void setInfoPrefix(SimpleComponent infoPrefix) {
-		MessengerCore.infoPrefix = infoPrefix;
-	}
-
-	/**
-	 * Set the prefix for success messages
-	 *
-	 * @param successPrefix
-	 */
-	public static void setSuccessPrefix(SimpleComponent successPrefix) {
-		MessengerCore.successPrefix = successPrefix;
-	}
-
-	/**
-	 * Set the prefix for warning messages
-	 *
-	 * @param warnPrefix
-	 */
-	public static void setWarnPrefix(SimpleComponent warnPrefix) {
-		MessengerCore.warnPrefix = warnPrefix;
-	}
-
-	/**
-	 * Set the prefix for error messages
-	 *
-	 * @param errorPrefix
-	 */
-	public static void setErrorPrefix(SimpleComponent errorPrefix) {
-		MessengerCore.errorPrefix = errorPrefix;
-	}
-
-	/**
-	 * Set the prefix for question messages
-	 *
-	 * @param questionPrefix
-	 */
-	public static void setQuestionPrefix(SimpleComponent questionPrefix) {
-		MessengerCore.questionPrefix = questionPrefix;
-	}
-
-	/**
-	 * Set the prefix for announcement messages
-	 *
-	 * @param announcePrefix
-	 */
-	public static void setAnnouncePrefix(SimpleComponent announcePrefix) {
-		MessengerCore.announcePrefix = announcePrefix;
-	}
-
-	/**
-	 * Send a message prepended with the {@link #getInfoPrefix()}
+	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
 	 *
 	 * @param message
 	 */
 	public static void broadcastInfo(final String message) {
 		for (final FoundationPlayer online : Platform.getOnlinePlayers())
-			tell(online, infoPrefix, message);
+			tell(online, INFO, message);
 	}
 
 	/**
-	 * Send a message prepended with the {@link #getInfoPrefix()}
+	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
 	 *
 	 * @param component
 	 */
 	public static void broadcastInfo(final SimpleComponent component) {
 		for (final FoundationPlayer online : Platform.getOnlinePlayers())
-			tell(online, infoPrefix, component);
+			tell(online, INFO, component);
 	}
 
 	/**
-	 * Send a message prepended with the {@link #getSuccessPrefix()}
+	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
 	 *
 	 * @param message
 	 */
 	public static void broadcastSuccess(final String message) {
 		for (final FoundationPlayer online : Platform.getOnlinePlayers())
-			tell(online, successPrefix, message);
+			tell(online, SUCCESS, message);
 	}
 
 	/**
-	 * Send a message prepended with the {@link #getSuccessPrefix()}
+	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
 	 *
 	 * @param component
 	 */
 	public static void broadcastSuccess(final SimpleComponent component) {
 		for (final FoundationPlayer online : Platform.getOnlinePlayers())
-			tell(online, successPrefix, component);
+			tell(online, SUCCESS, component);
 	}
 
 	/**
-	 * Send a message prepended with the {@link #getWarnPrefix()}
+	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
 	 *
 	 * @param message
 	 */
 	public static void broadcastWarn(final String message) {
 		for (final FoundationPlayer online : Platform.getOnlinePlayers())
-			tell(online, warnPrefix, message);
+			tell(online, WARN, message);
 	}
 
 	/**
-	 * Send a message prepended with the {@link #getWarnPrefix()}
+	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
 	 *
 	 * @param component
 	 */
 	public static void broadcastWarn(final SimpleComponent component) {
 		for (final FoundationPlayer online : Platform.getOnlinePlayers())
-			tell(online, warnPrefix, component);
+			tell(online, WARN, component);
 	}
 
 	/**
-	 * Send a message prepended with the {@link #getErrorPrefix()}
+	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
 	 *
 	 * @param message
 	 */
 	public static void broadcastError(final String message) {
 		for (final FoundationPlayer online : Platform.getOnlinePlayers())
-			tell(online, errorPrefix, message);
+			tell(online, ERROR, message);
 	}
 
 	/**
-	 * Send a message prepended with the {@link #getErrorPrefix()}
+	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
 	 *
 	 * @param component
 	 */
 	public static void broadcastError(final SimpleComponent component) {
 		for (final FoundationPlayer online : Platform.getOnlinePlayers())
-			tell(online, errorPrefix, component);
+			tell(online, ERROR, component);
 	}
 
 	/**
-	 * Send a message prepended with the {@link #getQuestionPrefix()}
+	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
 	 *
 	 * @param message
 	 */
 	public static void broadcastQuestion(final String message) {
 		for (final FoundationPlayer online : Platform.getOnlinePlayers())
-			tell(online, questionPrefix, message);
+			tell(online, QUESTION, message);
 	}
 
 	/**
-	 * Send a message prepended with the {@link #getQuestionPrefix()}
+	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
 	 *
 	 * @param component
 	 */
 	public static void broadcastQuestion(final SimpleComponent component) {
 		for (final FoundationPlayer online : Platform.getOnlinePlayers())
-			tell(online, questionPrefix, component);
+			tell(online, QUESTION, component);
 	}
 
 	/**
-	 * Send a message prepended with the {@link #getAnnouncePrefix()}
+	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
 	 *
 	 * @param message
 	 */
 	public static void broadcastAnnounce(final String message) {
 		for (final FoundationPlayer online : Platform.getOnlinePlayers())
-			tell(online, announcePrefix, message);
+			tell(online, ANNOUNCE, message);
 	}
 
 	/**
-	 * Send a message prepended with the {@link #getAnnouncePrefix()}
+	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
 	 *
 	 * @param component
 	 */
 	public static void broadcastAnnounce(final SimpleComponent component) {
 		for (final FoundationPlayer online : Platform.getOnlinePlayers())
-			tell(online, announcePrefix, component);
+			tell(online, ANNOUNCE, component);
 	}
 
 	/**
-	 * Send a message prepended with the {@link #getInfoPrefix()}
+	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
 	 *
 	 * @param player
 	 * @param message
 	 */
 	public static void info(final FoundationPlayer player, final String message) {
-		tell(player, infoPrefix, message);
+		tell(player, INFO, message);
 	}
 
 	/**
-	 * Send a message prepended with the {@link #getInfoPrefix()}
+	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
 	 *
 	 * @param player
 	 * @param component
 	 */
 	public static void info(final FoundationPlayer player, final SimpleComponent component) {
-		tell(player, infoPrefix, component);
+		tell(player, INFO, component);
 	}
 
 	/**
-	 * Send a message prepended with the {@link #getSuccessPrefix()}
+	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
 	 *
 	 * @param player
 	 * @param message
 	 */
 	public static void success(final FoundationPlayer player, final String message) {
-		tell(player, successPrefix, message);
+		tell(player, SUCCESS, message);
 	}
 
 	/**
-	 * Send a message prepended with the {@link #getSuccessPrefix()}
+	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
 	 *
 	 * @param player
 	 * @param component
 	 */
 	public static void success(final FoundationPlayer player, final SimpleComponent component) {
-		tell(player, successPrefix, component);
+		tell(player, SUCCESS, component);
 	}
 
 	/**
-	 * Send a message prepended with the {@link #getWarnPrefix()}
+	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
 	 *
 	 * @param player
 	 * @param message
 	 */
 	public static void warn(final FoundationPlayer player, final String message) {
-		tell(player, warnPrefix, message);
+		tell(player, WARN, message);
 	}
 
 	/**
-	 * Send a message prepended with the {@link #getWarnPrefix()}
+	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
 	 *
 	 * @param player
 	 * @param component
 	 */
 	public static void warn(final FoundationPlayer player, final SimpleComponent component) {
-		tell(player, warnPrefix, component);
+		tell(player, WARN, component);
 	}
 
 	/**
-	 * Send a message prepended with the {@link #getErrorPrefix()}
+	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
 	 *
 	 * @param player
 	 * @param message
 	 */
 	public static void error(final FoundationPlayer player, final String message) {
-		tell(player, errorPrefix, message);
+		tell(player, ERROR, message);
 	}
 
 	/**
-	 * Send a message prepended with the {@link #getErrorPrefix()}
+	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
 	 *
 	 * @param player
 	 * @param component
 	 */
 	public static void error(final FoundationPlayer player, final SimpleComponent component) {
-		tell(player, errorPrefix, component);
+		tell(player, ERROR, component);
 	}
 
 	/**
-	 * Send a message prepended with the {@link #getQuestionPrefix()}
+	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
 	 *
 	 * @param player
 	 * @param message
 	 */
 	public static void question(final FoundationPlayer player, final String message) {
-		tell(player, questionPrefix, message);
+		tell(player, QUESTION, message);
 	}
 
 	/**
-	 * Send a message prepended with the {@link #getQuestionPrefix()}
+	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
 	 *
 	 * @param player
 	 * @param component
 	 */
 	public static void question(final FoundationPlayer player, final SimpleComponent component) {
-		tell(player, questionPrefix, component);
+		tell(player, QUESTION, component);
 	}
 
 	/**
-	 * Send a message prepended with the {@link #getAnnouncePrefix()}
+	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
 	 *
 	 * @param player
 	 * @param message
 	 */
 	public static void announce(final FoundationPlayer player, final String message) {
-		tell(player, announcePrefix, message);
+		tell(player, ANNOUNCE, message);
 	}
 
 	/**
-	 * Send a message prepended with the {@link #getAnnouncePrefix()}
+	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
 	 *
 	 * @param player
 	 * @param component
 	 */
 	public static void announce(final FoundationPlayer player, final SimpleComponent component) {
-		tell(player, announcePrefix, component);
+		tell(player, ANNOUNCE, component);
 	}
 
 	/*
-	 * Internal method to perform the sending
+	 * Perform the sending
 	 */
 	private static void tell(final FoundationPlayer sender, final SimpleComponent prefix, @NonNull String message) {
 		tell(sender, prefix, SimpleComponent.fromMini(message));
@@ -361,6 +272,6 @@ public class MessengerCore {
 	 * Internal method to perform the sending
 	 */
 	private static void tell(final FoundationPlayer sender, final SimpleComponent prefix, @NonNull SimpleComponent component) {
-		prefix.append(component).send(sender);
+		prefix.appendPlain(" ").append(component).send(sender);
 	}
 }

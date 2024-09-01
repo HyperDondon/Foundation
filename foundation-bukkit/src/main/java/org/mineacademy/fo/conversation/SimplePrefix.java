@@ -2,7 +2,7 @@ package org.mineacademy.fo.conversation;
 
 import org.bukkit.conversations.ConversationContext;
 import org.bukkit.conversations.ConversationPrefix;
-import org.mineacademy.fo.model.SimpleComponent;
+import org.mineacademy.fo.remain.CompChatColor;
 
 import lombok.Getter;
 
@@ -18,7 +18,7 @@ public final class SimplePrefix implements ConversationPrefix {
 	private final String prefix;
 
 	public SimplePrefix(String prefix) {
-		this.prefix = SimpleComponent.fromMini(prefix).toLegacy();
+		this.prefix = CompChatColor.translateColorCodes(prefix);
 	}
 
 	@Override

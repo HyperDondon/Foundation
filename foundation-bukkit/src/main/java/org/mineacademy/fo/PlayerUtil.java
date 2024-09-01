@@ -42,10 +42,10 @@ import org.mineacademy.fo.jsonsimple.JSONObject;
 import org.mineacademy.fo.jsonsimple.JSONParser;
 import org.mineacademy.fo.menu.Menu;
 import org.mineacademy.fo.model.HookManager;
-import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.Task;
 import org.mineacademy.fo.plugin.SimplePlugin;
 import org.mineacademy.fo.remain.CompAttribute;
+import org.mineacademy.fo.remain.CompChatColor;
 import org.mineacademy.fo.remain.CompMaterial;
 import org.mineacademy.fo.remain.CompProperty;
 import org.mineacademy.fo.remain.Remain;
@@ -92,7 +92,7 @@ public final class PlayerUtil {
 	 * @param message
 	 */
 	public static void kick(final Player player, final String... message) {
-		final String reason = SimpleComponent.fromMini(String.join("\n", message)).toLegacy();
+		final String reason = CompChatColor.translateColorCodes(String.join("\n", message));
 
 		if (Bukkit.isPrimaryThread())
 			player.kickPlayer(reason);

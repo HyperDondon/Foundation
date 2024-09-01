@@ -35,7 +35,12 @@ public final class CompChatColor {
 	/**
 	 * All legacy color codes
 	 */
-	public static final String ALL_CODES = "0123456789AaBbCcDdEeFfKkLlMmNnOoRrXx";
+	private static final String ALL_CODES = "0123456789AaBbCcDdEeFfKkLlMmNnOoRrXx";
+
+	/**
+	 * MiniMessages to legacy color codes
+	 */
+	private static final Map<String, String> MINI_TO_LEGACY = new HashMap<>();
 
 	/**
 	 * Colour instances keyed by their active character.
@@ -536,22 +541,106 @@ public final class CompChatColor {
 	}
 
 	/**
-	 * Replaces & color codes to paragraph character
+	 * Replaces legacy & and MiniMessage color codes to paragraph character
 	 *
 	 * @param message
 	 * @return
 	 */
 	public static String translateColorCodes(String message) {
-		final char[] letters = message.toCharArray();
+		final StringBuilder result = new StringBuilder();
 
-		for (int index = 0; index < letters.length - 1; index++)
-			if (letters[index] == '&' && "0123456789AaBbCcDdEeFfKkLlMmNnOoRrXx".indexOf(letters[index + 1]) > -1) {
-				letters[index] = CompChatColor.COLOR_CHAR;
+		for (int i = 0; i < message.length(); i++) {
+			if (message.charAt(i) == '<') {
+				final int endIndex = message.indexOf('>', i);
 
-				letters[index + 1] = Character.toLowerCase(letters[index + 1]);
+				if (endIndex != -1) {
+					final String code = message.substring(i, endIndex + 1);
+
+					if (MINI_TO_LEGACY.containsKey(code)) {
+						result.append(MINI_TO_LEGACY.get(code));
+						i = endIndex;
+
+						continue;
+					}
+
+					if (code.matches("<#[0-9a-fA-F]{6}>")) {
+						appendHex(result, code.substring(1, code.length() - 1));
+
+						i = endIndex;
+						continue;
+					}
+				}
+
+			} else if (i + 6 < message.length() && message.charAt(i) == '#' && message.substring(i + 1, i + 7).matches("[0-9a-fA-F]{6}")) {
+				appendHex(result, message.substring(i, i + 7));
+
+				i += 6;
+				continue;
+
+			} else if (message.charAt(i) == '&' && i + 1 < message.length() && ALL_CODES.indexOf(message.charAt(i + 1)) > -1) {
+				result.append(CompChatColor.COLOR_CHAR).append(Character.toLowerCase(message.charAt(i + 1)));
+
+				i += 1;
+				continue;
 			}
 
-		return new String(letters);
+			result.append(message.charAt(i));
+		}
+
+		return result.toString();
+	}
+
+	/*
+	 * Append a hex color to the result
+	 */
+	private static void appendHex(StringBuilder result, String code) {
+		if (!Platform.hasHexColorSupport())
+			result.append(getClosestLegacyColor(getColorFromHex(code)));
+
+		else
+			result.append(COLOR_CHAR).append("x")
+					.append(COLOR_CHAR).append(code.charAt(2))
+					.append(COLOR_CHAR).append(code.charAt(3))
+					.append(COLOR_CHAR).append(code.charAt(4))
+					.append(COLOR_CHAR).append(code.charAt(5))
+					.append(COLOR_CHAR).append(code.charAt(6))
+					.append(COLOR_CHAR).append(code.charAt(7));
+	}
+
+	/**
+	 * Removes valid Minecraft color codes from a message. Valid color codes are sequences of
+	 * '§' or '&' followed by a character in the ranges 0-9, a-f, A-F, k-o, K-O, or r/R.
+	 *
+	 * @param message The input message potentially containing Minecraft color codes.
+	 * @return A new string with valid color codes removed.
+	 */
+	public static String stripColorCodes(String message) {
+		final int messageLength = message.length();
+		final char[] strippedMessage = new char[messageLength];
+		int resultIndex = 0;
+
+		for (int i = 0; i < messageLength; i++) {
+			final char currentChar = message.charAt(i);
+
+			if ((currentChar == '§' || currentChar == '&') && i + 1 < messageLength) {
+				final char nextChar = message.charAt(i + 1);
+
+				if ((nextChar >= '0' && nextChar <= '9') ||
+						(nextChar >= 'a' && nextChar <= 'f') ||
+						(nextChar >= 'A' && nextChar <= 'F') ||
+						(nextChar >= 'k' && nextChar <= 'o') ||
+						(nextChar >= 'K' && nextChar <= 'O') ||
+						nextChar == 'r' || nextChar == 'R') {
+					i++; // Skip the valid color code
+
+				} else
+					strippedMessage[resultIndex++] = currentChar;
+
+			} else
+				strippedMessage[resultIndex++] = currentChar;
+		}
+
+		return new String(strippedMessage, 0, resultIndex);
 	}
 
 	/**
@@ -561,6 +650,7 @@ public final class CompChatColor {
 	 * @return Any remaining ChatColors to pass onto the next line.
 	 */
 	public static String getLastColors(String input) {
+
 		if (input == null)
 			return "";
 
@@ -661,5 +751,36 @@ public final class CompChatColor {
 	 */
 	public static List<CompChatColor> getDecorations() {
 		return Arrays.asList(MAGIC, BOLD, STRIKETHROUGH, UNDERLINE, ITALIC);
+	}
+
+	static {
+		MINI_TO_LEGACY.put("<black>", "§0");
+		MINI_TO_LEGACY.put("<dark_blue>", "§1");
+		MINI_TO_LEGACY.put("<dark_green>", "§2");
+		MINI_TO_LEGACY.put("<dark_aqua>", "§3");
+		MINI_TO_LEGACY.put("<dark_red>", "§4");
+		MINI_TO_LEGACY.put("<dark_purple>", "§5");
+		MINI_TO_LEGACY.put("<gold>", "§6");
+		MINI_TO_LEGACY.put("<gray>", "§7");
+		MINI_TO_LEGACY.put("<dark_gray>", "§8");
+		MINI_TO_LEGACY.put("<blue>", "§9");
+		MINI_TO_LEGACY.put("<green>", "§a");
+		MINI_TO_LEGACY.put("<aqua>", "§b");
+		MINI_TO_LEGACY.put("<red>", "§c");
+		MINI_TO_LEGACY.put("<light_purple>", "§d");
+		MINI_TO_LEGACY.put("<yellow>", "§e");
+		MINI_TO_LEGACY.put("<white>", "§f");
+		MINI_TO_LEGACY.put("<u>", "§n");
+		MINI_TO_LEGACY.put("<underlined>", "§n");
+		MINI_TO_LEGACY.put("<st>", "§m");
+		MINI_TO_LEGACY.put("<strikethrough>", "§m");
+		MINI_TO_LEGACY.put("<obf>", "§k");
+		MINI_TO_LEGACY.put("<obfuscated>", "§k");
+		MINI_TO_LEGACY.put("<i>", "§o");
+		MINI_TO_LEGACY.put("<italic>", "§o");
+		MINI_TO_LEGACY.put("<b>", "§l");
+		MINI_TO_LEGACY.put("<bold>", "§l");
+		MINI_TO_LEGACY.put("<r>", "§r");
+		MINI_TO_LEGACY.put("<reset>", "§r");
 	}
 }

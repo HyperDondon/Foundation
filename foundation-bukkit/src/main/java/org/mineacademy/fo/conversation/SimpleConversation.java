@@ -3,6 +3,7 @@ package org.mineacademy.fo.conversation;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.bukkit.command.CommandSender;
 import org.bukkit.conversations.Conversable;
 import org.bukkit.conversations.Conversation;
 import org.bukkit.conversations.ConversationAbandonedEvent;
@@ -13,17 +14,16 @@ import org.bukkit.conversations.ConversationPrefix;
 import org.bukkit.conversations.Prompt;
 import org.bukkit.entity.Player;
 import org.mineacademy.fo.Common;
-import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.Messenger;
 import org.mineacademy.fo.Valid;
 import org.mineacademy.fo.collection.expiringmap.ExpiringMap;
 import org.mineacademy.fo.menu.Menu;
-import org.mineacademy.fo.model.BoxedMessage;
+import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.Task;
 import org.mineacademy.fo.model.Variables;
-import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.plugin.SimplePlugin;
+import org.mineacademy.fo.remain.CompChatColor;
 import org.mineacademy.fo.remain.CompSound;
 import org.mineacademy.fo.remain.Remain;
 import org.mineacademy.fo.settings.SimpleLocalization;
@@ -249,9 +249,9 @@ public abstract class SimpleConversation implements ConversationAbandonedListene
 	 * @param conversable
 	 * @param messages
 	 */
-	protected static final void tellBoxed(final int delayTicks, final Conversable conversable, final String... messages) {
+	/*protected static final void tellBoxed(final int delayTicks, final Conversable conversable, final String... messages) {
 		Common.runLater(delayTicks, () -> tellBoxed(conversable, messages));
-	}
+	}*/
 
 	/**
 	 * Sends a boxed message to the conversable player
@@ -259,21 +259,9 @@ public abstract class SimpleConversation implements ConversationAbandonedListene
 	 * @param conversable
 	 * @param messages
 	 */
-	protected static final void tellBoxed(final Conversable conversable, final String... messages) {
+	/*protected static final void tellBoxed(final Conversable conversable, final String... messages) {
 		BoxedMessage.tell(Platform.toPlayer(conversable), messages);
-	}
-
-	/**
-	 * Shortcut method for direct message send to the player
-	 *
-	 * @param conversable
-	 * @param message
-	 */
-	protected static final void tell(final Conversable conversable, String message) {
-		final FoundationPlayer player = Platform.toPlayer(conversable);
-
-		player.sendMessage(Variables.replace(message, player));
-	}
+	}*/
 
 	/**
 	 * Send a message to the conversable player later
@@ -283,9 +271,27 @@ public abstract class SimpleConversation implements ConversationAbandonedListene
 	 * @param message
 	 */
 	protected static final void tellLater(final int delayTicks, final Conversable conversable, String message) {
-		final FoundationPlayer player = Platform.toPlayer(conversable);
+		Platform.runTask(delayTicks, () -> tell(conversable, message));
+	}
 
-		Common.tellLater(delayTicks, player, Variables.replace(message, player));
+	/**
+	 * Shortcut method for direct message send to the player
+	 *
+	 * @param conversable
+	 * @param message
+	 */
+	protected static final void tell(final Conversable conversable, String message) {
+		conversable.sendRawMessage(Variables.replace(message, Platform.toPlayer(conversable)));
+	}
+
+	/**
+	 * Shortcut method for direct message send to the player
+	 *
+	 * @param conversable
+	 * @param message
+	 */
+	protected static final void tell(final Conversable conversable, SimpleComponent message) {
+		conversable.sendRawMessage(Variables.replace(message, Platform.toPlayer(conversable)).toLegacy());
 	}
 
 	// ------------------------------------------------------------------------------------------------------------
@@ -381,7 +387,7 @@ public abstract class SimpleConversation implements ConversationAbandonedListene
 					this.abandon(new ConversationAbandonedEvent(this));
 
 				} catch (final Throwable t) {
-					tell(this.context.getForWhom(), (Messenger.ENABLED ? Messenger.getErrorPrefix() : "") + SimpleLocalization.Conversation.CONVERSATION_ERROR);
+					Messenger.error((CommandSender) this.context.getForWhom(), SimpleLocalization.Conversation.CONVERSATION_ERROR);
 
 					t.printStackTrace();
 				}
@@ -398,11 +404,10 @@ public abstract class SimpleConversation implements ConversationAbandonedListene
 					if (!askedQuestions.containsKey(question)) {
 						askedQuestions.put(question, null);
 
-						if (!CommonCore.stripColorCodes(question).contains(Messenger.getQuestionPrefix().toPlain())) {
+						if (!CompChatColor.stripColorCodes(question).contains(SimpleLocalization.Prefix.QUESTION.toPlain())) {
 							final String prefix = this.prefix.getPrefix(this.context);
 
-							if (!prefix.isEmpty())
-								question = prefix + question;
+							question = (!prefix.isEmpty() ? prefix : SimpleLocalization.Prefix.QUESTION.toLegacy()) + " " + question;
 						}
 
 						this.context.setSessionData("Asked_" + promptClass, askedQuestions);

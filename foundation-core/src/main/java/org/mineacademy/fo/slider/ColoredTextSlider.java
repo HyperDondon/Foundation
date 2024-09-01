@@ -3,7 +3,6 @@ package org.mineacademy.fo.slider;
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.MathUtilCore;
 import org.mineacademy.fo.ValidCore;
-import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.remain.CompChatColor;
 
 import lombok.AccessLevel;
@@ -117,9 +116,9 @@ public final class ColoredTextSlider implements Slider<String> {
 		final int from = MathUtilCore.range(this.currentPointer, 0, this.text.length());
 		final int to = MathUtilCore.range(this.currentPointer + this.width, 0, this.text.length());
 
-		final String before = SimpleComponent.fromAndCharacter(this.primaryPrefix + this.text.substring(0, from)).toLegacy();
-		final String part = SimpleComponent.fromAndCharacter(this.secondaryPrefix + this.text.substring(from, to)).toLegacy();
-		final String after = SimpleComponent.fromAndCharacter(this.primaryPrefix + this.text.substring(to)).toLegacy();
+		final String before = CompChatColor.translateColorCodes(this.primaryPrefix + this.text.substring(0, from));
+		final String part = CompChatColor.translateColorCodes(this.secondaryPrefix + this.text.substring(from, to));
+		final String after = CompChatColor.translateColorCodes(this.primaryPrefix + this.text.substring(to));
 
 		this.currentPointer++;
 

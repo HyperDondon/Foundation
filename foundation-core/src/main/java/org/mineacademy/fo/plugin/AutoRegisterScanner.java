@@ -83,11 +83,9 @@ final class AutoRegisterScanner {
 	 * If not, we only call the instance constructor in case there is any underlying registration going on
 	 */
 	public static void scanAndRegister() {
-
-		// Reset
-		proxyListenerRegistered = false;
 		registeredCommandGroups.clear();
 
+		proxyListenerRegistered = false;
 		customRegisterHandler.onPreScan();
 
 		// Find all plugin classes that can be autoregistered
@@ -164,39 +162,22 @@ final class AutoRegisterScanner {
 		registerCommandGroups();
 	}
 
+	/**
+	 * Reloads settings and localization files
+	 */
 	public static void reloadSettings() {
+		SimpleSettings.resetSettingsCall();
+		SimpleLocalization.resetLocalizationCall();
+
+		registeredCommandGroups.clear();
+
+		proxyListenerRegistered = false;
+		customRegisterHandler.onPreScan();
 
 		// Find all plugin classes that can be autoregistered
 		final List<Class<?>> classes = findValidClasses();
 
-		// Reset settings and localization
-		SimpleSettings.resetSettingsCall();
-		SimpleLocalization.resetLocalizationCall();
-
-		// Register settings early to be used later
 		registerSettings(classes);
-
-		for (final Class<?> clazz : classes)
-			try {
-				final Tuple<FindInstance, Object> tuple = findInstance(clazz);
-
-				if (YamlConfig.class.isAssignableFrom(clazz)) {
-					final YamlConfig config = (YamlConfig) tuple.getValue();
-
-					if (Platform.getPlugin().isReloading()) {
-						config.save();
-						config.reload();
-					}
-				}
-
-			} catch (final Throwable t) {
-
-				// Ignore exception in other class we loaded
-				if (t instanceof VerifyError)
-					continue;
-
-				CommonCore.error(t, "Failed to reload class '" + clazz + "' using Foundation!");
-			}
 	}
 
 	/*
@@ -424,7 +405,7 @@ final class AutoRegisterScanner {
 
 		ValidCore.checkBoolean(!(instance instanceof Boolean), "Used " + mode + " to find instance of " + clazz.getSimpleName() + " but got a boolean instead!");
 
-		ValidCore.checkNotNull(instance, "Your class " + clazz + " using @AutoRegister must EITHER have 1) one public no arguments constructor,"
+		ValidCore.checkNotNull(instance, "Your " + clazz + " using @AutoRegister must EITHER have 1) one public no arguments constructor,"
 				+ " OR 2) one private no arguments constructor plus a 'private static final " + clazz.getSimpleName() + " instance' instance field.");
 
 		return new Tuple<>(mode, instance);

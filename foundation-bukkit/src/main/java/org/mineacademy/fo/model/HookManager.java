@@ -41,6 +41,7 @@ import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.plugin.SimplePlugin;
 import org.mineacademy.fo.region.Region;
+import org.mineacademy.fo.remain.CompChatColor;
 import org.mineacademy.fo.remain.Remain;
 
 import com.Zrips.CMI.CMI;
@@ -1766,6 +1767,16 @@ public final class HookManager {
 		return isCitizensLoaded() ? citizensHook.getNPCTarget(entity) : null;
 	}
 
+	/**
+	 * Attemps to destroy entity, if it is a Citizens NPC.
+	 *
+	 * @param entity
+	 */
+	public static void destroyNPC(final Entity entity) {
+		if (isCitizensLoaded())
+			citizensHook.destroyNPC(entity);
+	}
+
 	// ------------------------------------------------------------------------------------------------------------
 	// DiscordSRV
 	// ------------------------------------------------------------------------------------------------------------
@@ -2564,7 +2575,7 @@ final class PlaceholderAPIHook {
 				String value = this.getValue(hooks.get(identifier), identifier, player, params);
 
 				if (value != null) {
-					value = Matcher.quoteReplacement(SimpleComponent.fromMini(value).toLegacy());
+					value = Matcher.quoteReplacement(CompChatColor.translateColorCodes(value));
 
 					message = message.replaceAll(Pattern.quote(matcher.group()), value.isEmpty() ? "" : (frontSpace ? " " : "") + value + (backSpace ? " " : ""));
 				}
@@ -2623,7 +2634,7 @@ final class PlaceholderAPIHook {
 						final Relational relational = (Relational) hook;
 						final String value = canReplace ? relational.onPlaceholderRequest((Player) one, (Player) two, params) : null;
 
-						text = text.replaceAll(Pattern.quote(matcher.group()), value != null ? Matcher.quoteReplacement(SimpleComponent.fromMini(value).toLegacy()) : "");
+						text = text.replaceAll(Pattern.quote(matcher.group()), value != null ? Matcher.quoteReplacement(CompChatColor.translateColorCodes(value)) : "");
 					}
 				}
 
@@ -2660,7 +2671,7 @@ final class PlaceholderAPIHook {
 					final String value = one != null && two != null ? relational.onPlaceholderRequest(one, two, params) : "";
 
 					if (value != null)
-						text = text.replaceAll(Pattern.quote(matcher.group()), Matcher.quoteReplacement(SimpleComponent.fromMini(value).toLegacy()));
+						text = text.replaceAll(Pattern.quote(matcher.group()), Matcher.quoteReplacement(CompChatColor.translateColorCodes(value)));
 				}
 			}
 		}
@@ -2969,7 +2980,7 @@ class WorldGuardHook {
 		final List<String> list = new ArrayList<>();
 
 		this.getApplicableRegions(location).forEach(region -> {
-			final String name = Common.stripColorCodes(region.getId());
+			final String name = CompChatColor.stripColorCodes(region.getId());
 
 			if (!name.startsWith("__"))
 				list.add(name);
@@ -2989,7 +3000,7 @@ class WorldGuardHook {
 						if (regObj == null)
 							continue;
 
-						if (Common.stripColorCodes(((ProtectedRegion) regObj).getId()).equals(name)) {
+						if (CompChatColor.stripColorCodes(((ProtectedRegion) regObj).getId()).equals(name)) {
 
 							final Class<?> clazz = regObj.getClass();
 							final Method getMax = clazz.getMethod("getMaximumPoint");
@@ -3019,7 +3030,7 @@ class WorldGuardHook {
 				}
 			else
 				for (final ProtectedRegion reg : ((com.sk89q.worldguard.protection.managers.RegionManager) rm).getRegions().values())
-					if (reg != null && reg.getId() != null && Common.stripColorCodes(reg.getId()).equals(name)) {
+					if (reg != null && reg.getId() != null && CompChatColor.stripColorCodes(reg.getId()).equals(name)) {
 						//if(reg instanceof com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion) {
 						// just going to pretend that everything is a cuboid..
 						final Location locMax;
@@ -3051,7 +3062,7 @@ class WorldGuardHook {
 						if (getId == null)
 							getId = regObj.getClass().getMethod("getId");
 
-						final String name = Common.stripColorCodes(getId.invoke(regObj).toString());
+						final String name = CompChatColor.stripColorCodes(getId.invoke(regObj).toString());
 
 						if (!name.startsWith("__"))
 							list.add(name);
@@ -3067,7 +3078,7 @@ class WorldGuardHook {
 							if (reg == null || reg.getId() == null)
 								return;
 
-							final String name = Common.stripColorCodes(reg.getId());
+							final String name = CompChatColor.stripColorCodes(reg.getId());
 
 							if (!name.startsWith("__"))
 								list.add(name);
@@ -3174,7 +3185,7 @@ final class FactionsMassive extends FactionsHook {
 
 	@Override
 	public Collection<String> getFactions() {
-		return Common.convert(com.massivecraft.factions.entity.FactionColl.get().getAll(), object -> Common.stripColorCodes(object.getName()));
+		return Common.convert(com.massivecraft.factions.entity.FactionColl.get().getAll(), object -> CompChatColor.stripColorCodes(object.getName()));
 	}
 
 	@Override
@@ -3512,9 +3523,9 @@ class CMIHook {
 		final TabListManager tabManager = CMI.getInstance().getTabListManager();
 
 		if (user != null) {
-			final boolean isEmpty = nick == null || Common.stripColorCodes(nick).replace(" ", "").isEmpty();
+			final boolean isEmpty = nick == null || CompChatColor.stripColorCodes(nick).replace(" ", "").isEmpty();
 
-			user.setNickName(isEmpty ? null : SimpleComponent.fromMini(nick).toLegacy(), true);
+			user.setNickName(isEmpty ? null : CompChatColor.translateColorCodes(nick), true);
 			user.updateDisplayName();
 
 			if (tabManager.isUpdatesOnNickChange())
@@ -3523,10 +3534,10 @@ class CMIHook {
 	}
 
 	String getNameFromNick(String nick) {
-		nick = Common.stripColorCodes(nick).toLowerCase();
+		nick = CompChatColor.stripColorCodes(nick).toLowerCase();
 
 		for (final CMIUser user : CMI.getInstance().getPlayerManager().getAllUsers().values())
-			if (user != null && user.getNickName() != null && Common.stripColorCodes(user.getNickName()).toLowerCase().equals(nick))
+			if (user != null && user.getNickName() != null && CompChatColor.stripColorCodes(user.getNickName()).toLowerCase().equals(nick))
 				return Common.getOrDefault(user.getName(), nick);
 
 		return nick;
@@ -3571,6 +3582,13 @@ class CitizensHook {
 
 		return null;
 	}
+
+	void destroyNPC(Entity entity) {
+		final NPC npc = CitizensAPI.getNPCRegistry().getNPC(entity);
+
+		if (npc != null)
+			npc.destroy();
+	}
 }
 
 class DiscordSRVHook {
@@ -3584,7 +3602,7 @@ class DiscordSRVHook {
 	}
 
 	boolean sendMessage(@Nullable CommandSender sender, final String channel, String message) {
-		message = Common.stripColorCodes(message);
+		message = CompChatColor.stripColorCodes(message);
 
 		if (message.replace(" ", "").isEmpty())
 			return false;
@@ -3792,7 +3810,7 @@ class MythicMobsHook {
 		} catch (final NoSuchElementException ex) {
 		}
 
-		return Remain.getName(entity);
+		return Remain.getEntityName(entity);
 	}
 
 	private String getBossNameV5Direct(Entity entity) {
@@ -3803,7 +3821,7 @@ class MythicMobsHook {
 			if (ourUniqueId.equals(mob.getUniqueId()))
 				return mob.getName();
 
-		return Remain.getName(entity);
+		return Remain.getEntityName(entity);
 	}
 }
 

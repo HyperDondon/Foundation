@@ -17,7 +17,16 @@ public final class BukkitCommandImpl extends Command {
 	private final SimpleCommandCore delegate;
 
 	public BukkitCommandImpl(SimpleCommandCore delegate) {
-		super(delegate.getLabel(), delegate.getDescription().toLegacy(), delegate.getUsage().toLegacy(), delegate.getAliases());
+		super(delegate.getLabel());
+
+		if (delegate.getAliases() != null)
+			this.setAliases(delegate.getAliases());
+
+		if (delegate.getUsage() != null)
+			this.setUsage(delegate.getUsage().toLegacy());
+
+		if (delegate.getDescription() != null)
+			this.setDescription(delegate.getDescription().toLegacy());
 
 		this.delegate = delegate;
 	}

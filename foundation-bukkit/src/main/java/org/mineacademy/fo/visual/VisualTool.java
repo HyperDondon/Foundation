@@ -193,7 +193,7 @@ public abstract class VisualTool extends BlockTool {
 	}
 
 	/*
-	 * Visualize the region and points if exist
+	 * Visualize the region and points if exist.
 	 */
 	private void visualize(@NonNull final Player player) {
 		final VisualizedRegion region = this.getVisualizedRegion(player);

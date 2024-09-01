@@ -52,6 +52,7 @@ public final class HealthBarUtil {
 	 * @param damage
 	 */
 	public static void display(final Player displayTo, final LivingEntity displayAbout, @Nullable final String damagedEntityName, final double damage) {
+
 		final int maxHealth = Remain.getMaxHealth(displayAbout);
 		final int health = Remain.getHealth(displayAbout);
 
