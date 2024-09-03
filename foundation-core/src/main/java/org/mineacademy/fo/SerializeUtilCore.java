@@ -31,7 +31,7 @@ import org.mineacademy.fo.model.RangedValue;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.SimpleTime;
 import org.mineacademy.fo.remain.CompChatColor;
-import org.mineacademy.fo.settings.ConfigSection;
+import org.mineacademy.fo.settings.MemorySection;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -123,8 +123,8 @@ public abstract class SerializeUtilCore {
 		else if (object instanceof Path)
 			throw new FoException("Cannot serialize Path " + object + ", did you mean to convert it into a name?");
 
-		else if (object instanceof ConfigSection) {
-			return ((ConfigSection) object).getValues(true);
+		else if (object instanceof MemorySection) {
+			return object;
 
 		} else if (object instanceof Iterable || object.getClass().isArray() || object instanceof IsInList) {
 
@@ -268,9 +268,6 @@ public abstract class SerializeUtilCore {
 			}
 		}
 
-		else if (object instanceof ConfigSection)
-			return serialize(language, ((ConfigSection) object).getValues(true));
-
 		else if (object instanceof Pattern)
 			return ((Pattern) object).pattern();
 
@@ -395,9 +392,6 @@ public abstract class SerializeUtilCore {
 			if (object instanceof Map)
 				return (T) object;
 
-			if (object instanceof ConfigSection)
-				return (T) ((ConfigSection) object).getValues(false);
-
 			if (isJson)
 				return (T) SerializedMap.fromJson(object.toString()).asMap();
 
@@ -477,10 +471,10 @@ public abstract class SerializeUtilCore {
 			// Good
 		}
 
-		else if (ConfigSection.class.isAssignableFrom(classOf))
-			throw new FoException("Cannot deserialize a ConfigSection. Got object: " + object);
+		else if (MemorySection.class.isAssignableFrom(classOf)) {
+			// Good
 
-		else
+		} else
 			throw new SerializeFailedException("Does not know how to turn " + classOf + " into a serialized object from data: " + object);
 
 		return (T) object;

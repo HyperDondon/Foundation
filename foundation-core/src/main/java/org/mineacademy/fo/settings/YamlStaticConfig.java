@@ -14,12 +14,12 @@ import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.collection.StrictList;
+import org.mineacademy.fo.model.AccusativeHelper;
 import org.mineacademy.fo.model.IsInList;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.SimpleTime;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.remain.RemainCore;
-import org.mineacademy.fo.settings.FileConfig.AccusativeHelper;
 
 /**
  * A special case {@link YamlConfig} that allows static access to config.
@@ -51,21 +51,8 @@ public abstract class YamlStaticConfig {
 
 			{
 				YamlStaticConfig.this.beforeLoad();
-			}
 
-			@Override
-			protected boolean saveComments() {
-				return YamlStaticConfig.this.saveComments();
-			}
-
-			@Override
-			protected boolean alwaysSaveOnLoad() {
-				return YamlStaticConfig.this.alwaysSaveOnLoad();
-			}
-
-			@Override
-			protected List<String> getUncommentedSections() {
-				return YamlStaticConfig.this.getUncommentedSections();
+				this.setUncommentedSections(YamlStaticConfig.this.getUncommentedSections());
 			}
 
 			@Override
@@ -121,29 +108,6 @@ public abstract class YamlStaticConfig {
 	protected abstract void onLoad() throws Exception;
 
 	/**
-	 * Return true if you have a default file and want to save comments from it
-	 *
-	 * Any user-generated comments will be lost, any user-written values will be lost.
-	 *
-	 * Please see {@link #getUncommentedSections()} to write sections containing maps users
-	 * can create to prevent losing them.
-	 *
-	 * @return
-	 */
-	protected boolean saveComments() {
-		return true;
-	}
-
-	/**
-	 * Return true if we should always save the file after loading it.
-	 *
-	 * @return
-	 */
-	protected boolean alwaysSaveOnLoad() {
-		return false;
-	}
-
-	/**
 	 * See {@link #saveComments()}
 	 *
 	 * @return
@@ -157,7 +121,7 @@ public abstract class YamlStaticConfig {
 	 */
 	private void loadViaReflection() {
 		ValidCore.checkNotNull(TEMPORARY_INSTANCE, "Instance cannot be null " + getFileName());
-		ValidCore.checkNotNull(TEMPORARY_INSTANCE.defaults, "Default config cannot be null for " + getFileName());
+		ValidCore.checkNotNull(TEMPORARY_INSTANCE.hasDefaults(), "Default config cannot be null for " + getFileName());
 
 		try {
 			this.preLoad();
@@ -279,7 +243,7 @@ public abstract class YamlStaticConfig {
 	}
 
 	protected static final String getFileName() {
-		return TEMPORARY_INSTANCE.getFileName();
+		return TEMPORARY_INSTANCE.getFile().getName();
 	}
 
 	// -----------------------------------------------------------------------------------------------------

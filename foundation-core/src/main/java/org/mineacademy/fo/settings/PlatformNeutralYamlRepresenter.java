@@ -11,8 +11,6 @@ import org.snakeyaml.engine.v2.exceptions.YamlEngineException;
 import org.snakeyaml.engine.v2.nodes.Node;
 import org.snakeyaml.engine.v2.representer.StandardRepresenter;
 
-import novy.config.MemorySection;
-
 public class PlatformNeutralYamlRepresenter extends StandardRepresenter {
 
 	public PlatformNeutralYamlRepresenter(DumpSettings settings) {
@@ -20,7 +18,6 @@ public class PlatformNeutralYamlRepresenter extends StandardRepresenter {
 
 		this.parentClassRepresenters.put(MemorySection.class, new RepresentMemorySection());
 		this.parentClassRepresenters.put(ConfigSerializable.class, new RepresentConfigSerializable());
-		this.parentClassRepresenters.put(ConfigSection.class, new RepresentConfigurationSection());
 
 		// We could just switch YamlConstructor to extend Constructor rather than SafeConstructor, however there is a very small risk of issues with plugins treating config as untrusted input
 		// So instead we will just allow future plugins to have their enums extend ConfigurationSerializable
@@ -62,14 +59,6 @@ public class PlatformNeutralYamlRepresenter extends StandardRepresenter {
 			values.putAll(serializable.serialize().asMap());
 
 			return super.representData(values);
-		}
-	}
-
-	private class RepresentConfigurationSection extends RepresentMap {
-
-		@Override
-		public Node representData(Object data) {
-			return super.representData(((ConfigSection) data).getValues(false));
 		}
 	}
 }

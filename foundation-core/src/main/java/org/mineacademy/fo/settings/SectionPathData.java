@@ -1,4 +1,4 @@
-package novy.config;
+package org.mineacademy.fo.settings;
 
 import java.util.Collections;
 import java.util.List;

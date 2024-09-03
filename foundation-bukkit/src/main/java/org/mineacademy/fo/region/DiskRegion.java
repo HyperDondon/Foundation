@@ -81,7 +81,7 @@ public final class DiskRegion extends YamlConfig {
 	}
 
 	/**
-	 * @see org.mineacademy.fo.settings.YamlConfig#onLoad()
+	 * @see org.mineacademy.org.mineacademy.fo.settings.YamlConfig#onLoad()
 	 */
 	@Override
 	protected void onLoad() {
@@ -93,7 +93,7 @@ public final class DiskRegion extends YamlConfig {
 			return;
 		}
 
-		final SerializedMap map = this.getMap("");
+		final SerializedMap map = SerializedMap.of(this);
 
 		try {
 			this.border = VisualizedRegion.deserialize(map);
@@ -289,8 +289,9 @@ public final class DiskRegion extends YamlConfig {
 	}
 
 	/**
+	 * Remove the given region
+	 *
 	 * @param region
-	 * @see ConfigItems#removeItem(org.mineacademy.fo.settings.YamlConfig)
 	 */
 	public static void removeRegion(final DiskRegion region) {
 		loadedRegions.removeItem(region);

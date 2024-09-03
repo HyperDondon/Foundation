@@ -167,10 +167,10 @@ public final class Lang {
 	public static SimpleComponent ofVars(String path, Object... replacements) {
 		checkInit();
 
-		final SimpleComponent component = instance.getComponent(path);
+		final SimpleComponent component = instance.get(path, SimpleComponent.class);
 
 		if (component == null)
-			throw new FoException("Missing localization key '" + path + "' from " + instance.getFileName());
+			throw new FoException("Missing localization key '" + path + "' from " + instance.getFile());
 
 		return Variables.replace(component, null, CommonCore.newHashMap(replacements));
 	}
@@ -196,7 +196,7 @@ public final class Lang {
 		checkInit();
 
 		if (!instance.isSet(path))
-			throw new FoException("Missing localization key '" + path + "' from " + instance.getFileName());
+			throw new FoException("Missing localization key '" + path + "' from " + instance.getFile());
 
 		final List<SimpleComponent> components = new ArrayList<>();
 
@@ -217,7 +217,7 @@ public final class Lang {
 		checkInit();
 
 		if (!instance.isSet(path))
-			throw new FoException("Missing localization key '" + path + "' from " + instance.getFileName());
+			throw new FoException("Missing localization key '" + path + "' from " + instance.getFile());
 
 		final List<String> lines = new ArrayList<>();
 

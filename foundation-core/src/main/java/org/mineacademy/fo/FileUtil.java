@@ -362,10 +362,23 @@ public final class FileUtil {
 	 * @return the extracted file
 	 */
 	public static File extract(String from, String to) {
-		File file = new File(Platform.getPlugin().getDataFolder(), to);
-
 		final List<String> lines = getInternalFileContent(from);
-		ValidCore.checkNotNull(lines, "Inbuilt " + file.getAbsolutePath() + " not found! Did you reload?");
+		ValidCore.checkNotNull(lines, "Inbuilt " + from + " not found! Did you reload?");
+
+		return extract(lines, to);
+	}
+
+	/**
+	 * Copy file from our plugin jar to destination - customizable destination file
+	 * name.
+	 *
+	 * @param lines    the content of the file inside the plugin from which we copy
+	 * @param to       the path where the file will be copyed inside the plugin
+	 *                 folder
+	 * @return the extracted file
+	 */
+	public static File extract(final List<String> lines, String to) {
+		File file = new File(Platform.getPlugin().getDataFolder(), to);
 
 		if (file.exists())
 			return file;
@@ -383,7 +396,7 @@ public final class FileUtil {
 
 		} catch (final IOException ex) {
 			CommonCore.error(ex,
-					"Failed to extract " + from + " to " + to,
+					"Failed to extract file to " + to,
 					"Error: %error");
 		}
 

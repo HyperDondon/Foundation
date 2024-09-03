@@ -22,11 +22,10 @@ import org.mineacademy.fo.jsonsimple.JSONObject;
 import org.mineacademy.fo.jsonsimple.JSONParser;
 import org.mineacademy.fo.model.IsInList;
 import org.mineacademy.fo.model.Tuple;
-import org.mineacademy.fo.settings.ConfigSection;
+import org.mineacademy.fo.settings.MemorySection;
 
 import lombok.Getter;
 import lombok.NonNull;
-import novy.config.MemorySection;
 
 /**
  * Serialized map enables you to save and retain values from your
@@ -1080,9 +1079,6 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 
 		if (object instanceof String && object.toString().equals("{}"))
 			return new SerializedMap(mode);
-
-		if (object instanceof ConfigSection)
-			return of(((ConfigSection) object).getValues(false));
 
 		if (object instanceof MemorySection)
 			return of(((MemorySection) object).getValues(false));

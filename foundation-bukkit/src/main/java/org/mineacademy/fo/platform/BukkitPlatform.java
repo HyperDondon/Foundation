@@ -55,11 +55,12 @@ import org.mineacademy.fo.remain.CompEnchantment;
 import org.mineacademy.fo.remain.CompPotionEffectType;
 import org.mineacademy.fo.remain.JsonItemStack;
 import org.mineacademy.fo.remain.Remain;
+import org.mineacademy.fo.settings.BukkitYamlConstructor;
+import org.mineacademy.fo.settings.BukkitYamlRepresenter;
 import org.mineacademy.fo.settings.YamlConfig;
 
 import lombok.NonNull;
 import net.kyori.adventure.text.event.HoverEventSource;
-import novy.config.YamlConfiguration;
 
 public class BukkitPlatform extends FoundationPlatform {
 
@@ -72,9 +73,6 @@ public class BukkitPlatform extends FoundationPlatform {
 		// Inject Yaml
 		YamlConfig.setCustomConstructor(settings -> new BukkitYamlConstructor(settings));
 		YamlConfig.setCustomRepresenter(settings -> new BukkitYamlRepresenter(settings));
-
-		YamlConfiguration.setCustomConstructor(settings -> new BukkitYamlConstructor(settings));
-		YamlConfiguration.setCustomRepresenter(settings -> new BukkitYamlRepresenter(settings));
 
 		// Expand simple component
 		SimpleComponent.setBuilder(HookManager::replaceRelationPlaceholders);
@@ -90,19 +88,19 @@ public class BukkitPlatform extends FoundationPlatform {
 		/*public SimpleComponent onHover(@NonNull final ItemStack item) {
 			if (CompMaterial.isAir(item.getType()))
 				return this.onHover("Air");
-
+		
 			try {
 				this.modifyLastComponent(component -> component.hoverEvent(Remain.convertItemStackToHoverEvent(item)));
-
+		
 			} catch (final Throwable t) {
 				CommonCore.logFramed(
 						"Error parsing ItemStack to simple component!",
 						"Item: " + item,
 						"Error: " + t.getMessage());
-
+		
 				t.printStackTrace();
 			}
-
+		
 			return this;
 		}*/
 

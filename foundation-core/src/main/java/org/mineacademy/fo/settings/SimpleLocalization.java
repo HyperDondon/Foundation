@@ -6,9 +6,9 @@ import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.command.DebugCommand;
 import org.mineacademy.fo.command.PermsCommand;
 import org.mineacademy.fo.command.ReloadCommand;
+import org.mineacademy.fo.model.AccusativeHelper;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.platform.Platform;
-import org.mineacademy.fo.settings.FileConfig.AccusativeHelper;
 
 /**
  * A simple implementation of a basic localization file.
@@ -89,14 +89,6 @@ public class SimpleLocalization extends YamlStaticConfig {
 	 */
 	protected int getConfigVersion() {
 		return 1;
-	}
-
-	/**
-	 * Always keep the lang file up to date.
-	 */
-	@Override
-	protected final boolean alwaysSaveOnLoad() {
-		return true;
 	}
 
 	// --------------------------------------------------------------------

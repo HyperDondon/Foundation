@@ -1,4 +1,4 @@
-package novy.config;
+package org.mineacademy.fo.settings;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -117,10 +117,6 @@ public class MemorySection {
 			return this.contains(path);
 
 		return this.getObject(path, null) != null;
-	}
-
-	private String getName() {
-		return this.path;
 	}
 
 	final String getFullPath() {
@@ -270,13 +266,13 @@ public class MemorySection {
 		return (val != null) ? val.toString() : def;
 	}
 
-	public final int getInt(String path) {
+	public final int getInteger(String path) {
 		final Object def = this.getDefault(path);
 
-		return this.getInt(path, (def instanceof Number) ? toInt(def) : 0);
+		return this.getInteger(path, (def instanceof Number) ? toInt(def) : 0);
 	}
 
-	public final int getInt(String path, int def) {
+	public final int getInteger(String path, int def) {
 		final Object val = this.getObject(path, def);
 
 		return (val instanceof Number) ? toInt(val) : def;
@@ -583,7 +579,7 @@ public class MemorySection {
 		for (MemorySection parent = section; (parent != null) && (parent != relativeTo); parent = parent.getParent()) {
 			if (builder.length() > 0)
 				builder.insert(0, PATH_SEPARATOR);
-			builder.insert(0, parent.getName());
+			builder.insert(0, parent.path);
 		}
 
 		if ((key != null) && (key.length() > 0)) {

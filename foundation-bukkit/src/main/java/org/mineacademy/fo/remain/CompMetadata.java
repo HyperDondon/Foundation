@@ -396,7 +396,6 @@ public final class CompMetadata {
 		private MetadataFile() {
 			if (!hasPersistentMetadata && ENABLE_LEGACY_FILE_STORAGE) {
 				this.setPathPrefix("Metadata");
-				this.setSaveEmptyValues(false);
 
 				this.setHeader(
 						"-------------------------------------------------------------------------------------------------",
@@ -433,10 +432,9 @@ public final class CompMetadata {
 		}
 
 		@Override
-		public SerializedMap saveToMap() {
-			return SerializedMap.ofArray(
-					"Entity", this.entityMetadata,
-					"Block", this.blockMetadata);
+		protected void onSave() {
+			this.set("Entity", this.entityMetadata);
+			this.set("Block", this.blockMetadata);
 		}
 
 		@EventHandler
@@ -452,7 +450,7 @@ public final class CompMetadata {
 		private void loadEntities() {
 			this.entityMetadata.clear();
 
-			for (final String uuidString : this.getMap("Entity").keySet()) {
+			for (final String uuidString : this.getConfigurationSection("Entity").getKeys(false)) {
 				final UUID uuid = UUID.fromString(uuidString);
 
 				// Remove broken keys
@@ -462,10 +460,10 @@ public final class CompMetadata {
 					continue;
 				}
 
-				final Set<String> metadata = this.getSet("Entity." + uuidString, String.class);
+				final List<String> metadata = this.getStringList("Entity." + uuidString);
 
 				if (!metadata.isEmpty())
-					this.entityMetadata.put(uuid, metadata);
+					this.entityMetadata.put(uuid, new HashSet<>(metadata));
 			}
 
 			Common.runLater(4, () -> {
@@ -482,7 +480,7 @@ public final class CompMetadata {
 		private void loadBlockStates() {
 			this.blockMetadata.clear();
 
-			for (final String locationString : this.getMap("Block").keySet()) {
+			for (final String locationString : this.getConfigurationSection("Block").getKeys(false)) {
 				final Location location = SerializeUtil.deserialize(SerializeUtil.Language.YAML, Location.class, locationString);
 
 				final Block block = location.getBlock();

@@ -1,4 +1,4 @@
-package novy.config;
+package org.mineacademy.fo.settings;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -10,8 +10,10 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import org.mineacademy.fo.CommonCore;
+import org.mineacademy.fo.FileUtil;
 import org.mineacademy.fo.ValidCore;
 
 import lombok.NonNull;
@@ -20,6 +22,11 @@ import lombok.NonNull;
  * This is a base class for all File based configurations.
  */
 public abstract class FileConfiguration extends MemorySection {
+
+	/**
+	 * A null, used for convenience in {@link #loadConfiguration(String, String)} where the "to" is null.
+	 */
+	public static final String NO_DEFAULT = null;
 
 	/**
 	 * The default configuration.
@@ -59,6 +66,8 @@ public abstract class FileConfiguration extends MemorySection {
 			if (parent != null)
 				parent.mkdirs();
 
+			this.onSave();
+
 			final String data = this.saveToString();
 			final Writer writer = new OutputStreamWriter(new FileOutputStream(this.file), StandardCharsets.UTF_8);
 
@@ -75,11 +84,33 @@ public abstract class FileConfiguration extends MemorySection {
 	}
 
 	/**
+	 * Called before the configuration is saved
+	 */
+	protected void onSave() {
+	}
+
+	/**
 	 * Saves this {@link FileConfiguration} to a string, and returns it.
 	 *
 	 * @return String containing this configuration.
 	 */
 	public abstract String saveToString();
+
+	public final void loadConfiguration(String from, String to) {
+		if (from != null) {
+			final List<String> defaultContent = FileUtil.getInternalFileContent(from);
+			ValidCore.checkNotNull(defaultContent, "Inbuilt " + from + " not found! Did you reload?");
+
+			// Load main
+			this.load(FileUtil.extract(defaultContent, to));
+
+			// Load defaults
+			this.defaults = new YamlConfig();
+			this.defaults.loadFromString(String.join("\n", defaultContent));
+
+		} else
+			this.load(FileUtil.createIfNotExists(to));
+	}
 
 	/**
 	 * Loads this {@link FileConfiguration} from the specified location.
@@ -100,10 +131,17 @@ public abstract class FileConfiguration extends MemorySection {
 			final FileInputStream stream = new FileInputStream(file);
 
 			this.load(new InputStreamReader(stream, StandardCharsets.UTF_8));
+			this.onLoad();
 
 		} catch (final Exception ex) {
 			CommonCore.error(ex, "Cannot load " + file);
 		}
+	}
+
+	/**
+	 * Called automatically after the configuration is loaded
+	 */
+	protected void onLoad() {
 	}
 
 	/*
@@ -194,6 +232,24 @@ public abstract class FileConfiguration extends MemorySection {
 	}
 
 	/**
+	 * Return the file name without the extension
+	 *
+	 * @return
+	 */
+	public final String getName() {
+		final String fileName = this.getFile().getName();
+
+		if (fileName != null) {
+			final int lastDot = fileName.lastIndexOf(".");
+
+			if (lastDot != -1)
+				return fileName.substring(0, lastDot);
+		}
+
+		return null;
+	}
+
+	/**
 	 * Updates the file this configuration is stored in.
 	 *
 	 * @param file
@@ -201,6 +257,16 @@ public abstract class FileConfiguration extends MemorySection {
 	public final void setFile(File file) {
 		this.file = file;
 	}
+
+	/**
+	 * Removes the loaded file configuration from the disk.
+	 */
+	/*public final void deleteFile() {
+		ValidCore.checkNotNull(this.file, "Cannot delete a null file");
+
+		if (this.file.exists())
+			this.file.delete();
+	}*/
 
 	@Override
 	final MemorySection getParent() {
@@ -230,5 +296,10 @@ public abstract class FileConfiguration extends MemorySection {
 		}
 
 		return false;
+	}
+
+	@Override
+	public String toString() {
+		return "FileConfiguration{file=" + file + "}";
 	}
 }

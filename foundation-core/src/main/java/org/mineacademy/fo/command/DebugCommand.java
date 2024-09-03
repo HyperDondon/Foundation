@@ -112,7 +112,7 @@ public final class DebugCommand extends SimpleSubCommandCore {
 							copyConfig.set(key, value);
 					}
 
-					copyConfig.save(copy);
+					copyConfig.save();
 				}
 
 				else

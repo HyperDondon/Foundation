@@ -135,7 +135,7 @@ public final class Variable extends YamlConfig {
 	// ----------------------------------------------------------------------------------
 
 	/**
-	 * @see org.mineacademy.fo.settings.YamlConfig#onLoad()
+	 * @see org.mineacademy.org.mineacademy.fo.settings.YamlConfig#onLoad()
 	 */
 	@Override
 	protected void onLoad() {
@@ -157,10 +157,10 @@ public final class Variable extends YamlConfig {
 
 		// Check for known mistakes
 		if (this.key == null || this.key.isEmpty())
-			throw new NullPointerException("(DO NOT REPORT, PLEASE FIX YOURSELF) Please set 'Key' as variable name in " + this.getFileName());
+			throw new NullPointerException("(DO NOT REPORT, PLEASE FIX YOURSELF) Please set 'Key' as variable name in " + this.getFile());
 
 		if (this.value == null)
-			throw new NullPointerException("(DO NOT REPORT, PLEASE FIX YOURSELF) Please set 'Value' key as what the variable shows in " + this.getFileName() + " (this can be a JavaScript code)");
+			throw new NullPointerException("(DO NOT REPORT, PLEASE FIX YOURSELF) Please set 'Value' key as what the variable shows in " + this.getFile() + " (this can be a JavaScript code)");
 
 		if (this.key.startsWith("{") || this.key.startsWith("[")) {
 			this.key = this.key.substring(1);
@@ -184,7 +184,7 @@ public final class Variable extends YamlConfig {
 
 		// Test for key validity
 		if (!VALID_KEY_PATTERN.matcher(this.key).matches())
-			throw new IllegalArgumentException("(DO NOT REPORT, PLEASE FIX YOURSELF) The 'Key' variable in " + this.getFileName() + " must only contains letters, numbers or underscores. Do not write [] or {} there!");
+			throw new IllegalArgumentException("(DO NOT REPORT, PLEASE FIX YOURSELF) The 'Key' variable in " + this.getFile() + " must only contains letters, numbers or underscores. Do not write [] or {} there!");
 	}
 
 	@Override
@@ -255,13 +255,13 @@ public final class Variable extends YamlConfig {
 		} catch (final FoScriptException ex) {
 			CommonCore.logFramed(
 					"Error executing JavaScript in a variable!",
-					"Variable: " + this.getFileName(),
+					"Variable: " + this.getFile(),
 					"Line: " + ex.getErrorLine(),
 					"Sender: " + sender,
 					"Replacements: " + replacements,
 					"Error: " + ex.getMessage(),
 					"",
-					"This is likely NOT our plugin bug, check Value key in " + this.getFileName(),
+					"This is likely NOT our plugin bug, check Value key in " + this.getFile(),
 					"that it returns a valid JavaScript code before reporting!");
 
 			throw ex;
@@ -291,7 +291,7 @@ public final class Variable extends YamlConfig {
 					final Object result = JavaScriptExecutor.run(Variables.replace(this.senderCondition, sender, replacements), sender);
 
 					if (result != null) {
-						ValidCore.checkBoolean(result instanceof Boolean, "Variable '" + this.getFileName() + "' option Condition must return boolean not " + (result == null ? "null" : result.getClass()));
+						ValidCore.checkBoolean(result instanceof Boolean, "Variable '" + this.getFile() + "' option Condition must return boolean not " + (result == null ? "null" : result.getClass()));
 
 						if (!((boolean) result))
 							return SimpleComponent.empty();
@@ -300,7 +300,7 @@ public final class Variable extends YamlConfig {
 				} catch (final FoScriptException ex) {
 					CommonCore.logFramed(
 							"Error executing Sender_Condition in a variable!",
-							"Variable: " + this.getFileName(),
+							"Variable: " + this.getFile(),
 							"Sender condition: " + this.senderCondition,
 							"Sender: " + sender,
 							"Replacements: " + replacements,
@@ -308,7 +308,7 @@ public final class Variable extends YamlConfig {
 							"",
 							"This is likely NOT a plugin bug,",
 							"check your JavaScript code in",
-							this.getFileName() + " in the 'Sender_Condition' key",
+							this.getFile() + " in the 'Sender_Condition' key",
 							"before reporting it to us.");
 
 					throw ex;
@@ -333,7 +333,7 @@ public final class Variable extends YamlConfig {
 					final Object result = JavaScriptExecutor.run(Variables.replace(this.hoverItem, sender, replacements), sender);
 
 					if (result != null) {
-						ValidCore.checkBoolean(result.getClass().getSimpleName().contains("ItemStack"), "Variable '" + this.getFileName() + "' option Hover_Item must return ItemStack not " + result.getClass());
+						ValidCore.checkBoolean(result.getClass().getSimpleName().contains("ItemStack"), "Variable '" + this.getFile() + "' option Hover_Item must return ItemStack not " + result.getClass());
 
 						component.onHover(Platform.convertItemStackToHoverEvent(result));
 					}
@@ -341,7 +341,7 @@ public final class Variable extends YamlConfig {
 				} catch (final FoScriptException ex) {
 					CommonCore.logFramed(
 							"Error executing Hover_Item in a variable!",
-							"Variable: " + this.getFileName(),
+							"Variable: " + this.getFile(),
 							"Hover Item: " + this.hoverItem,
 							"Sender: " + sender,
 							"Replacements: " + replacements,
@@ -349,7 +349,7 @@ public final class Variable extends YamlConfig {
 							"",
 							"This is likely NOT a plugin bug,",
 							"check your JavaScript code in",
-							this.getFileName() + " in the 'Hover_Item' key",
+							this.getFile() + " in the 'Hover_Item' key",
 							"before reporting it to us.");
 
 					throw ex;
@@ -372,9 +372,6 @@ public final class Variable extends YamlConfig {
 		}
 	}
 
-	/**
-	 * @see org.mineacademy.fo.settings.YamlConfig#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object obj) {
 		return obj instanceof Variable && this.key.equals(((Variable) obj).getKey());

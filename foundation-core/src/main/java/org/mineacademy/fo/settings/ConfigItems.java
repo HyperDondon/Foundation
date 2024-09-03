@@ -200,7 +200,7 @@ public final class ConfigItems<T extends YamlConfig> {
 		final T item = this.findItem(name);
 		ValidCore.checkNotNull(item, ChatUtil.capitalize(this.type) + " " + name + " not loaded. Available: " + this.getItemNames());
 
-		item.deleteFile();
+		item.getFile().delete();
 		this.loadedItemsMap.remove(name);
 	}
 

@@ -1,380 +1,562 @@
 package org.mineacademy.fo.settings;
 
 import java.io.File;
+import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.FileUtil;
+import org.mineacademy.fo.SerializeUtilCore;
+import org.mineacademy.fo.SerializeUtilCore.Language;
+import org.mineacademy.fo.ValidCore;
+import org.mineacademy.fo.exception.FoException;
 import org.snakeyaml.engine.v2.api.Dump;
 import org.snakeyaml.engine.v2.api.DumpSettings;
-import org.snakeyaml.engine.v2.api.Load;
 import org.snakeyaml.engine.v2.api.LoadSettings;
+import org.snakeyaml.engine.v2.api.StreamDataWriter;
+import org.snakeyaml.engine.v2.api.lowlevel.Compose;
+import org.snakeyaml.engine.v2.comments.CommentLine;
+import org.snakeyaml.engine.v2.comments.CommentType;
 import org.snakeyaml.engine.v2.common.FlowStyle;
-import org.snakeyaml.engine.v2.constructor.StandardConstructor;
-import org.snakeyaml.engine.v2.representer.StandardRepresenter;
+import org.snakeyaml.engine.v2.nodes.AnchorNode;
+import org.snakeyaml.engine.v2.nodes.MappingNode;
+import org.snakeyaml.engine.v2.nodes.Node;
+import org.snakeyaml.engine.v2.nodes.NodeTuple;
+import org.snakeyaml.engine.v2.nodes.ScalarNode;
+import org.snakeyaml.engine.v2.nodes.SequenceNode;
+import org.snakeyaml.engine.v2.nodes.Tag;
 
 import lombok.NonNull;
 import lombok.Setter;
 
 /**
- * The core settings class. Fully compatible with Minecraft 1.7.10 to the
- * latest one, including comments support (default file required, see saveComments()
- * and automatic config upgrading if we request a value that only exist in the default file.
+ * An implementation of configuration which saves all files in Yaml.
+ * Note that this implementation is not synchronized.
  */
-public class YamlConfig extends FileConfig {
+public class YamlConfig extends FileConfiguration {
 
 	/**
 	 * The custom constructor to convert strings to values in the config
 	 */
 	@Setter
-	private static Function<LoadSettings, StandardConstructor> customConstructor = loadSettings -> new PlatformNeutralYamlConstructor(loadSettings);
+	private static Function<LoadSettings, PlatformNeutralYamlConstructor> customConstructor = loadSettings -> new PlatformNeutralYamlConstructor(loadSettings);
 
 	/**
 	 * The custom representer to convert values to strings in the config
 	 */
 	@Setter
-	private static Function<DumpSettings, StandardRepresenter> customRepresenter = dumpSettings -> new PlatformNeutralYamlRepresenter(dumpSettings);
+	private static Function<DumpSettings, PlatformNeutralYamlRepresenter> customRepresenter = dumpSettings -> new PlatformNeutralYamlRepresenter(dumpSettings);
 
-	/**
-	 * The yaml loader
-	 */
-	private final Load yamlLoader;
+	private final Dump dumper;
+	private final Compose composer;
 
-	/**
-	 * The yaml dumper
-	 */
-	private final Dump yamlDumper;
+	private final PlatformNeutralYamlConstructor constructor;
+	private final PlatformNeutralYamlRepresenter representer;
 
-	/**
-	 * Should we save empty sections or null values (requires NO default file)
-	 */
-	private boolean saveEmptyValues = true;
+	private List<String> header = Collections.emptyList();
+	private List<String> footer = Collections.emptyList();
+	private Set<String> uncommentedSections = Collections.emptySet();
 
-	/**
-	 * Create a new instance (do not load it, use {@link #load(File)} to load)
-	 */
-	protected YamlConfig() {
+	public YamlConfig() {
 		final LoadSettings loadSettings = LoadSettings.builder()
 				.setParseComments(true)
 				.setCodePointLimit(Integer.MAX_VALUE)
 				.setMaxAliasesForCollections(Integer.MAX_VALUE)
 				.build();
 
-		this.yamlLoader = new Load(loadSettings, customConstructor.apply(loadSettings));
+		this.constructor = customConstructor.apply(loadSettings);
+		this.composer = new Compose(loadSettings);
 
 		final DumpSettings dumpSettings = DumpSettings.builder()
 				.setDefaultFlowStyle(FlowStyle.BLOCK)
 				.setDumpComments(true)
 				.setWidth(4096) // Do not wrap long lines
+				.setSplitLines(false)
 				.build();
 
-		this.yamlDumper = new Dump(dumpSettings, customRepresenter.apply(dumpSettings));
+		this.representer = customRepresenter.apply(dumpSettings);
+		this.dumper = new Dump(dumpSettings, this.representer);
 	}
 
-	/**
-	 * Return true if you have a default file and want to save comments from it
-	 *
-	 * Any user-generated comments will be lost, any user-written values will be lost.
-	 *
-	 * Please see {@link #getUncommentedSections()} to write sections containing maps users
-	 * can create to prevent losing them.
-	 *
-	 * @return
-	 */
-	protected boolean saveComments() {
-		return true;
-	}
-
-	/**
-	 * See {@link #saveComments()}
-	 *
-	 * @return
-	 */
-	protected List<String> getUncommentedSections() {
-		return new ArrayList<>();
-	}
-
-	/**
-	 * (Requires no default file or saveComments() on false)
-	 * Set if we should remove empty lists or sections when saving.
-	 * Defaults to true, that means that empty sections will be saved.
-	 *
-	 * @param saveEmptyValues
-	 */
-	public final void setSaveEmptyValues(boolean saveEmptyValues) {
-		this.saveEmptyValues = saveEmptyValues;
-	}
-
-	/**
-	 * Returns true if this config contains any keys what so ever. Override for
-	 * custom logic.
-	 *
-	 * @return
-	 */
-	public boolean isValid() {
-		return !this.section.map.isEmpty();
-	}
-
-	// ------------------------------------------------------------------------------------
-	// File manipulation
-	// ------------------------------------------------------------------------------------
-
-	/**
-	 * Attempts to load configuration from the given internal path in your JAR.
-	 * We automatically move the file to your plugin's folder if it does not exist.
-	 * Subfolders are supported, example: localization/messages_en.yml
-	 *
-	 * @param internalPath
-	 */
-	public final void loadConfiguration(String internalPath) {
-		this.loadConfiguration(internalPath, internalPath);
-	}
-
-	/**
-	 * Load configuration from the optional from path in your JAR file,
-	 * extracting it to the given path in your plugin's folder if it does not exist.
-	 *
-	 * @param from
-	 * @param to
-	 */
-	public final void loadConfiguration(String from, String to) {
-		File file;
-
-		if (from != null) {
-
-			// Copy if not exists yet
-			file = FileUtil.extract(from, to);
-
-			// Initialize file early
-			this.file = file;
-
-			// Keep a loaded copy to copy default values from
-			final YamlConfig defaultConfig = new YamlConfig();
-			final String defaultContent = String.join("\n", FileUtil.getInternalFileContent(from));
-
-			defaultConfig.file = file;
-			defaultConfig.loadFromString(defaultContent);
-
-			this.defaults = defaultConfig.section;
-			this.defaultsPath = from;
-		}
-
-		else {
-			file = FileUtil.getFile(to);
-
-			if (!file.exists()) {
-				FileUtil.createIfNotExists(to);
-
-				if (this.getHeader() != null)
-					this.shouldSave = true;
-			}
-		}
-
-		this.load(file);
-	}
-
-	/**
-	 * Loads the configuration from the internal path WITHOUT calling onLoad(),
-	 * without setting defaults and without extracting the file.
-	 *
-	 * @param internalPath
-	 */
-	public final void loadInternal(String internalPath) {
-		final String content = String.join("\n", FileUtil.getInternalFileContent(internalPath));
-
-		this.loadFromString(content);
-	}
-
-	/*
-	 * Dumps all values in this config into a saveable format
-	 */
-	@NonNull
 	@Override
 	public final String saveToString() {
-		// Do not use comments
-		if (this.defaults == null || !this.saveComments()) {
-			String header = "";
+		final MappingNode node = this.toNodeTreeWithDefaults(this, this.getDefaults());
 
-			if (this.getHeader() != null) {
-				for (final String line : this.getHeader())
-					header += "# " + line + "\n";
+		node.setBlockComments(this.getCommentLines(this.saveHeader(this.getHeader()), CommentType.BLOCK));
+		node.setEndComments(this.getCommentLines(this.getFooter(), CommentType.BLOCK));
 
-				header += "\n";
-			}
+		final StreamToStringWriter writer = new StreamToStringWriter();
 
-			final Map<String, Object> values = this.section.getValues(false);
+		if (node.getBlockComments().isEmpty() && node.getEndComments().isEmpty() && node.getValue().isEmpty())
+			writer.write("");
 
-			if (!this.saveEmptyValues)
-				removeEmptyValues(values);
+		else {
+			if (node.getValue().isEmpty())
+				node.setFlowStyle(FlowStyle.FLOW);
 
-			String dump = this.yamlDumper.dumpToString(values);
-
-			// Blank config
-			if (dump.equals("{}\n"))
-				dump = "";
-
-			return header + dump;
+			this.dumper.dumpNode(node, writer);
 		}
 
-		// Special case, write using comments engine
-		YamlComments.writeComments(this.defaultsPath, this.file, this.getUncommentedSections(), this.yamlDumper);
-
-		return null;
+		return writer.toString();
 	}
 
-	/*
-	 * Attempts to remove empty maps, lists or arrays from the given map
-	 */
-	private static void removeEmptyValues(Map<String, Object> map) {
-		for (final Iterator<Entry<String, Object>> it = map.entrySet().iterator(); it.hasNext();) {
-			final Entry<String, Object> entry = it.next();
-			final Object value = entry.getValue();
-
-			if (value instanceof ConfigSection) {
-				final Map<String, Object> childMap = ((ConfigSection) value).map;
-
-				removeEmptyValues(childMap);
-
-				if (childMap.isEmpty())
-					it.remove();
-			}
-
-			if (value == null
-					|| value instanceof Iterable<?> && !((Iterable<?>) value).iterator().hasNext()
-					|| value.getClass().isArray() && ((Object[]) value).length == 0
-					|| value instanceof Map<?, ?> && ((Map<?, ?>) value).isEmpty()) {
-
-				it.remove();
-
-				continue;
-			}
-		}
-	}
-
-	/*
-	 * Loads configuration from the given string contents
-	 */
 	@Override
-	final void loadFromString(@NonNull String contents) {
-		final Map<?, ?> input = (Map<?, ?>) this.yamlLoader.loadFromString(contents);
-		final String header = this.parseHeader(contents);
+	public final void loadFromString(@NonNull String contents) {
 
-		if (header.trim().length() > 0)
-			this.setHeader(header);
+		MappingNode node;
+		final Node rawNode = this.composer.composeString(contents).orElse(null);
 
-		this.section.map.clear();
+		try {
+			node = (MappingNode) rawNode;
 
-		if (input != null)
-			this.convertMapsToSections(input, this.section);
+		} catch (final ClassCastException e) {
+			throw new FoException("Top level is not a Map in YAML configuration: " + contents);
+		}
+
+		this.map.clear();
+
+		if (node != null) {
+			this.adjustNodeComments(node);
+
+			this.setHeader(this.loadHeader(this.getCommentLines(node.getBlockComments())));
+			this.setFooter(this.getCommentLines(node.getEndComments()));
+
+			this.fromNodeTree(node, this);
+		}
 	}
 
 	/*
-	 * Converts the given maps to sections
+	 * This method splits the header on the last empty line, and sets the
+	 * comments below this line as comments for the first key on the map object.
+	 *
+	 * @param node The root node of the yaml object
 	 */
-	private void convertMapsToSections(@NonNull Map<?, ?> input, @NonNull ConfigSection section) {
-		for (final Map.Entry<?, ?> entry : input.entrySet()) {
-			final String key = entry.getKey().toString();
-			final Object value = entry.getValue();
+	private void adjustNodeComments(final MappingNode node) {
+		if (node.getBlockComments() == null && !node.getValue().isEmpty()) {
+			final Node firstNode = node.getValue().get(0).getKeyNode();
+			final List<CommentLine> lines = firstNode.getBlockComments();
 
-			if (value instanceof Map)
-				this.convertMapsToSections((Map<?, ?>) value, section.createSection(key));
+			if (lines != null) {
+				int index = -1;
+
+				for (int i = 0; i < lines.size(); i++)
+					if (lines.get(i).getCommentType() == CommentType.BLANK_LINE)
+						index = i;
+
+				if (index != -1) {
+					node.setBlockComments(lines.subList(0, index + 1));
+
+					firstNode.setBlockComments(lines.subList(index + 1, lines.size()));
+				}
+			}
+		}
+	}
+
+	private void fromNodeTree(MappingNode input, MemorySection section) {
+		this.constructor.flattenMapping(input);
+
+		for (final NodeTuple nodeTuple : input.getValue()) {
+			final Node key = nodeTuple.getKeyNode();
+			final String keyString = String.valueOf(this.constructor.construct(key));
+
+			Node value = nodeTuple.getValueNode();
+
+			while (value instanceof AnchorNode)
+				value = ((AnchorNode) value).getRealNode();
+
+			if (value instanceof MappingNode && !this.hasSerializedTypeKey((MappingNode) value))
+				this.fromNodeTree((MappingNode) value, section.createSection(keyString));
+
 			else
-				section.store(key, value);
+				section.set(keyString, this.constructor.construct(value));
+
+			section.setComments(keyString, this.getCommentLines(key.getBlockComments()));
+
+			if (value instanceof MappingNode || value instanceof SequenceNode)
+				section.setInlineComments(keyString, this.getCommentLines(key.getInLineComments()));
+
+			else
+				section.setInlineComments(keyString, this.getCommentLines(value.getInLineComments()));
 		}
+	}
+
+	private boolean hasSerializedTypeKey(MappingNode node) {
+		for (final NodeTuple nodeTuple : node.getValue()) {
+			final Node keyNode = nodeTuple.getKeyNode();
+
+			if (!(keyNode instanceof ScalarNode))
+				continue;
+
+			final String key = ((ScalarNode) keyNode).getValue();
+
+			if (key.equals("==")) // From Bukkit
+				return true;
+		}
+		return false;
+	}
+
+	public final <T> T get(String path, Class<T> clazz, Object... deserializeParams) {
+		final Object object = this.getObject(path);
+
+		if (clazz.isInstance(object))
+			return clazz.cast(object);
+
+		return SerializeUtilCore.deserialize(Language.YAML, clazz, object, deserializeParams);
+	}
+
+	/*private MappingNode toNodeTree(MemorySection section) {
+		final List<NodeTuple> nodeTuples = new ArrayList<>();
+	
+		for (final Map.Entry<String, Object> entry : section.getValues(false).entrySet()) {
+			final Node key = this.representer.represent(entry.getKey());
+	
+			Node value;
+	
+			if (entry.getValue() instanceof MemorySection)
+				value = this.toNodeTree((MemorySection) entry.getValue());
+			else
+				value = this.representer.represent(entry.getValue());
+	
+			key.setBlockComments(this.getCommentLines(section.getComments(entry.getKey()), CommentType.BLOCK));
+	
+			if (value instanceof MappingNode || value instanceof SequenceNode)
+				key.setInLineComments(this.getCommentLines(section.getInlineComments(entry.getKey()), CommentType.IN_LINE));
+			else
+				value.setInLineComments(this.getCommentLines(section.getInlineComments(entry.getKey()), CommentType.IN_LINE));
+	
+			nodeTuples.add(new NodeTuple(key, value));
+		}
+	
+		return new MappingNode(Tag.MAP, nodeTuples, FlowStyle.BLOCK);
+	}*/
+
+	private MappingNode toNodeTreeWithDefaults(MemorySection section, MemorySection defaults) {
+
+		// Move settings which are NOT in the default file to the unused folder.
+		// You can configure which sections are allowed to stay using uncommentedSections field above.
+		{
+			final Map<String, Object> unusedKeys = new HashMap<>();
+
+			for (final Map.Entry<String, Object> entry : section.getValues(true).entrySet()) {
+				final String path = entry.getKey();
+
+				if (defaults != null && !defaults.isSet(path)) {
+					boolean isUncommentedSection = false;
+
+					for (final String uncommented : this.uncommentedSections) {
+						if (path.startsWith(uncommented)) {
+
+							isUncommentedSection = true;
+							break;
+						}
+					}
+
+					if (!isUncommentedSection) {
+						unusedKeys.put(path, entry.getValue());
+
+						section.set(path, null);
+					}
+				}
+			}
+
+			if (!unusedKeys.isEmpty()) {
+				final File unusedFile = FileUtil.createIfNotExists("unused/" + this.getFile().getName());
+				final YamlConfig unusedConfig = YamlConfig.fromFile(unusedFile);
+
+				for (final Map.Entry<String, Object> entry : unusedKeys.entrySet())
+					unusedConfig.set(entry.getKey(), entry.getValue());
+
+				unusedConfig.save();
+				CommonCore.warning("The following entries in " + this.getFile().getName() + " are unused and were moved to " + unusedFile + ": " + unusedKeys.keySet());
+			}
+		}
+
+		return this.toNodeTreeWithDefaults0(section, defaults, true);
+	}
+
+	// Make sure that:
+	// 1. Use default key if disk key is missing
+	// 2. Prefer default comments
+	// 3. If ignored section, use disk comment, if any
+
+	private MappingNode toNodeTreeWithDefaults0(MemorySection section, MemorySection defaults, boolean pullFromDefaults) {
+		final List<NodeTuple> nodeTuples = new ArrayList<>();
+
+		for (final Map.Entry<String, Object> entry : (pullFromDefaults && defaults != null ? defaults : section).getValues(false).entrySet()) {
+			final Node key = this.representer.represent(entry.getKey());
+			Node value;
+
+			final boolean hasDiskValue = section.isSet(entry.getKey());
+			final Object diskValue = section.getObject(entry.getKey());
+
+			boolean isUncommentedSection = !pullFromDefaults;
+			String deepPath = entry.getKey();
+
+			if (entry.getValue() instanceof MemorySection) {
+				final MemorySection innerSection = (MemorySection) entry.getValue();
+
+				deepPath = innerSection.getFullPath();
+
+				for (final String uncommented : this.uncommentedSections) {
+					if (deepPath.startsWith(uncommented)) {
+						isUncommentedSection = true;
+
+						break;
+					}
+				}
+
+				if (hasDiskValue)
+					ValidCore.checkBoolean(diskValue instanceof MemorySection, "Expected " + entry.getKey() + " in " + this.getFile() + " to be a Map, got " + diskValue.getClass().getSimpleName());
+
+				value = this.toNodeTreeWithDefaults0((MemorySection) (hasDiskValue ? diskValue : entry.getValue()), defaults != null ? defaults.getConfigurationSection(entry.getKey()) : null, !isUncommentedSection);
+
+			} else
+				value = this.representer.represent(hasDiskValue ? diskValue : entry.getValue());
+
+			key.setBlockComments(this.getCommentLines((pullFromDefaults && defaults != null ? defaults : section).getComments(entry.getKey()), CommentType.BLOCK));
+
+			if (value instanceof MappingNode || value instanceof SequenceNode)
+				key.setInLineComments(this.getCommentLines((pullFromDefaults && defaults != null ? defaults : section).getInlineComments(entry.getKey()), CommentType.IN_LINE));
+			else
+				value.setInLineComments(this.getCommentLines((pullFromDefaults && defaults != null ? defaults : section).getInlineComments(entry.getKey()), CommentType.IN_LINE));
+
+			nodeTuples.add(new NodeTuple(key, value));
+		}
+
+		return new MappingNode(Tag.MAP, nodeTuples, FlowStyle.BLOCK);
+	}
+
+	private List<String> getCommentLines(List<CommentLine> comments) {
+		final List<String> lines = new ArrayList<>();
+
+		if (comments != null)
+			for (final CommentLine comment : comments)
+				if (comment.getCommentType() == CommentType.BLANK_LINE)
+					lines.add(null);
+
+				else {
+					String line = comment.getValue();
+
+					line = line.startsWith(" ") ? line.substring(1) : line;
+					lines.add(line);
+				}
+
+		return lines;
+	}
+
+	private List<CommentLine> getCommentLines(List<String> comments, CommentType commentType) {
+		final List<CommentLine> lines = new ArrayList<>();
+
+		for (final String comment : comments)
+			if (comment == null)
+				lines.add(new CommentLine(Optional.empty(), Optional.empty(), "", CommentType.BLANK_LINE));
+
+			else {
+				String line = comment;
+
+				line = line.isEmpty() ? line : " " + line;
+				lines.add(new CommentLine(Optional.empty(), Optional.empty(), line, commentType));
+			}
+		return lines;
 	}
 
 	/*
-	 * Converts the given input to header
+	 * Removes the empty line at the end of the header that separates the header
+	 * from further comments. Also removes all empty header starts (backwards
+	 * compat).
+	 *
+	 * @param header The list of heading comments
+	 * @return The modified list
 	 */
-	@NonNull
-	private String parseHeader(@NonNull String input) {
-		final String commentPrefix = "# ";
-		final String[] lines = input.split("\r?\n", -1);
-		final StringBuilder result = new StringBuilder();
+	private List<String> loadHeader(List<String> header) {
+		final LinkedList<String> list = new LinkedList<>(header);
 
-		boolean readingHeader = true;
-		boolean foundHeader = false;
+		if (!list.isEmpty())
+			list.removeLast();
 
-		for (int i = 0; i < lines.length && readingHeader; i++) {
-			final String line = lines[i].trim();
+		while (!list.isEmpty() && list.peek() == null)
+			list.remove();
 
-			if (line.startsWith(commentPrefix) || line.equals("#")) {
-				if (i > 0)
-					result.append("\n");
-
-				if (line.length() > commentPrefix.length())
-					result.append(line.substring(commentPrefix.length()));
-
-				foundHeader = true;
-
-			} else if (foundHeader && line.length() == 0)
-				result.append("\n");
-
-			else if (foundHeader)
-				readingHeader = false;
-		}
-
-		final String string = result.toString();
-
-		return string.trim().isEmpty() ? "" : string + "\n";
+		return list;
 	}
 
-	@Override
-	public int hashCode() {
-		return this.getFileName().hashCode();
-	}
+	/*
+	 * Adds the empty line at the end of the header that separates the header
+	 * from further comments.
+	 *
+	 * @param header The list of heading comments
+	 * @return The modified list
+	 */
+	private List<String> saveHeader(List<String> header) {
+		final LinkedList<String> list = new LinkedList<>(header);
 
-	@Override
-	public boolean equals(Object obj) {
-		return obj instanceof YamlConfig && ((YamlConfig) obj).getFileName().equals(this.getFileName());
-	}
+		if (!list.isEmpty())
+			list.add(null);
 
-	// -----------------------------------------------------------------------------------------------------
-	// Static
-	// -----------------------------------------------------------------------------------------------------
+		return list;
+	}
 
 	/**
-	 * Loads configuration from the internal JAR path, extracting it if needed.
+	 * Gets the header that will be applied to the top of the saved output.
+	 * <p>
+	 * This header will be commented out and applied directly at the top of
+	 * the generated output of the {@link FileConfiguration}. It is not
+	 * required to include a newline at the end of the header as it will
+	 * automatically be applied, but you may include one if you wish for extra
+	 * spacing.
+	 * <p>
+	 * If no comments exist, an empty list will be returned. A null entry
+	 * represents an empty line and an empty String represents an empty comment
+	 * line.
 	 *
-	 * @param path
-	 * @return
+	 * @return Unmodifiable header, every entry represents one line.
 	 */
-	@NonNull
-	public static final YamlConfig fromInternalPath(@NonNull String path) {
+	public final List<String> getHeader() {
+		return this.header;
+	}
+
+	/**
+	 * Sets the header that will be applied to the top of the saved output.
+	 * <p>
+	 * This header will be commented out and applied directly at the top of
+	 * the generated output of the {@link FileConfiguration}. It is not
+	 * required to include a newline at the end of the header as it will
+	 * automatically be applied, but you may include one if you wish for extra
+	 * spacing.
+	 * <p>
+	 * If no comments exist, an empty list will be returned. A null entry
+	 * represents an empty line and an empty String represents an empty comment
+	 * line.
+	 *
+	 * @param lines New header, every entry represents one line.
+	 */
+	public final void setHeader(String... lines) {
+		this.setHeader(CommonCore.newList(lines));
+	}
+
+	/**
+	 * Sets the header that will be applied to the top of the saved output.
+	 * <p>
+	 * This header will be commented out and applied directly at the top of
+	 * the generated output of the {@link FileConfiguration}. It is not
+	 * required to include a newline at the end of the header as it will
+	 * automatically be applied, but you may include one if you wish for extra
+	 * spacing.
+	 * <p>
+	 * If no comments exist, an empty list will be returned. A null entry
+	 * represents an empty line and an empty String represents an empty comment
+	 * line.
+	 *
+	 * @param value New header, every entry represents one line.
+	 */
+	public final void setHeader(List<String> value) {
+		this.header = value;
+	}
+
+	/**
+	 * Gets the footer that will be applied to the bottom of the saved output.
+	 * <p>
+	 * This footer will be commented out and applied directly at the bottom of
+	 * the generated output of the {@link FileConfiguration}. It is not required
+	 * to include a newline at the beginning of the footer as it will
+	 * automatically be applied, but you may include one if you wish for extra
+	 * spacing.
+	 * <p>
+	 * If no comments exist, an empty list will be returned. A null entry
+	 * represents an empty line and an empty String represents an empty comment
+	 * line.
+	 *
+	 * @return Unmodifiable footer, every entry represents one line.
+	 */
+	public final List<String> getFooter() {
+		return this.footer;
+	}
+
+	/**
+	 * Sets the footer that will be applied to the bottom of the saved output.
+	 * <p>
+	 * This footer will be commented out and applied directly at the bottom of
+	 * the generated output of the {@link FileConfiguration}. It is not required
+	 * to include a newline at the beginning of the footer as it will
+	 * automatically be applied, but you may include one if you wish for extra
+	 * spacing.
+	 * <p>
+	 * If no comments exist, an empty list will be returned. A null entry
+	 * represents an empty line and an empty String represents an empty comment
+	 * line.
+	 *
+	 * @param value New footer, every entry represents one line.
+	 */
+	public final void setFooter(List<String> value) {
+		this.footer = value;
+	}
+
+	public final Set<String> getUncommentedSections() {
+		return uncommentedSections;
+	}
+
+	public final void setUncommentedSections(Collection<String> uncommentedSections) {
+		this.uncommentedSections = new HashSet<>(uncommentedSections);
+	}
+
+	/**
+	 * Creates a new {@link YamlConfig}, loading from the given file.
+	 * <p>
+	 * Any errors loading the Configuration will be logged and then ignored.
+	 * If the specified input is not a valid config, a blank config will be
+	 * returned.
+	 * <p>
+	 * The encoding used may follow the system dependent default.
+	 *
+	 * @param file Input file
+	 * @return Resulting configuration
+	 * @throws IllegalArgumentException Thrown if file is null
+	 */
+	public static YamlConfig fromFile(@NonNull File file) {
 		final YamlConfig config = new YamlConfig();
-
-		try {
-			config.loadConfiguration(path);
-
-		} catch (final Exception ex) {
-			CommonCore.error(ex, "Cannot load config from internal path " + path);
-		}
+		config.load(file);
 
 		return config;
 	}
 
 	/**
-	 * Loads configuration from the file in your plugin's folder.
+	 * Creates a new {@link YamlConfig}, loading from the given reader.
+	 * <p>
+	 * Any errors loading the Configuration will be logged and then ignored.
+	 * If the specified input is not a valid config, a blank config will be
+	 * returned.
 	 *
-	 * @param file
-	 * @return
 	 */
-	@NonNull
-	public static final YamlConfig fromFile(@NonNull File file) {
-		final YamlConfig config = new YamlConfig();
-
+	/*public static YamlConfiguration loadConfiguration(@NonNull Reader reader) {
+		final YamlConfiguration config = new YamlConfiguration();
+	
 		try {
-			config.load(file);
-		} catch (final Exception ex) {
-			CommonCore.error(ex, "Cannot load config from file " + file);
-		}
+			config.load(reader);
 
+		} catch (final IOException ex) {
+			CommonCore.error(ex, "Cannot load configuration from stream");
+	
+		} catch (final InvalidConfigurationException ex) {
+			CommonCore.error(ex, "Invalid configuration from stream");
+		}
+	
 		return config;
+	}*/
+
+	/*
+	 * Internal helper class to support dumping to String
+	 */
+	private class StreamToStringWriter extends StringWriter implements StreamDataWriter {
 	}
 
 }

@@ -1,4 +1,4 @@
-package org.mineacademy.fo.platform;
+package org.mineacademy.fo.settings;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
