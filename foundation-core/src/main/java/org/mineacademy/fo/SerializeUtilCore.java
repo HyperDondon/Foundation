@@ -36,6 +36,11 @@ import org.mineacademy.fo.settings.ConfigSection;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import lombok.Setter;
+import net.kyori.adventure.text.format.Style;
+import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.format.TextDecoration.State;
 
 /**
  * Utility class for serializing objects to writeable YAML data and back.
@@ -44,30 +49,34 @@ import lombok.NonNull;
 public abstract class SerializeUtilCore {
 
 	/**
-	 * A custom serializer extending the serialize method
+	 * A list of custom serializers
 	 */
-	@SuppressWarnings("rawtypes")
-	private static final Map<Class<?>, Serializer> customSerializers = new HashMap<>();
+	@Setter
+	private static List<Serializer> serializers = new ArrayList<>();
 
 	/**
 	 * Converts the given object into something you can safely save in file as a string
 	 *
-	 * @param mode determines the file that the object originated from, if unsure just set to YAML
+	 * @param language determines the file that the object originated from, if unsure just set to YAML
 	 * @param object
 	 * @return
 	 */
-	public static Object serialize(Mode mode, Object object) {
+	public static Object serialize(Language language, Object object) {
 		if (object == null)
 			return null;
 
-		if (customSerializers.containsKey(object.getClass()))
-			return customSerializers.get(object.getClass()).serialize(mode, object);
+		for (final Serializer serializer : serializers) {
+			final Object result = serializer.serialize(language, object);
 
-		else if (object instanceof ConfigSerializable)
-			return serialize(mode, ((ConfigSerializable) object).serialize().serialize());
+			if (result != null)
+				return result;
+		}
+
+		if (object instanceof ConfigSerializable)
+			return serialize(language, ((ConfigSerializable) object).serialize().serialize());
 
 		else if (object instanceof StrictCollection)
-			return serialize(mode, ((StrictCollection) object).serialize());
+			return serialize(language, ((StrictCollection) object).serialize());
 
 		else if (object instanceof CompChatColor)
 			return ((CompChatColor) object).toSaveableString();
@@ -93,6 +102,24 @@ public abstract class SerializeUtilCore {
 		else if (object instanceof SimpleComponent)
 			throw new FoException("Serializing SimpleComponent is ambigious, if you want to serialize it literally, call SimpleComponent#serialize().toJson(), otherwise call SimpleComponent#toAdventureJson()");
 
+		else if (object instanceof Style) {
+			final Map<String, Object> map = new HashMap<>();
+			final Style style = (Style) object;
+
+			if (style.color() != null)
+				map.put("Color", style.color().asHexString());
+
+			final List<String> decorations = new ArrayList<>();
+
+			for (final Map.Entry<TextDecoration, State> entry : style.decorations().entrySet())
+				if (entry.getValue() == State.TRUE)
+					decorations.add(entry.getKey().name());
+
+			map.put("Decorations", decorations);
+
+			return map;
+		}
+
 		else if (object instanceof Path)
 			throw new FoException("Cannot serialize Path " + object + ", did you mean to convert it into a name?");
 
@@ -101,18 +128,67 @@ public abstract class SerializeUtilCore {
 
 		} else if (object instanceof Iterable || object.getClass().isArray() || object instanceof IsInList) {
 
-			if (mode == Mode.JSON) {
+			if (language == Language.JSON) {
 				final JSONArray jsonList = new JSONArray();
 
 				if (object instanceof Iterable || object instanceof IsInList) {
-					for (final Object element : object instanceof IsInList ? ((IsInList<?>) object).getList() : (Iterable<?>) object)
-						addJsonElement(element, jsonList);
+					for (Object element : object instanceof IsInList ? ((IsInList<?>) object).getList() : (Iterable<?>) object) {
+						if (element == null)
+							jsonList.add(null);
+
+						if (element instanceof Jsonable)
+							jsonList.add(element);
+
+						else {
+							element = serialize(Language.JSON, element);
+
+							// Assume the element is a JSON string
+							try {
+								jsonList.add(JSONParser.deserialize(element.toString()));
+
+							} catch (final JSONParseException ex) {
+								final String message = ex.getMessage();
+
+								// Apparently not a json string :/
+								if (message.contains("The unexpected character") && (message.contains("was found at position 0") || message.contains("was found at position 1")))
+									jsonList.add(element.toString());
+								else
+									CommonCore.error(ex, "Failed to deserialize JSON collection from string: " + element);
+							}
+						}
+					}
 
 				} else {
 					final Object[] array = (Object[]) object;
 
-					for (int i = 0; i < array.length; i++)
-						jsonList.add(toJsonElement(array[i]));
+					for (int i = 0; i < array.length; i++) {
+						Object element = array[i];
+
+						if (element != null) {
+							if (element instanceof Jsonable)
+								jsonList.add(element);
+
+							else {
+								element = serialize(Language.JSON, element);
+
+								// Assume the element is a JSON string
+								try {
+									jsonList.add(JSONParser.deserialize(element.toString()));
+
+								} catch (final JSONParseException ex) {
+									final String message = ex.getMessage();
+
+									// Apparently not a json string :/
+									if (message.contains("The unexpected character") && (message.contains("was found at position 0") || message.contains("was found at position 1")))
+										jsonList.add(element.toString());
+									else
+										CommonCore.error(ex, "Failed to deserialize JSON collection from string: " + element);
+								}
+							}
+						}
+
+						jsonList.add(null);
+					}
 				}
 
 				return jsonList;
@@ -123,7 +199,7 @@ public abstract class SerializeUtilCore {
 					final List<Object> serialized = new ArrayList<>();
 
 					for (final Object element : object instanceof IsInList ? ((IsInList<?>) object).getList() : (Iterable<?>) object) {
-						serialized.add(serialize(mode, element));
+						serialized.add(serialize(language, element));
 					}
 
 					return serialized;
@@ -136,7 +212,7 @@ public abstract class SerializeUtilCore {
 					for (int i = 0; i < length; i++) {
 						final Object element = Array.get(object, i);
 
-						serialized[i] = serialize(mode, element);
+						serialized[i] = serialize(language, element);
 					}
 
 					return serialized;
@@ -146,12 +222,12 @@ public abstract class SerializeUtilCore {
 		} else if (object instanceof Map || object instanceof StrictMap) {
 			final Map<Object, Object> oldMap = object instanceof StrictMap ? ((StrictMap<Object, Object>) object).getSource() : (Map<Object, Object>) object;
 
-			if (mode == Mode.JSON) {
+			if (language == Language.JSON) {
 				final JSONObject json = new JSONObject();
 
 				for (final Map.Entry<Object, Object> entry : oldMap.entrySet()) {
-					final Object key = serialize(mode, entry.getKey());
-					final Object value = serialize(mode, entry.getValue());
+					final Object key = serialize(language, entry.getKey());
+					final Object value = serialize(language, entry.getValue());
 
 					if (key != null)
 						ValidCore.checkBoolean(key instanceof String || key instanceof Number,
@@ -186,14 +262,14 @@ public abstract class SerializeUtilCore {
 				final Map<Object, Object> newMap = new LinkedHashMap<>();
 
 				for (final Map.Entry<Object, Object> entry : oldMap.entrySet())
-					newMap.put(serialize(mode, entry.getKey()), serialize(mode, entry.getValue()));
+					newMap.put(serialize(language, entry.getKey()), serialize(language, entry.getValue()));
 
 				return newMap;
 			}
 		}
 
 		else if (object instanceof ConfigSection)
-			return serialize(mode, ((ConfigSection) object).getValues(true));
+			return serialize(language, ((ConfigSection) object).getValues(true));
 
 		else if (object instanceof Pattern)
 			return ((Pattern) object).pattern();
@@ -211,78 +287,18 @@ public abstract class SerializeUtilCore {
 		throw new SerializeFailedException("Does not know how to serialize " + object.getClass().getSimpleName() + "! Does it extends ConfigSerializable? Data: " + object);
 	}
 
-	/*
-	 * Helps to add an unknown element into a json list
-	 */
-	private static void addJsonElement(Object element, JSONArray jsonList) {
-		if (element == null)
-			return;
-
-		if (element instanceof Jsonable)
-			jsonList.add(element);
-
-		else {
-			element = serialize(Mode.JSON, element);
-
-			// Assume the element is a JSON string
-			try {
-				jsonList.add(JSONParser.deserialize(element.toString()));
-
-			} catch (final JSONParseException ex) {
-				final String message = ex.getMessage();
-
-				// Apparently not a json string :/
-				if (message.contains("The unexpected character") && (message.contains("was found at position 0") || message.contains("was found at position 1")))
-					jsonList.add(element.toString());
-				else
-					CommonCore.error(ex, "Failed to deserialize JSON collection from string: " + element);
-			}
-		}
-	}
-
-	/*
-	 * Helps to add an unknown element into a json list
-	 */
-	private static Object toJsonElement(Object element) {
-		if (element == null)
-			return null;
-
-		if (element instanceof Jsonable)
-			return element;
-
-		else {
-			element = serialize(Mode.JSON, element);
-
-			// Assume the element is a JSON string
-			try {
-				return JSONParser.deserialize(element.toString());
-
-			} catch (final JSONParseException ex) {
-				final String message = ex.getMessage();
-
-				// Apparently not a json string :/
-				if (message.contains("The unexpected character") && (message.contains("was found at position 0") || message.contains("was found at position 1")))
-					return element.toString();
-				else
-					CommonCore.error(ex, "Failed to deserialize JSON collection from string: " + element);
-			}
-		}
-
-		return null;
-	}
-
 	/**
 	 * Attempts to convert the given object saved in the given mode (i.e. in a .yml file) back
 	 * into its Java class, i.e. a Location.
 	 *
 	 * @param <T>
-	 * @param mode
+	 * @param language
 	 * @param classOf
 	 * @param object
 	 * @return
 	 */
-	public static <T> T deserialize(@NonNull Mode mode, @NonNull final Class<T> classOf, @NonNull final Object object) {
-		return deserialize(mode, classOf, object, (Object[]) null);
+	public static <T> T deserialize(@NonNull Language language, @NonNull final Class<T> classOf, @NonNull final Object object) {
+		return deserialize(language, classOf, object, (Object[]) null);
 	}
 
 	/**
@@ -290,21 +306,25 @@ public abstract class SerializeUtilCore {
 	 * into its Java class, i.e. a Location.
 	 *
 	 * @param <T>
-	 * @param mode
+	 * @param language
 	 * @param classOf
 	 * @param object
 	 * @param parameters
 	 * @return
 	 */
 	@SuppressWarnings("rawtypes")
-	public static <T> T deserialize(@NonNull Mode mode, @NonNull final Class<T> classOf, @NonNull Object object, final Object... parameters) {
+	public static <T> T deserialize(@NonNull Language language, @NonNull final Class<T> classOf, @NonNull Object object, final Object... parameters) {
 
-		final boolean isJson = mode == Mode.JSON;
+		final boolean isJson = language == Language.JSON;
 
-		if (customSerializers.containsKey(classOf))
-			object = customSerializers.get(classOf).deserialize(mode, object);
+		for (final Serializer serializer : serializers) {
+			final Object result = serializer.deserialize(language, classOf, object, parameters);
 
-		else if (classOf == String.class)
+			if (result != null)
+				return (T) result;
+		}
+
+		if (classOf == String.class)
 			object = object.toString();
 
 		else if (classOf == Integer.class)
@@ -341,8 +361,22 @@ public abstract class SerializeUtilCore {
 			object = UUID.fromString(object.toString());
 
 		else if (classOf == SimpleComponent.class)
-			throw new FoException("Deserializing SimpleComponet is ambigious, if you want to deserialize it literally from JSON, "
+			throw new FoException("Deserializing SimpleComponent is ambigious, if you want to deserialize it literally from JSON, "
 					+ "use SimpleComponent$deserialize(SerializedMap.fromJson(object.toString())), otherwise call SimpleComponent#fromMini");
+
+		else if (classOf == Style.class) {
+			final SerializedMap map = SerializedMap.of(object);
+			Style.Builder style = Style.style();
+
+			if (map.containsKey("Color"))
+				style = style.color(TextColor.fromHexString(map.getString("Color")));
+
+			if (map.containsKey("Decorations"))
+				for (final String decoration : map.getStringList("Decorations"))
+					style = style.decorate(TextDecoration.valueOf(decoration));
+
+			object = style.build();
+		}
 
 		else if (Enum.class.isAssignableFrom(classOf)) {
 			object = ReflectionUtilCore.lookupEnum((Class<Enum>) classOf, object.toString());
@@ -380,7 +414,7 @@ public abstract class SerializeUtilCore {
 				for (int i = 0; i < rawList.size(); i++) {
 					final Object element = rawList.get(i);
 
-					array[i] = element == null ? null : (T) deserialize(mode, arrayType, element, (Object[]) null);
+					array[i] = element == null ? null : (T) deserialize(language, arrayType, element, (Object[]) null);
 				}
 			}
 
@@ -389,7 +423,7 @@ public abstract class SerializeUtilCore {
 				array = (T[]) Array.newInstance(classOf.getComponentType(), rawArray.length);
 
 				for (int i = 0; i < array.length; i++)
-					array[i] = rawArray[i] == null ? null : (T) deserialize(mode, classOf.getComponentType(), rawArray[i], (Object[]) null);
+					array[i] = rawArray[i] == null ? null : (T) deserialize(language, classOf.getComponentType(), rawArray[i], (Object[]) null);
 			}
 
 			return (T) array;
@@ -453,28 +487,36 @@ public abstract class SerializeUtilCore {
 	}
 
 	/**
-	 * Add a custom serializer to serialize objects into strings
+	 * Adds a custom serializer for serializing objects into strings
 	 *
-	 * @param typeOf
-	 * @param serializer
+	 * @param <T>
+	 * @param handler
 	 */
-	public static <T> void addCustomSerializer(Class<T> typeOf, Serializer<T> serializer) {
-		customSerializers.put(typeOf, serializer);
+	public static <T> void addSerializer(Serializer handler) {
+		serializers.add(handler);
 	}
 
 	/**
 	 * A custom serializer for serializing objects into strings
 	 */
-	public interface Serializer<T> {
-		Object serialize(Mode mode, T object);
+	public interface Serializer {
 
-		T deserialize(Mode mode, Object object);
+		/**
+		 * Turn the given object into something we can save inside the given config language, for most cases this is a string.
+		 *
+		 * @param language
+		 * @param object
+		 * @return
+		 */
+		Object serialize(Language language, Object object);
+
+		<T> T deserialize(@NonNull Language language, @NonNull final Class<T> classOf, @NonNull Object object, final Object... parameters);
 	}
 
 	/**
-	 * How should we de/serialize the objects in this class?
+	 * The markup language the objects should be serialized to or deserialized from
 	 */
-	public enum Mode {
+	public enum Language {
 		JSON,
 		YAML
 	}

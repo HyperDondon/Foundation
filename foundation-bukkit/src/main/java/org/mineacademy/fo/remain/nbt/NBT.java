@@ -8,6 +8,7 @@ import javax.annotation.Nullable;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.Entity;
 import org.bukkit.inventory.ItemStack;
+import org.mineacademy.fo.CommonCore;
 
 /**
  * General utility class for a clean and simple nbt access.
@@ -15,10 +16,48 @@ import org.bukkit.inventory.ItemStack;
  * @author tr7zw
  *
  */
+
 public class NBT {
 
 	private NBT() {
 		// No instances of NBT. Utility class
+	}
+
+	/**
+	 * Utility method for shaded versions to preload and check the API during
+	 * onEnable. This method does not throw an exception and instead logs them. Will
+	 * return false if something fundamentally is wrong and the NBTAPI is in a non
+	 * functioning state. The shading plugin then needs to handle this. Note:
+	 * Calling this method during onLoad will cause an failure, so please wait till
+	 * onEnable.
+	 *
+	 * @return true if everything went fine
+	 */
+	public static boolean preloadApi() {
+		try {
+			// boiled down version of the plugin selfcheck without tests
+			if (MinecraftVersion.getVersion() == MinecraftVersion.UNKNOWN) {
+				NbtApiException.confirmedBroken = true;
+				return false;
+			}
+			for (final ClassWrapper c : ClassWrapper.values())
+				if (c.isEnabled() && c.getClazz() == null) {
+					NbtApiException.confirmedBroken = true;
+					return false;
+				}
+			for (final ReflectionMethod method : ReflectionMethod.values())
+				if (method.isCompatible() && !method.isLoaded()) {
+					NbtApiException.confirmedBroken = true;
+					return false;
+				}
+			// not settings NbtApiException.confirmedBroken = false, as no actual tests were done.
+			// This just means the version was found, and all reflections seem to work.
+			return true;
+		} catch (final Exception ex) {
+			NbtApiException.confirmedBroken = true;
+			CommonCore.error(ex, "[NBTAPI] Error during the selfcheck!");
+			return false;
+		}
 	}
 
 	/**

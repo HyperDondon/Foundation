@@ -385,10 +385,10 @@ public final class Remain extends RemainCore {
 			hasPlayerOpenSignMethod = false;
 		}
 
-		if (MinecraftVersion.newerThan(V.v1_6)) {
-			final Class<?> chatBaseComponent = ReflectionUtil.getNMSClass("IChatBaseComponent", "N/A");
-
+		if (MinecraftVersion.newerThan(V.v1_6) && MinecraftVersion.olderThan(V.v1_13)) {
 			try {
+				final Class<?> chatBaseComponent = ReflectionUtil.getNMSClass("IChatBaseComponent", "N/A");
+
 				if (MinecraftVersion.olderThan(V.v1_12)) {
 					final Class<?> chatPacket = ReflectionUtil.getNMSClass("PacketPlayOutChat", "N/A");
 
@@ -414,18 +414,22 @@ public final class Remain extends RemainCore {
 					resetTitleConstructor = titlePacket.getConstructor(enumAction, chatBaseComponent);
 				}
 
-			} catch (final ReflectiveOperationException ex) {
+			} catch (final Throwable t) {
 				if (!isThermos)
-					Common.error(ex, "Unable to setup chat internals");
+					Common.error(t, "Unable to setup chat internals");
 			}
 		}
 
 		if (isFolia) {
-			foliaScheduler = ReflectionUtil.invoke("getGlobalRegionScheduler", org.bukkit.Bukkit.getServer());
-			runAtFixedRate = ReflectionUtil.getMethod(foliaScheduler.getClass(), "runAtFixedRate", Plugin.class, Consumer.class, long.class, long.class);
-			execute = ReflectionUtil.getMethod(foliaScheduler.getClass(), "run", Plugin.class, Consumer.class);
-			runDelayed = ReflectionUtil.getMethod(foliaScheduler.getClass(), "runDelayed", Plugin.class, Consumer.class, long.class);
-			cancel = ReflectionUtil.getMethod(ReflectionUtil.lookupClass("io.papermc.paper.threadedregions.scheduler.ScheduledTask"), "cancel");
+			try {
+				foliaScheduler = ReflectionUtil.invoke("getGlobalRegionScheduler", org.bukkit.Bukkit.getServer());
+				runAtFixedRate = ReflectionUtil.getMethod(foliaScheduler.getClass(), "runAtFixedRate", Plugin.class, Consumer.class, long.class, long.class);
+				execute = ReflectionUtil.getMethod(foliaScheduler.getClass(), "run", Plugin.class, Consumer.class);
+				runDelayed = ReflectionUtil.getMethod(foliaScheduler.getClass(), "runDelayed", Plugin.class, Consumer.class, long.class);
+				cancel = ReflectionUtil.getMethod(ReflectionUtil.lookupClass("io.papermc.paper.threadedregions.scheduler.ScheduledTask"), "cancel");
+			} catch (final Throwable t) {
+				Common.error(t, "Failed to setup Folia scheduler");
+			}
 		}
 	}
 
@@ -791,7 +795,7 @@ public final class Remain extends RemainCore {
 	 */
 	/*public static Object convertLegacyToIChatBase(String legacyText) {
 		final String json = SimpleComponent.fromMini(legacyText).toAdventureJson();
-
+	
 		return convertJsonToIChatBase(json);
 	}*/
 

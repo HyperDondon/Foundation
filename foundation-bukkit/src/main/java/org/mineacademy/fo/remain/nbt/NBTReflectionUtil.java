@@ -18,6 +18,8 @@ import org.bukkit.entity.Entity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import com.google.gson.Gson;
+
 /**
  * Utility class for translating NBTApi calls to reflections into NMS code All
  * methods are allowed to throw {@link NbtApiException}
@@ -25,7 +27,10 @@ import org.bukkit.inventory.meta.ItemMeta;
  * @author tr7zw
  *
  */
+
 public class NBTReflectionUtil {
+
+	private static Gson gson = new Gson();
 
 	private static Field field_unhandledTags = null;
 	private static Field field_handle = null;
@@ -200,7 +205,7 @@ public class NBTReflectionUtil {
 		try {
 			Object nmsComp = getToCompount(nbtcompound.getCompound(), nbtcompound);
 			if (MinecraftVersion.isAtLeastVersion(MinecraftVersion.MC1_20_R4)) {
-				if (nbtcompound.hasTag("tag"))
+				if (nbtcompound.hasTag("tag") || nbtcompound.hasTag("Count"))
 					nmsComp = DataFixerUtil.fixUpRawItemData(nmsComp, DataFixerUtil.VERSION1_20_4,
 							DataFixerUtil.getCurrentVersion());
 				return ReflectionMethod.NMSITEM_LOAD.run(null, registry_access, nmsComp);
@@ -559,7 +564,8 @@ public class NBTReflectionUtil {
 	 */
 	public static void setObject(NBTCompound comp, String key, Object value) {
 		try {
-			final String json = GsonWrapper.getString(value);
+			final String json = gson.toJson(value);
+
 			setData(comp, ReflectionMethod.COMPOUND_SET_STRING, key, json);
 		} catch (final Exception e) {
 			throw new NbtApiException("Exception while setting the Object '" + value + "'!", e);
@@ -578,7 +584,9 @@ public class NBTReflectionUtil {
 		final String json = (String) getData(comp, ReflectionMethod.COMPOUND_GET_STRING, key);
 		if (json == null)
 			return null;
-		return GsonWrapper.deserializeJson(json, type);
+
+		final T obj = gson.fromJson(json, type);
+		return type.cast(obj);
 	}
 
 	/**
@@ -589,7 +597,9 @@ public class NBTReflectionUtil {
 	 */
 	public static void remove(NBTCompound comp, String key) {
 		final Object rootnbttag = comp.getCompound();
-		if ((rootnbttag == null) || !valideCompound(comp))
+		if (rootnbttag == null)
+			return;
+		if (!valideCompound(comp))
 			return;
 		final Object workingtag = getToCompount(rootnbttag, comp);
 		ReflectionMethod.COMPOUND_REMOVE_KEY.run(workingtag, key);

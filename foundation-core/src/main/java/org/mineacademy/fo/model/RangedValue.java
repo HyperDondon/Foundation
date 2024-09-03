@@ -123,6 +123,28 @@ public final class RangedValue {
 	}
 
 	/**
+	 * Create a new ranged value
+	 *
+	 * @param min
+	 * @param max
+	 * @return
+	 */
+	public static RangedValue between(double min, double max) {
+		return new RangedValue(min, max);
+	}
+
+	/**
+	 * Create a new ranged value
+	 *
+	 * @param min
+	 * @param max
+	 * @return
+	 */
+	public static RangedValue between(int min, int max) {
+		return new RangedValue(min, max);
+	}
+
+	/**
 	 * Create a {@link RangedValue} from a line
 	 * Example: 1-10
 	 * 5 - 60

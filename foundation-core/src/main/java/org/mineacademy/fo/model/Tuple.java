@@ -1,7 +1,7 @@
 package org.mineacademy.fo.model;
 
 import org.mineacademy.fo.SerializeUtilCore;
-import org.mineacademy.fo.SerializeUtilCore.Mode;
+import org.mineacademy.fo.SerializeUtilCore.Language;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.collection.SerializedMap;
 
@@ -87,8 +87,8 @@ public final class Tuple<K, V> implements ConfigSerializable {
 		final String split[] = line.split(" - ");
 		ValidCore.checkBoolean(split.length == 2, "Line must have the syntax <" + keyType.getSimpleName() + "> - <" + valueType.getSimpleName() + "> but got: " + line);
 
-		final K key = SerializeUtilCore.deserialize(Mode.YAML, keyType, split[0]);
-		final V value = SerializeUtilCore.deserialize(Mode.YAML, valueType, split[1]);
+		final K key = SerializeUtilCore.deserialize(Language.YAML, keyType, split[0]);
+		final V value = SerializeUtilCore.deserialize(Language.YAML, valueType, split[1]);
 
 		return new Tuple<>(key, value);
 	}

@@ -15,6 +15,7 @@ import org.bukkit.Bukkit;
  */
 
 enum MinecraftVersion {
+
 	UNKNOWN(Integer.MAX_VALUE), // Use the newest known mappings
 	MC1_7_R4(174),
 	MC1_8_R3(183),
@@ -46,8 +47,6 @@ enum MinecraftVersion {
 	private static Boolean isForgePresent;
 	private static Boolean isFoliaPresent;
 
-	protected static final String VERSION = "2.13.1-SNAPSHOT";
-
 	private final int versionId;
 	private final boolean mojangMapping;
 
@@ -62,6 +61,7 @@ enum MinecraftVersion {
 			this.put("1.20.5", MC1_20_R4);
 			this.put("1.20.6", MC1_20_R4);
 			this.put("1.21", MC1_21_R1);
+			this.put("1.21.1", MC1_21_R1);
 		}
 	};
 
@@ -78,7 +78,7 @@ enum MinecraftVersion {
 	 * @return A simple comparable Integer, representing the version.
 	 */
 	public int getVersionId() {
-		return versionId;
+		return this.versionId;
 	}
 
 	/**
@@ -86,7 +86,7 @@ enum MinecraftVersion {
 	 *         internally
 	 */
 	public boolean isMojangMapping() {
-		return mojangMapping;
+		return this.mojangMapping;
 	}
 
 	/**
@@ -140,10 +140,8 @@ enum MinecraftVersion {
 			version = MinecraftVersion.valueOf(ver.replace("v", "MC"));
 
 		} catch (final Exception ex) {
-			version = VERSION_TO_REVISION.getOrDefault(Bukkit.getServer().getBukkitVersion().split("-")[0],
-					MinecraftVersion.UNKNOWN);
+			version = VERSION_TO_REVISION.getOrDefault(Bukkit.getServer().getBukkitVersion().split("-")[0], MinecraftVersion.UNKNOWN);
 		}
-
 		return version;
 	}
 
@@ -153,15 +151,19 @@ enum MinecraftVersion {
 	public static boolean isForgePresent() {
 		if (isForgePresent != null)
 			return isForgePresent;
+
 		try {
 			if (getVersion() == MinecraftVersion.MC1_7_R4)
 				Class.forName("cpw.mods.fml.common.Loader");
 			else
 				Class.forName("net.minecraftforge.fml.common.Loader");
+
 			isForgePresent = true;
+
 		} catch (final Exception ex) {
 			isForgePresent = false;
 		}
+
 		return isForgePresent;
 	}
 
@@ -171,12 +173,15 @@ enum MinecraftVersion {
 	public static boolean isFoliaPresent() {
 		if (isFoliaPresent != null)
 			return isFoliaPresent;
+
 		try {
 			Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
+
 			isFoliaPresent = true;
 		} catch (final Exception ex) {
 			isFoliaPresent = false;
 		}
+
 		return isFoliaPresent;
 	}
 }

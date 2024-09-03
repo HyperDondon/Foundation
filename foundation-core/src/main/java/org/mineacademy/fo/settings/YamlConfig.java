@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
 
-import org.jetbrains.annotations.Nullable;
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.FileUtil;
 import org.snakeyaml.engine.v2.api.Dump;
@@ -29,16 +28,26 @@ import lombok.Setter;
  */
 public class YamlConfig extends FileConfig {
 
+	/**
+	 * The custom constructor to convert strings to values in the config
+	 */
 	@Setter
 	private static Function<LoadSettings, StandardConstructor> customConstructor = loadSettings -> new PlatformNeutralYamlConstructor(loadSettings);
 
+	/**
+	 * The custom representer to convert values to strings in the config
+	 */
 	@Setter
 	private static Function<DumpSettings, StandardRepresenter> customRepresenter = dumpSettings -> new PlatformNeutralYamlRepresenter(dumpSettings);
 
 	/**
-	 * The Yaml instance
+	 * The yaml loader
 	 */
 	private final Load yamlLoader;
+
+	/**
+	 * The yaml dumper
+	 */
 	private final Dump yamlDumper;
 
 	/**
@@ -133,7 +142,7 @@ public class YamlConfig extends FileConfig {
 	 * @param from
 	 * @param to
 	 */
-	public final void loadConfiguration(@Nullable String from, String to) {
+	public final void loadConfiguration(String from, String to) {
 		File file;
 
 		if (from != null) {
@@ -187,7 +196,6 @@ public class YamlConfig extends FileConfig {
 	@NonNull
 	@Override
 	public final String saveToString() {
-
 		// Do not use comments
 		if (this.defaults == null || !this.saveComments()) {
 			String header = "";
@@ -253,7 +261,6 @@ public class YamlConfig extends FileConfig {
 	 */
 	@Override
 	final void loadFromString(@NonNull String contents) {
-
 		final Map<?, ?> input = (Map<?, ?>) this.yamlLoader.loadFromString(contents);
 		final String header = this.parseHeader(contents);
 
@@ -339,7 +346,6 @@ public class YamlConfig extends FileConfig {
 	 */
 	@NonNull
 	public static final YamlConfig fromInternalPath(@NonNull String path) {
-
 		final YamlConfig config = new YamlConfig();
 
 		try {
@@ -360,7 +366,6 @@ public class YamlConfig extends FileConfig {
 	 */
 	@NonNull
 	public static final YamlConfig fromFile(@NonNull File file) {
-
 		final YamlConfig config = new YamlConfig();
 
 		try {

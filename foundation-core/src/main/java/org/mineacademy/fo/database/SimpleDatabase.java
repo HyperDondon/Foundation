@@ -25,7 +25,7 @@ import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.FileUtil;
 import org.mineacademy.fo.ReflectionUtilCore;
 import org.mineacademy.fo.SerializeUtilCore;
-import org.mineacademy.fo.SerializeUtilCore.Mode;
+import org.mineacademy.fo.SerializeUtilCore.Language;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.collection.StrictMap;
@@ -954,8 +954,8 @@ public class SimpleDatabase {
 	 *
 	 * @return
 	 */
-	protected Mode getTableMode() {
-		return SerializeUtilCore.Mode.YAML;
+	protected Language getTableMode() {
+		return SerializeUtilCore.Language.YAML;
 	}
 
 	/**
@@ -1363,7 +1363,7 @@ public class SimpleDatabase {
 				return null;
 
 			try {
-				return SerializeUtilCore.deserialize(Mode.JSON, typeOf, value);
+				return SerializeUtilCore.deserialize(Language.JSON, typeOf, value);
 
 			} catch (final Throwable ex) {
 				CommonCore.warning(Platform.getPlugin().getName() + " found invalid row with invalid item value '" + value + "' in column '" + columnLabel + "' in table " + this.tableName + ", ignoring.");
@@ -1382,7 +1382,7 @@ public class SimpleDatabase {
 			}
 
 			try {
-				return SerializeUtilCore.deserialize(Mode.JSON, typeOf, value);
+				return SerializeUtilCore.deserialize(Language.JSON, typeOf, value);
 
 			} catch (final Throwable ex) {
 				CommonCore.warning(Platform.getPlugin().getName() + " found invalid row with invalid item value '" + value + "' in column '" + columnLabel + "' in table " + this.tableName + ", ignoring.");

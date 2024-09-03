@@ -14,7 +14,6 @@ import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.collection.StrictList;
-import org.mineacademy.fo.model.BoxedMessage;
 import org.mineacademy.fo.model.IsInList;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.SimpleTime;
@@ -353,10 +352,6 @@ public abstract class YamlStaticConfig {
 
 	protected static final double getPercentage(String path) {
 		return TEMPORARY_INSTANCE.getPercentage(path);
-	}
-
-	protected static final BoxedMessage getBoxedMessage(final String path) {
-		return TEMPORARY_INSTANCE.getBoxedMessage(path);
 	}
 
 	protected static final <E> E get(final String path, final Class<E> typeOf) {

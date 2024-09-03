@@ -83,6 +83,7 @@ final class AutoRegisterScanner {
 	 * If not, we only call the instance constructor in case there is any underlying registration going on
 	 */
 	public static void scanAndRegister() {
+
 		registeredCommandGroups.clear();
 
 		proxyListenerRegistered = false;
@@ -96,7 +97,6 @@ final class AutoRegisterScanner {
 
 		for (final Class<?> clazz : classes)
 			try {
-
 				// Prevent beginner programmer mistake of forgetting to implement listener
 				try {
 					final Class<? extends Annotation> eventHandlerClass = ReflectionUtilCore.lookupClass("org.bukkit.event.EventHandler");
@@ -245,8 +245,9 @@ final class AutoRegisterScanner {
 		for (final Class<?> delayedSettings : delayedLoading)
 			YamlStaticConfig.load((Class<? extends YamlStaticConfig>) delayedSettings);
 
-		if (staticLocalizations.isEmpty() && staticLocalizationFileExist)
+		if (staticLocalizations.isEmpty() && staticLocalizationFileExist) {
 			YamlStaticConfig.load(SimpleLocalization.class);
+		}
 
 	}
 

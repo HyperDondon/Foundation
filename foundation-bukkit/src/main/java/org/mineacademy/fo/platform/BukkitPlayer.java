@@ -17,10 +17,6 @@ import org.mineacademy.fo.plugin.SimplePlugin;
 import org.mineacademy.fo.remain.Remain;
 import org.mineacademy.fo.remain.internal.BossBarInternals;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-
 import lombok.Getter;
 import lombok.NonNull;
 import net.kyori.adventure.bossbar.BossBar.Color;
@@ -188,60 +184,27 @@ public class BukkitPlayer extends FoundationPlayer {
 			return;
 		}
 
-		final long nanoTime = System.nanoTime();
+		if (MinecraftVersion.olderThan(V.v1_16)) {
 
-		try {
-			if (MinecraftVersion.olderThan(V.v1_16)) {
+			if (MinecraftVersion.olderThan(V.v1_7))
+				this.sender.sendMessage(Remain.convertAdventureToLegacy(component));
 
-				if (MinecraftVersion.olderThan(V.v1_7))
+			else {
+				String json = GsonComponentSerializer.gson().serialize(component);
+
+				// different hover event key in legacy and adventure conversion is broken, again
+				json = json.replace("\"action\":\"show_text\",\"contents\"", "\"action\":\"show_text\",\"value\"");
+
+				try {
+					this.player.spigot().sendMessage(Remain.convertJsonToBungee(json));
+
+				} catch (final NoSuchMethodError ex) {
 					this.sender.sendMessage(Remain.convertAdventureToLegacy(component));
-
-				else {
-					String json = GsonComponentSerializer.gson().serialize(component);
-
-					// different hover event key in legacy and adventure conversion is broken, again
-					json = json.replace("\"action\":\"show_text\",\"contents\"", "\"action\":\"show_text\",\"value\"");
-
-					try {
-						this.player.spigot().sendMessage(Remain.convertJsonToBungee(json));
-
-					} catch (final NoSuchMethodError ex) {
-						this.sender.sendMessage(Remain.convertAdventureToLegacy(component));
-					}
 				}
-
-			} else
-				this.sender.spigot().sendMessage(Remain.convertAdventureToBungee(component));
-
-		} finally {
-			//System.out.println("sendRawMessage took " + String.format("%.3f", (System.nanoTime() - nanoTime) / 1_000_000D) + "ms");
-		}
-	}
-
-	/*
-	 * Helper method to rename the component's contents to value for legacy MC versions
-	 */
-	private void convertHoverEvent(JsonObject map) {
-		if (map.has("hoverEvent")) {
-			final JsonObject hoverEvent = map.get("hoverEvent").getAsJsonObject();
-			JsonObject value = null;
-
-			if (hoverEvent.has("contents")) {
-				value = hoverEvent.get("contents").getAsJsonObject();
-
-				hoverEvent.remove("contents");
 			}
 
-			if (value != null)
-				hoverEvent.add("value", value);
-		}
-
-		if (map.has("extra")) {
-			final JsonArray extraArray = map.get("extra").getAsJsonArray();
-
-			for (final JsonElement key : extraArray)
-				convertHoverEvent(key.getAsJsonObject());
-		}
+		} else
+			this.sender.spigot().sendMessage(Remain.convertAdventureToBungee(component));
 	}
 
 	@Override

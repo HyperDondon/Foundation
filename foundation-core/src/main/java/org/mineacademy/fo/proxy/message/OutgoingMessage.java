@@ -177,7 +177,7 @@ public final class OutgoingMessage extends Message {
 				"Proxy message " + message + " on channel " + channel + " has invalid data lenght! Expected: " + message.getContent().length + ". Got: " + dataArray.length);
 
 		if (!message.name().equals("PLAYERS_CLUSTER_DATA") && Debugger.isDebugged("proxy"))
-			Debugger.put("proxy", "Sending proxy message " + message + " on channel " + channel + " with data: " + CommonCore.join(dataArray, t -> CommonCore.getOrDefault(SerializeUtilCore.serialize(SerializeUtilCore.Mode.YAML, t), "").toString()));
+			Debugger.put("proxy", "Sending proxy message " + message + " on channel " + channel + " with data: " + CommonCore.join(dataArray, t -> CommonCore.getOrDefault(SerializeUtilCore.serialize(SerializeUtilCore.Language.YAML, t), "").toString()));
 
 		final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 		final DataOutputStream out = new DataOutputStream(byteArrayOutputStream);
@@ -194,7 +194,7 @@ public final class OutgoingMessage extends Message {
 					"Message: " + message,
 					"Channel: " + channel,
 					"Error: %error%",
-					"All data: " + CommonCore.join(dataArray, data2 -> CommonCore.getOrDefault(SerializeUtilCore.serialize(SerializeUtilCore.Mode.YAML, data2), "").toString()));
+					"All data: " + CommonCore.join(dataArray, data2 -> CommonCore.getOrDefault(SerializeUtilCore.serialize(SerializeUtilCore.Language.YAML, data2), "").toString()));
 		}
 
 		for (final Object data : dataArray)
@@ -239,7 +239,7 @@ public final class OutgoingMessage extends Message {
 						"Channel: " + channel,
 						"Wrong data: " + data,
 						"Error: %error%",
-						"All data: " + CommonCore.join(dataArray, data2 -> CommonCore.getOrDefault(SerializeUtilCore.serialize(SerializeUtilCore.Mode.YAML, data2), "").toString()));
+						"All data: " + CommonCore.join(dataArray, data2 -> CommonCore.getOrDefault(SerializeUtilCore.serialize(SerializeUtilCore.Language.YAML, data2), "").toString()));
 
 				return;
 			}

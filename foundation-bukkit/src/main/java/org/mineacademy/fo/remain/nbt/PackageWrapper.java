@@ -8,10 +8,8 @@ package org.mineacademy.fo.remain.nbt;
  */
 
 enum PackageWrapper {
-	NMS(new String(new byte[] { 'n', 'e', 't', '.', 'm', 'i', 'n', 'e', 'c', 'r', 'a', 'f', 't', '.', 's', 'e', 'r',
-			'v', 'e', 'r' })),
-	CRAFTBUKKIT(new String(new byte[] { 'o', 'r', 'g', '.', 'b', 'u', 'k', 'k', 'i', 't', '.', 'c', 'r', 'a', 'f', 't',
-			'b', 'u', 'k', 'k', 'i', 't' })),
+	NMS(new String(new byte[] { 'n', 'e', 't', '.', 'm', 'i', 'n', 'e', 'c', 'r', 'a', 'f', 't', '.', 's', 'e', 'r', 'v', 'e', 'r' })),
+	CRAFTBUKKIT(new String(new byte[] { 'o', 'r', 'g', '.', 'b', 'u', 'k', 'k', 'i', 't', '.', 'c', 'r', 'a', 'f', 't', 'b', 'u', 'k', 'k', 'i', 't' })),
 	NONE("");
 
 	private final String uri;
@@ -24,7 +22,7 @@ enum PackageWrapper {
 	 * @return The Uri for that package
 	 */
 	public String getUri() {
-		return uri;
+		return this.uri;
 	}
 
 }

@@ -15,7 +15,7 @@ import java.util.function.Function;
 
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.SerializeUtilCore;
-import org.mineacademy.fo.SerializeUtilCore.Mode;
+import org.mineacademy.fo.SerializeUtilCore.Language;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.jsonsimple.JSONObject;
@@ -26,6 +26,7 @@ import org.mineacademy.fo.settings.ConfigSection;
 
 import lombok.Getter;
 import lombok.NonNull;
+import novy.config.MemorySection;
 
 /**
  * Serialized map enables you to save and retain values from your
@@ -43,7 +44,7 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 	 * Was this map created from a json string?
 	 */
 	@Getter
-	private SerializeUtilCore.Mode mode;
+	private SerializeUtilCore.Language mode;
 
 	/**
 	 * Should we remove entries on get for this map instance,
@@ -66,13 +67,13 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 	 * Create a new map
 	 */
 	public SerializedMap() {
-		this(Mode.YAML);
+		this(Language.YAML);
 	}
 
 	/*
 	 * Create a new map
 	 */
-	private SerializedMap(SerializeUtilCore.Mode mode) {
+	private SerializedMap(SerializeUtilCore.Language mode) {
 		super("Cannot remove '%s' as it is not in the map!", "Value '%s' is already in the map!");
 
 		this.mode = mode;
@@ -879,8 +880,8 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 			final JSONObject jsonMap = new JSONObject();
 
 			for (final Map.Entry<String, Object> entry : this.map.entrySet()) {
-				final Object key = SerializeUtilCore.serialize(Mode.JSON, entry.getKey());
-				final Object value = SerializeUtilCore.serialize(Mode.JSON, entry.getValue());
+				final Object key = SerializeUtilCore.serialize(Language.JSON, entry.getKey());
+				final Object value = SerializeUtilCore.serialize(Language.JSON, entry.getValue());
 
 				if (key != null && value != null)
 					jsonMap.put(key.toString(), value);
@@ -1063,13 +1064,13 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 	 * @return the serialized map, or an empty map if object could not be parsed
 	 */
 	public static SerializedMap of(@NonNull Object object) {
-		return of(object, Mode.YAML);
+		return of(object, Language.YAML);
 	}
 
 	/*
 	 * Parses the given object into Serialized map
 	 */
-	private static SerializedMap of(@NonNull Object object, Mode mode) {
+	private static SerializedMap of(@NonNull Object object, Language mode) {
 
 		if (object instanceof SerializedMap) {
 			((SerializedMap) object).mode = mode;
@@ -1082,6 +1083,9 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 
 		if (object instanceof ConfigSection)
 			return of(((ConfigSection) object).getValues(false));
+
+		if (object instanceof MemorySection)
+			return of(((MemorySection) object).getValues(false));
 
 		if (object instanceof Map) {
 			final Map<String, Object> copyOf = new LinkedHashMap<>();
@@ -1136,14 +1140,14 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 	public static SerializedMap fromJson(@NonNull final String json) {
 
 		if (json.isEmpty() || "[]".equals(json) || "{}".equals(json))
-			return new SerializedMap(Mode.JSON);
+			return new SerializedMap(Language.JSON);
 
 		// Fallback to simple
 		try {
 			final Object parsed = JSONParser.deserialize(json);
 
 			if (parsed instanceof JSONObject)
-				return of(parsed, Mode.JSON);
+				return of(parsed, Language.JSON);
 
 			throw new FoException("Expected JSONObject, got " + (parsed != null ? parsed.getClass() : "unknown class") + " from raw JSON input: " + json);
 

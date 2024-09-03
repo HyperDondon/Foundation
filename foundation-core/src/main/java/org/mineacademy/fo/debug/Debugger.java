@@ -176,8 +176,8 @@ public final class Debugger {
 		} catch (final Throwable secondError) {
 
 			// Use system in case CommonCore#log threw the error
-			System.out.println("Got error when saving another error! Saving error:" + secondError);
-			System.out.println("Original error that is not saved:");
+			log("Got error when saving another error! Saving error:" + secondError);
+			log("Original error that is not saved:");
 
 			throwable.printStackTrace();
 		}
@@ -329,6 +329,9 @@ public final class Debugger {
 				!message.contains("java.util.concurrent.ThreadPoolExecutor");
 	}
 
+	/*
+	 * Fallback to system.out in case logger is corrupted
+	 */
 	private static void log(String message) {
 		System.out.println(message);
 	}

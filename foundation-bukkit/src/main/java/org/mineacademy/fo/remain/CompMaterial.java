@@ -1761,7 +1761,7 @@ public enum CompMaterial {
 	/**
 	 * The cached Bukkit parsed material.
 	 *
-	 * @see #toMaterial()
+	 * @see #getMaterial()
 	 * @since 9.0.0
 	 */
 	@Getter
@@ -1843,23 +1843,12 @@ public enum CompMaterial {
 	 */
 
 	public ItemStack toItem(int amount) {
-		final Material material = this.toMaterial();
+		final Material material = this.getMaterial();
 
 		if (material == null)
 			return null;
 
 		return Data.ISFLAT ? new ItemStack(material, amount) : new ItemStack(material, amount, this.data);
-	}
-
-	/**
-	 * Parses the material of this CompMaterial.
-	 *
-	 * @return the material related to this CompMaterial based on the server version.
-	 * @since 1.0.0
-	 */
-
-	public Material toMaterial() {
-		return this.material;
 	}
 
 	/**
@@ -1912,12 +1901,12 @@ public enum CompMaterial {
 		if (MinecraftVersion.atLeast(V.v1_13))
 			return type == this.material;
 
-		if (type == this.toMaterial() && data == this.data)
+		if (type == this.getMaterial() && data == this.data)
 			return true;
 
 		final CompMaterial compMat = fromMaterial(type);
 
-		return isDamageable(compMat) && this.toMaterial() == type;
+		return isDamageable(compMat) && this.getMaterial() == type;
 	}
 
 	/**
@@ -2787,7 +2776,7 @@ public enum CompMaterial {
 	 */
 	public ItemStack setType(ItemStack item) {
 		Objects.requireNonNull(item, "Cannot set material for null ItemStack");
-		final Material material = this.toMaterial();
+		final Material material = this.getMaterial();
 		Objects.requireNonNull(material, () -> "Unsupported material: " + this.name());
 
 		item.setType(material);
@@ -2825,7 +2814,7 @@ public enum CompMaterial {
 		if (this.data != 0 || this.version >= 13)
 			return -1;
 
-		final Material material = this.toMaterial();
+		final Material material = this.getMaterial();
 
 		if (material == null)
 			return -1;

@@ -113,10 +113,10 @@ public final class CompMetadata {
 	 * @param value
 	 */
 	public static void setMetadata(@NonNull final Entity entity, @NonNull final String key, final String value) {
-		if (hasPersistentMetadata) {
+		if (hasPersistentMetadata)
 			setPersistentMetadata(entity, key, value);
 
-		} else
+		else
 			MetadataFile.getInstance().setMetadata(entity, key, value);
 	}
 
@@ -467,13 +467,23 @@ public final class CompMetadata {
 				if (!metadata.isEmpty())
 					this.entityMetadata.put(uuid, metadata);
 			}
+
+			Common.runLater(4, () -> {
+				for (final Iterator<UUID> iterator = this.entityMetadata.keySet().iterator(); iterator.hasNext();) {
+					final UUID uniqueId = iterator.next();
+					final Entity entity = Remain.getEntity(uniqueId);
+
+					if (entity == null)
+						iterator.remove();
+				}
+			});
 		}
 
 		private void loadBlockStates() {
 			this.blockMetadata.clear();
 
 			for (final String locationString : this.getMap("Block").keySet()) {
-				final Location location = SerializeUtil.deserialize(SerializeUtil.Mode.YAML, Location.class, locationString);
+				final Location location = SerializeUtil.deserialize(SerializeUtil.Language.YAML, Location.class, locationString);
 
 				final Block block = location.getBlock();
 				final BlockCache blockCache = this.get("Block." + locationString, BlockCache.class);

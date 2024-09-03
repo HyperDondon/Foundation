@@ -28,10 +28,10 @@ public class NBTFile extends NBTCompound {
 			throw new NullPointerException("File can't be null!");
 		this.file = file;
 		if (file.exists())
-			nbt = NBTReflectionUtil.readNBT(Files.newInputStream(file.toPath()));
+			this.nbt = NBTReflectionUtil.readNBT(Files.newInputStream(file.toPath()));
 		else {
-			nbt = ObjectCreator.NMS_NBTTAGCOMPOUND.getInstance();
-			save();
+			this.nbt = ObjectCreator.NMS_NBTTAGCOMPOUND.getInstance();
+			this.save();
 		}
 	}
 
@@ -42,10 +42,10 @@ public class NBTFile extends NBTCompound {
 	 */
 	public void save() throws IOException {
 		try {
-			getWriteLock().lock();
-			saveTo(file, this);
+			this.getWriteLock().lock();
+			saveTo(this.file, this);
 		} finally {
-			getWriteLock().unlock();
+			this.getWriteLock().unlock();
 		}
 	}
 
@@ -53,17 +53,17 @@ public class NBTFile extends NBTCompound {
 	 * @return The File used to store the data
 	 */
 	public File getFile() {
-		return file;
+		return this.file;
 	}
 
 	@Override
 	public Object getCompound() {
-		return nbt;
+		return this.nbt;
 	}
 
 	@Override
 	protected void setCompound(Object compound) {
-		nbt = compound;
+		this.nbt = compound;
 	}
 
 	/**

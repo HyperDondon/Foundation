@@ -594,7 +594,7 @@ public abstract class SimpleCommandCore {
 	 * @param enumType
 	 * @param enumValue
 	 * @param condition
-
+	
 	 * @return
 	 * @throws CommandException
 	 */
@@ -864,23 +864,23 @@ public abstract class SimpleCommandCore {
 	 * @param messages
 	 */
 	/*protected final void tell(String... messages) {
-
+	
 		if (messages == null)
 			return;
-
+	
 		final String oldTellPrefix = CommonCore.getTellPrefix();
-
+	
 		if (this.tellPrefix != null)
 			CommonCore.setTellPrefix(this.tellPrefix);
-
+	
 		try {
 			messages = this.replacePlaceholders(messages);
-
+	
 			if (messages.length > 2)
 				CommonCore.tellNoPrefix(this.sender, messages);
 			else
 				CommonCore.tell(this.sender, messages);
-
+	
 		} finally {
 			CommonCore.setTellPrefix(oldTellPrefix);
 		}
@@ -1023,11 +1023,22 @@ public abstract class SimpleCommandCore {
 	/**
 	 * Sends a message to the player and throws a message error, preventing further execution
 	 *
-	 * @param message
+	 * @param messages
 	 * @throws CommandException
 	 */
-	public final void returnTell(final String message) throws CommandException {
-		this.returnTell(SimpleComponent.fromMini(message));
+	public final void returnTell(final String... messages) throws CommandException {
+		SimpleComponent component = SimpleComponent.empty();
+
+		for (int i = 0; i < messages.length; i++) {
+			final String message = messages[i];
+
+			component = component.append(SimpleComponent.fromMini(message));
+
+			if (i + 1 < messages.length)
+				component = component.appendNewLine();
+		}
+
+		this.returnTell(component);
 	}
 
 	/**
@@ -1073,10 +1084,10 @@ public abstract class SimpleCommandCore {
 	/*public final String[] replacePlaceholders(final String[] messages) {
 		for (int i = 0; i < messages.length; i++)
 			messages[i] = this.replacePlaceholders(messages[i]);
-
+	
 		return messages;
 	}
-
+	
 	// TODO get rid of
 	protected String replacePlaceholders(String legacy) {
 		return RemainCore.convertAdventureToLegacy(replacePlaceholders(RemainCore.convertLegacyToAdventure(legacy)));
@@ -1130,7 +1141,7 @@ public abstract class SimpleCommandCore {
 	/*protected final void setArg(final int position, final String value) {
 		if (this.args.length <= position)
 			this.args = Arrays.copyOf(this.args, position + 1);
-
+	
 		this.args[position] = value;
 	}*/
 
@@ -1321,6 +1332,17 @@ public abstract class SimpleCommandCore {
 	 *
 	 * @param tellPrefix
 	 */
+	protected final void setTellPrefix(final String tellPrefix) {
+		this.setTellPrefix(SimpleComponent.fromMini(tellPrefix));
+	}
+
+	/**
+	 * Sets a custom prefix used in tell messages for this command.
+	 * This overrides {@link CommonCore#getTellPrefix()} however won't work if
+	 * {@link #addTellPrefix} is disabled
+	 *
+	 * @param tellPrefix
+	 */
 	protected final void setTellPrefix(final SimpleComponent tellPrefix) {
 		this.tellPrefix = tellPrefix;
 	}
@@ -1388,6 +1410,17 @@ public abstract class SimpleCommandCore {
 	 */
 	protected final SimpleComponent getCooldownMessage() {
 		return cooldownMessage;
+	}
+
+	/**
+	 * Set a custom cooldown message, by default we use the one found in {@link SimpleLocalization.Commands#COOLDOWN_WAIT}
+	 * <p>
+	 * Use {duration} to dynamically replace the remaining time
+	 *
+	 * @param cooldownMessage
+	 */
+	protected final void setCooldownMessage(final String cooldownMessage) {
+		this.cooldownMessage = SimpleComponent.fromMini(cooldownMessage);
 	}
 
 	/**

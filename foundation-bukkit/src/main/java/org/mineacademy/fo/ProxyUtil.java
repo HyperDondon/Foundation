@@ -155,7 +155,7 @@ public final class ProxyUtil {
 			for (final Object datum : data) {
 
 				if (data == null)
-					throw new FoException("Found null object when sending proxy plugin message! Data: " + CommonCore.join(data, t -> CommonCore.getOrDefault(SerializeUtil.serialize(SerializeUtil.Mode.YAML, t), "").toString()));
+					throw new FoException("Found null object when sending proxy plugin message! Data: " + CommonCore.join(data, t -> CommonCore.getOrDefault(SerializeUtil.serialize(SerializeUtil.Language.YAML, t), "").toString()));
 
 				if (datum instanceof Integer)
 					out.writeInt((Integer) datum);

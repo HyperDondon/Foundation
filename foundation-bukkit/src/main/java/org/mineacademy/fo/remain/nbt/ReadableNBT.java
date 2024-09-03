@@ -164,7 +164,7 @@ public interface ReadableNBT {
 	 * @return whether the key is set and has the specified type
 	 */
 	default boolean hasTag(String key, NBTType type) {
-		return hasTag(key) && getType(key) == type;
+		return this.hasTag(key) && this.getType(key) == type;
 	}
 
 	/**
@@ -308,16 +308,6 @@ public interface ReadableNBT {
 	ReadableNBT resolveCompound(String key);
 
 	/**
-	 * Get the object at the specified key via the handler.
-	 * 
-	 * @param <T>
-	 * @param key
-	 * @param handler
-	 * @return
-	 */
-	<T> T get(String key, NBTHandler<T> handler);
-
-	/**
 	 * Get an Enum value that has been set via setEnum or setString(key,
 	 * value.name()). Passing null/invalid keys will return null.
 	 * 
@@ -342,10 +332,10 @@ public interface ReadableNBT {
 	 */
 	void writeCompound(OutputStream stream);
 
-	@Override
 	/**
 	 * @return The NBT as printable NBT-Json.
 	 */
+	@Override
 	String toString();
 
 }

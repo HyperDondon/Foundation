@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.jetbrains.annotations.Nullable;
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.FileUtil;
 import org.mineacademy.fo.ValidCore;
@@ -171,7 +170,7 @@ final class YamlComments {
 		writer.close();
 	}
 
-	private static void write0(String key, @Nullable String forceWriteKey, boolean forceNew, YamlConfig newConfig, YamlConfig oldConfig, Map<String, String> comments, List<String> ignoredSections, BufferedWriter writer, Dump yaml) throws IOException {
+	private static void write0(String key, String forceWriteKey, boolean forceNew, YamlConfig newConfig, YamlConfig oldConfig, Map<String, String> comments, List<String> ignoredSections, BufferedWriter writer, Dump yaml) throws IOException {
 
 		final String[] keys = key.split("\\.");
 		final String actualKey = keys[keys.length - 1];

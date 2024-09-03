@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import org.mineacademy.fo.SerializeUtilCore.Mode;
+import org.mineacademy.fo.SerializeUtilCore.Language;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -35,7 +35,7 @@ public final class TabUtil {
 				if (element != null)
 					if (element instanceof Iterable)
 						for (final Object iterable : (Iterable<?>) element)
-							clone.add(iterable instanceof Enum ? iterable.toString().toLowerCase() : SerializeUtilCore.serialize(Mode.YAML, iterable).toString());
+							clone.add(iterable instanceof Enum ? iterable.toString().toLowerCase() : SerializeUtilCore.serialize(Language.YAML, iterable).toString());
 
 					// Trick: Automatically parse enum constants
 					else if (element instanceof Enum[])
@@ -44,7 +44,7 @@ public final class TabUtil {
 
 					else {
 						final boolean lowercase = element instanceof Enum;
-						final String parsed = SerializeUtilCore.serialize(Mode.YAML, element).toString();
+						final String parsed = SerializeUtilCore.serialize(Language.YAML, element).toString();
 
 						if (!"".equals(parsed))
 							clone.add(lowercase ? parsed.toLowerCase() : parsed);

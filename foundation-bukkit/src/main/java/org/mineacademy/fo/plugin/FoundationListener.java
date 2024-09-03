@@ -197,7 +197,7 @@ final class FoundationListener implements Listener {
 
 }
 
-final class CompPrepareAnvilEvent {
+final class CompPrepareAnvilEvent implements Listener {
 
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void onAnvilPrepareItem(PrepareAnvilEvent event) {

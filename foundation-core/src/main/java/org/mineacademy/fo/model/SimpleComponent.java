@@ -639,7 +639,8 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	public SerializedMap serialize() {
 		return SerializedMap.ofArray(
 				"Components", this.subcomponents,
-				"Ignore_Empty", this.ignoreEmpty);
+				"Ignore_Empty", this.ignoreEmpty,
+				"Last_Style", this.lastStyle);
 	}
 
 	/**
@@ -827,9 +828,12 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	 */
 	public static SimpleComponent deserialize(SerializedMap map) {
 		final List<ConditionalComponent> components = map.getList("Components", ConditionalComponent.class);
-		final boolean ignoreEmpty = map.getBoolean("Ignore_Empty");
+		final SimpleComponent component = new SimpleComponent(components);
 
-		return new SimpleComponent(components).setIgnoreEmpty(ignoreEmpty);
+		component.ignoreEmpty = map.getBoolean("Ignore_Empty");
+		component.lastStyle = map.get("Last_Style", Style.class);
+
+		return component;
 	}
 
 	// --------------------------------------------------------------------

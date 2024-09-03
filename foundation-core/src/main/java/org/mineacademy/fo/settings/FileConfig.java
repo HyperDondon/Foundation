@@ -20,7 +20,7 @@ import java.util.Set;
 
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.SerializeUtilCore;
-import org.mineacademy.fo.SerializeUtilCore.Mode;
+import org.mineacademy.fo.SerializeUtilCore.Language;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.collection.StrictList;
@@ -28,7 +28,6 @@ import org.mineacademy.fo.command.SimpleCommandCore;
 import org.mineacademy.fo.command.SimpleCommandGroup;
 import org.mineacademy.fo.exception.EventHandledException;
 import org.mineacademy.fo.exception.FoException;
-import org.mineacademy.fo.model.BoxedMessage;
 import org.mineacademy.fo.model.ConfigSerializable;
 import org.mineacademy.fo.model.IsInList;
 import org.mineacademy.fo.model.SimpleComponent;
@@ -193,7 +192,7 @@ public abstract class FileConfig {
 			if (type == Long.class && raw instanceof Integer)
 				raw = ((Integer) raw).longValue();
 
-			raw = SerializeUtilCore.deserialize(Mode.YAML, type, raw, deserializeParams);
+			raw = SerializeUtilCore.deserialize(Language.YAML, type, raw, deserializeParams);
 
 			this.checkAssignable(path, raw, type);
 
@@ -526,29 +525,6 @@ public abstract class FileConfig {
 	}
 
 	/**
-	 * Return a message that can be formatted nicely from the key at the given path
-	 * (see {@link #get(String, Class, Object, Object...)}).
-	 *
-	 * @param path
-	 * @return
-	 */
-	public final BoxedMessage getBoxedMessage(final String path) {
-		return this.getBoxedMessage(path, null);
-	}
-
-	/**
-	 * Return a message that can be formatted nicely from the key at the given path, or supply with default
-	 * (see {@link #get(String, Class, Object, Object...)}).
-	 *
-	 * @param path
-	 * @param def
-	 * @return
-	 */
-	public final BoxedMessage getBoxedMessage(final String path, final BoxedMessage def) {
-		return this.get(path, BoxedMessage.class, def);
-	}
-
-	/**
 	 * Return an tuple from the key at the given path
 	 * (see {@link #get(String, Class, Object, Object...)}).
 	 *
@@ -778,7 +754,7 @@ public abstract class FileConfig {
 
 		if (objects != null)
 			for (Object object : objects) {
-				object = object != null ? SerializeUtilCore.deserialize(Mode.YAML, type, object, deserializeParameters) : null;
+				object = object != null ? SerializeUtilCore.deserialize(Language.YAML, type, object, deserializeParameters) : null;
 
 				if (object != null)
 					list.add((T) object);
@@ -860,7 +836,7 @@ public abstract class FileConfig {
 
 		if (savedKeys != null)
 			for (final Map.Entry<String, Object> entry : SerializedMap.of(this.section.retrieve(path))) {
-				final Key key = SerializeUtilCore.deserialize(Mode.YAML, keyType, entry.getKey());
+				final Key key = SerializeUtilCore.deserialize(Language.YAML, keyType, entry.getKey());
 				final Value value;
 
 				/*if (LocationList.class.isAssignableFrom(valueType)) {
@@ -872,7 +848,7 @@ public abstract class FileConfig {
 					value = (Value) new LocationList(this, copy);
 				
 				} else*/
-				value = SerializeUtilCore.deserialize(Mode.YAML, valueType, entry.getValue(), valueDeserializeParams);
+				value = SerializeUtilCore.deserialize(Language.YAML, valueType, entry.getValue(), valueDeserializeParams);
 
 				// Ensure the pair values are valid for the given paramenters
 				this.checkAssignable(path, key, keyType);
@@ -916,8 +892,8 @@ public abstract class FileConfig {
 		// Load key-value pairs from config to our map
 		if (exists)
 			for (final Map.Entry<String, Object> entry : SerializedMap.of(this.section.retrieve(path)).entrySet()) {
-				final Key key = SerializeUtilCore.deserialize(Mode.YAML, keyType, entry.getKey());
-				final List<Value> value = SerializeUtilCore.deserialize(Mode.YAML, List.class, entry.getValue(), setDeserializeParameters);
+				final Key key = SerializeUtilCore.deserialize(Language.YAML, keyType, entry.getKey());
+				final List<Value> value = SerializeUtilCore.deserialize(Language.YAML, List.class, entry.getValue(), setDeserializeParameters);
 
 				// Ensure the pair values are valid for the given parameters
 				this.checkAssignable(path, key, keyType);
@@ -967,7 +943,7 @@ public abstract class FileConfig {
 		if (value instanceof SimpleComponent)
 			value = ((SimpleComponent) value).toMini();
 
-		value = SerializeUtilCore.serialize(Mode.YAML, value);
+		value = SerializeUtilCore.serialize(Language.YAML, value);
 
 		this.section.store(path, value);
 		this.shouldSave = true;

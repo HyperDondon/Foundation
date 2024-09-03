@@ -105,9 +105,7 @@ public final class Variables {
 		final Matcher matcher = BRACKET_VARIABLE_PATTERN.matcher(message);
 
 		while (matcher.find()) {
-			String variable = matcher.group();
-			variable = variable.substring(1, variable.length() - 1);
-
+			final String variable = matcher.group();
 			final SimpleComponent value = replaceVariable(variable, sender, replacements);
 
 			if (value != null)
@@ -124,7 +122,7 @@ public final class Variables {
 	public static SimpleComponent replace(SimpleComponent message, FoundationPlayer sender, Map<String, Object> replacements) {
 		return message.replaceMatch(BRACKET_VARIABLE_PATTERN, (result, input) -> {
 			final String variable = result.group();
-			final SimpleComponent value = replaceVariable(variable.substring(1, variable.length() - 1), sender, replacements);
+			final SimpleComponent value = replaceVariable(variable, sender, replacements);
 
 			return value == null ? SimpleComponent.fromPlain(variable) : value;
 		});
@@ -134,6 +132,9 @@ public final class Variables {
 	private static SimpleComponent replaceVariable(String variable, FoundationPlayer audience, @NonNull Map<String, Object> replacements) {
 		boolean frontSpace = false;
 		boolean backSpace = false;
+
+		if (variable.startsWith("{") && variable.endsWith("}"))
+			variable = variable.substring(1, variable.length() - 1);
 
 		if (variable.startsWith("+")) {
 			variable = variable.substring(1);

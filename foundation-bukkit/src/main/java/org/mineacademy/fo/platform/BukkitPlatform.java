@@ -3,6 +3,7 @@ package org.mineacademy.fo.platform;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -14,6 +15,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
@@ -31,7 +33,7 @@ import org.mineacademy.fo.MinecraftVersion;
 import org.mineacademy.fo.MinecraftVersion.V;
 import org.mineacademy.fo.ReflectionUtil;
 import org.mineacademy.fo.SerializeUtil;
-import org.mineacademy.fo.SerializeUtilCore.Mode;
+import org.mineacademy.fo.SerializeUtilCore.Language;
 import org.mineacademy.fo.SerializeUtilCore.Serializer;
 import org.mineacademy.fo.Valid;
 import org.mineacademy.fo.ValidCore;
@@ -55,7 +57,9 @@ import org.mineacademy.fo.remain.JsonItemStack;
 import org.mineacademy.fo.remain.Remain;
 import org.mineacademy.fo.settings.YamlConfig;
 
+import lombok.NonNull;
 import net.kyori.adventure.text.event.HoverEventSource;
+import novy.config.YamlConfiguration;
 
 public class BukkitPlatform extends FoundationPlatform {
 
@@ -68,6 +72,9 @@ public class BukkitPlatform extends FoundationPlatform {
 		// Inject Yaml
 		YamlConfig.setCustomConstructor(settings -> new BukkitYamlConstructor(settings));
 		YamlConfig.setCustomRepresenter(settings -> new BukkitYamlRepresenter(settings));
+
+		YamlConfiguration.setCustomConstructor(settings -> new BukkitYamlConstructor(settings));
+		YamlConfiguration.setCustomRepresenter(settings -> new BukkitYamlRepresenter(settings));
 
 		// Expand simple component
 		SimpleComponent.setBuilder(HookManager::replaceRelationPlaceholders);
@@ -103,214 +110,193 @@ public class BukkitPlatform extends FoundationPlatform {
 		Variables.setCollector(new BukkitVariableCollector());
 
 		// Add platform-specific helpers to translate values to a config and back
-
-		SerializeUtil.addCustomSerializer(Location.class, new Serializer<Location>() {
+		SerializeUtil.addSerializer(new Serializer() {
 
 			@Override
-			public Object serialize(Mode mode, Location object) {
-				return SerializeUtil.serializeLoc(object);
+			public Object serialize(Language language, Object object) {
+				if (object instanceof World)
+					return ((World) object).getName();
+
+				else if (object instanceof Location)
+					return SerializeUtil.serializeLoc((Location) object);
+
+				else if (object instanceof PotionEffectType)
+					return ((PotionEffectType) object).getName();
+
+				else if (object instanceof PotionEffect) {
+					final PotionEffect effect = (PotionEffect) object;
+
+					return effect.getType().getName() + " " + effect.getDuration() + " " + effect.getAmplifier();
+				}
+
+				else if (object instanceof Enchantment)
+					return ((Enchantment) object).getName();
+
+				else if (object instanceof SimpleSound)
+					return object.toString();
+
+				else if (object instanceof ItemStack) {
+					if (language == Language.JSON)
+						return JsonItemStack.toJson((ItemStack) object);
+					else
+						return object;
+				}
+
+				else if (object instanceof ItemStack[]) {
+					if (language == SerializeUtil.Language.JSON) {
+						final JSONArray jsonList = new JSONArray();
+
+						for (final ItemStack item : (ItemStack[]) object)
+							jsonList.add(item == null ? null : JsonItemStack.toJson(item));
+
+						return jsonList.toJson();
+
+					} else
+						return SerializeUtil.serialize(language, Arrays.asList((ItemStack[]) object));
+				}
+
+				else if (object instanceof ConfigurationSerializable)
+					return object; // will pack in BukkitYamlRepresenter
+
+				return null;
 			}
 
 			@Override
-			public Location deserialize(Mode mode, Object object) {
-				return SerializeUtil.deserializeLocation((String) object);
-			}
-		});
+			public <T> T deserialize(@NonNull Language language, @NonNull Class<T> classOf, @NonNull Object object, Object... parameters) {
 
-		SerializeUtil.addCustomSerializer(World.class, new Serializer<World>() {
+				if (classOf == Location.class)
+					return (T) SerializeUtil.deserializeLocation((String) object);
 
-			@Override
-			public Object serialize(Mode mode, World object) {
-				return object.getName();
-			}
+				else if (classOf == World.class) {
+					final World world = Bukkit.getWorld((String) object);
+					Valid.checkNotNull(world, "World " + object + " not found. Available: " + Bukkit.getWorlds());
 
-			@Override
-			public World deserialize(Mode mode, Object object) {
-				final World world = Bukkit.getWorld((String) object);
-				Valid.checkNotNull(world, "World " + object + " not found. Available: " + Bukkit.getWorlds());
+					return (T) world;
+				}
 
-				return world;
-			}
-		});
+				else if (classOf == PotionEffectType.class) {
+					final PotionEffectType type = CompPotionEffectType.getByName((String) object);
+					Valid.checkNotNull(type, "Potion effect type " + object + " not found. Available: " + CompPotionEffectType.getPotionNames());
 
-		SerializeUtil.addCustomSerializer(PotionEffectType.class, new Serializer<PotionEffectType>() {
+					return (T) type;
+				}
 
-			@Override
-			public Object serialize(Mode mode, PotionEffectType object) {
-				return object.getName();
-			}
+				else if (classOf == PotionEffect.class) {
+					final String[] parts = object.toString().split(" ");
+					ValidCore.checkBoolean(parts.length == 3, "Expected PotionEffect (String) but got " + object.getClass().getSimpleName() + ": " + object);
 
-			@Override
-			public PotionEffectType deserialize(Mode mode, Object object) {
-				final PotionEffectType type = CompPotionEffectType.getByName((String) object);
-				Valid.checkNotNull(type, "Potion effect type " + object + " not found. Available: " + CompPotionEffectType.getPotionNames());
+					final String typeRaw = parts[0];
+					final PotionEffectType type = PotionEffectType.getByName(typeRaw);
 
-				return type;
-			}
-		});
+					final int duration = Integer.parseInt(parts[1]);
+					final int amplifier = Integer.parseInt(parts[2]);
 
-		SerializeUtil.addCustomSerializer(PotionEffect.class, new Serializer<PotionEffect>() {
+					return (T) new PotionEffect(type, duration, amplifier);
+				}
 
-			@Override
-			public Object serialize(Mode mode, PotionEffect object) {
-				return object.getType().getName() + " " + object.getDuration() + " " + object.getAmplifier();
-			}
+				else if (classOf == Enchantment.class) {
+					final Enchantment enchant = CompEnchantment.getByName((String) object);
+					Valid.checkNotNull(enchant, "Enchantment " + object + " not found. Available: " + CompEnchantment.getEnchantmentNames());
 
-			@Override
-			public PotionEffect deserialize(Mode mode, Object object) {
-				final String[] parts = object.toString().split(" ");
-				ValidCore.checkBoolean(parts.length == 3, "Expected PotionEffect (String) but got " + object.getClass().getSimpleName() + ": " + object);
+					return (T) enchant;
+				}
 
-				final String typeRaw = parts[0];
-				final PotionEffectType type = PotionEffectType.getByName(typeRaw);
+				else if (classOf == SimpleSound.class)
+					return (T) new SimpleSound((String) object);
 
-				final int duration = Integer.parseInt(parts[1]);
-				final int amplifier = Integer.parseInt(parts[2]);
+				else if (classOf == ItemStack.class) {
+					if (object instanceof ItemStack)
+						return (T) object;
 
-				return new PotionEffect(type, duration, amplifier);
-			}
-		});
+					if (language == Language.JSON)
+						return (T) JsonItemStack.fromJson(object.toString());
 
-		SerializeUtil.addCustomSerializer(Enchantment.class, new Serializer<Enchantment>() {
+					else {
+						final SerializedMap map = SerializedMap.of(object);
 
-			@Override
-			public Object serialize(Mode mode, Enchantment object) {
-				return object.getName();
-			}
+						final ItemStack item = ItemStack.deserialize(map.asMap());
+						final SerializedMap meta = map.getMap("meta");
 
-			@Override
-			public Enchantment deserialize(Mode mode, Object object) {
-				final Enchantment enchant = CompEnchantment.getByName((String) object);
-				Valid.checkNotNull(enchant, "Enchantment " + object + " not found. Available: " + CompEnchantment.getEnchantmentNames());
+						if (meta != null)
+							try {
+								final Class<?> metaClass = ReflectionUtil.getOBCClass("inventory." + (meta.containsKey("spawnedType") ? "CraftMetaSpawnEgg" : "CraftMetaItem"));
+								final Constructor<?> constructor = metaClass.getDeclaredConstructor(Map.class);
+								constructor.setAccessible(true);
 
-				return enchant;
-			}
-		});
+								final Object craftMeta = constructor.newInstance((Map<String, ?>) meta.serialize());
 
-		SerializeUtil.addCustomSerializer(SimpleSound.class, new Serializer<SimpleSound>() {
+								if (craftMeta instanceof ItemMeta)
+									item.setItemMeta((ItemMeta) craftMeta);
 
-			@Override
-			public Object serialize(Mode mode, SimpleSound object) {
-				return object.toString();
-			}
+							} catch (final Throwable t) {
 
-			@Override
-			public SimpleSound deserialize(Mode mode, Object object) {
-				return new SimpleSound((String) object);
-			}
-		});
+								// We have to manually deserialize metadata :(
+								final ItemMeta itemMeta = item.getItemMeta();
 
-		SerializeUtil.addCustomSerializer(ItemStack.class, new Serializer<ItemStack>() {
+								final String display = meta.containsKey("display-name") ? meta.getString("display-name") : null;
 
-			@Override
-			public Object serialize(Mode mode, ItemStack object) {
-				if (mode == Mode.JSON)
-					return JsonItemStack.toJson(object);
-				else
-					return object;
-			}
+								if (display != null)
+									itemMeta.setDisplayName(display);
 
-			@Override
-			public ItemStack deserialize(Mode mode, Object object) {
-				if (object instanceof ItemStack)
-					return (ItemStack) object;
+								final List<String> lore = meta.containsKey("lore") ? meta.getStringList("lore") : null;
 
-				if (mode == Mode.JSON)
-					return JsonItemStack.fromJson(object.toString());
+								if (lore != null)
+									itemMeta.setLore(lore);
 
-				else {
-					final SerializedMap map = SerializedMap.of(object);
+								final SerializedMap enchants = meta.containsKey("enchants") ? meta.getMap("enchants") : null;
 
-					final ItemStack item = ItemStack.deserialize(map.asMap());
-					final SerializedMap meta = map.getMap("meta");
+								if (enchants != null)
+									for (final Map.Entry<String, Object> entry : enchants.entrySet()) {
+										final Enchantment enchantment = Enchantment.getByName(entry.getKey());
+										final int level = (int) entry.getValue();
 
-					if (meta != null)
-						try {
-							final Class<?> metaClass = ReflectionUtil.getOBCClass("inventory." + (meta.containsKey("spawnedType") ? "CraftMetaSpawnEgg" : "CraftMetaItem"));
-							final Constructor<?> constructor = metaClass.getDeclaredConstructor(Map.class);
-							constructor.setAccessible(true);
-
-							final Object craftMeta = constructor.newInstance((Map<String, ?>) meta.serialize());
-
-							if (craftMeta instanceof ItemMeta)
-								item.setItemMeta((ItemMeta) craftMeta);
-
-						} catch (final Throwable t) {
-
-							// We have to manually deserialize metadata :(
-							final ItemMeta itemMeta = item.getItemMeta();
-
-							final String display = meta.containsKey("display-name") ? meta.getString("display-name") : null;
-
-							if (display != null)
-								itemMeta.setDisplayName(display);
-
-							final List<String> lore = meta.containsKey("lore") ? meta.getStringList("lore") : null;
-
-							if (lore != null)
-								itemMeta.setLore(lore);
-
-							final SerializedMap enchants = meta.containsKey("enchants") ? meta.getMap("enchants") : null;
-
-							if (enchants != null)
-								for (final Map.Entry<String, Object> entry : enchants.entrySet()) {
-									final Enchantment enchantment = Enchantment.getByName(entry.getKey());
-									final int level = (int) entry.getValue();
-
-									itemMeta.addEnchant(enchantment, level, true);
-								}
-
-							final List<String> itemFlags = meta.containsKey("ItemFlags") ? meta.getStringList("ItemFlags") : null;
-
-							if (itemFlags != null)
-								for (final String flag : itemFlags)
-									try {
-										itemMeta.addItemFlags(ItemFlag.valueOf(flag));
-									} catch (final Exception ex) {
-										// Likely not MC compatible, ignore
+										itemMeta.addEnchant(enchantment, level, true);
 									}
 
-							item.setItemMeta(itemMeta);
-						}
+								final List<String> itemFlags = meta.containsKey("ItemFlags") ? meta.getStringList("ItemFlags") : null;
 
-					return item;
+								if (itemFlags != null)
+									for (final String flag : itemFlags)
+										try {
+											itemMeta.addItemFlags(ItemFlag.valueOf(flag));
+										} catch (final Exception ex) {
+											// Likely not MC compatible, ignore
+										}
+
+								item.setItemMeta(itemMeta);
+							}
+
+						return (T) item;
+					}
 				}
-			}
-		});
 
-		SerializeUtil.addCustomSerializer(ItemStack[].class, new Serializer<ItemStack[]>() {
+				else if (classOf == ItemStack[].class) {
+					if (object instanceof ItemStack[])
+						return (T) object;
 
-			@Override
-			public Object serialize(Mode mode, ItemStack[] object) {
-				if (mode == SerializeUtil.Mode.JSON) {
-					final JSONArray jsonList = new JSONArray();
+					final List<ItemStack> list = new ArrayList<>();
 
-					for (final ItemStack item : object)
-						jsonList.add(item == null ? null : JsonItemStack.toJson(item));
+					if (language == SerializeUtil.Language.JSON) {
+						final JSONArray jsonList = JSONParser.deserialize(object.toString(), new JSONArray());
 
-					return jsonList.toJson();
+						for (final Object element : jsonList)
+							list.add(element == null ? null : JsonItemStack.fromJson(element.toString()));
 
-				} else
-					throw new FoException("Cannot deserialize non-JSON ItemStack[]");
-			}
+					} else {
+						Valid.checkBoolean(object instanceof List, "When deserializing ItemStack[] from YAML, expected the oject to be a List, but got " + object.getClass().getSimpleName() + ": " + object);
+						final List<?> rawList = (List<?>) object;
 
-			@Override
-			public ItemStack[] deserialize(Mode mode, Object object) {
+						for (final Object element : rawList)
+							list.add(element == null ? null : SerializeUtil.deserialize(language, ItemStack.class, object));
+					}
 
-				if (object instanceof ItemStack[])
-					return (ItemStack[]) object;
+					return (T) list.toArray(new ItemStack[list.size()]);
+				}
 
-				final List<ItemStack> list = new ArrayList<>();
+				else if (ConfigurationSerializable.class.isAssignableFrom(classOf))
+					return (T) object; // Already unpacked in BukkitYamlConstructor
 
-				if (mode == SerializeUtil.Mode.JSON) {
-					final JSONArray jsonList = JSONParser.deserialize(object.toString(), new JSONArray());
-
-					for (final Object element : jsonList)
-						list.add(element == null ? null : JsonItemStack.fromJson(element.toString()));
-				} else
-					throw new FoException("Cannot deserialize non-JSON ItemStack[]");
-
-				return list.toArray(new ItemStack[list.size()]);
+				return null;
 			}
 		});
 	}

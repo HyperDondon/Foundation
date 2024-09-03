@@ -1,6 +1,6 @@
 package org.mineacademy.fo.collection;
 
-import org.mineacademy.fo.SerializeUtilCore.Mode;
+import org.mineacademy.fo.SerializeUtilCore.Language;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -22,7 +22,7 @@ public abstract class StrictCollection {
 	 */
 	@Setter
 	@Getter
-	private Mode mode = Mode.YAML;
+	private Language mode = Language.YAML;
 
 	/**
 	 * The error message when removing non-existing keys

@@ -334,85 +334,75 @@ public abstract class SimpleCommandGroup {
 		 * Automatically tells all help for all subcommands
 		 */
 		protected void tellSubcommandsHelp() {
+			if (SimpleCommandGroup.this.subcommands.isEmpty()) {
+				this.tellError(SimpleLocalization.Commands.HEADER_NO_SUBCOMMANDS);
 
-			// Building help can be heavy so do it off of the main thread
-			final long nanoTime = System.nanoTime();
-
-			try {
-
-				if (SimpleCommandGroup.this.subcommands.isEmpty()) {
-					this.tellError(SimpleLocalization.Commands.HEADER_NO_SUBCOMMANDS);
-
-					return;
-				}
-
-				final List<SimpleComponent> lines = new ArrayList<>();
-
-				for (final SimpleSubCommandCore subcommand : SimpleCommandGroup.this.subcommands) {
-					if (!subcommand.showInHelp() || !this.hasPerm(subcommand.getPermission()))
-						continue;
-
-					// Simulate the sender to enable permission checks in getMultilineHelp for ex.
-					subcommand.sender = this.sender;
-					subcommand.args = this.compileSubcommandArgs();
-
-					final List<SimpleComponent> hover = new ArrayList<>();
-
-					if (subcommand.getDescription() != null)
-						hover.add(SimpleLocalization.Commands.HELP_TOOLTIP_DESCRIPTION.replaceBracket("description", subcommand.getDescription()));
-
-					if (subcommand.getPermission() != null)
-						hover.add(SimpleLocalization.Commands.HELP_TOOLTIP_PERMISSION.replaceBracket("permission", subcommand.getPermission()));
-
-					final String[] legacyUsage = subcommand.getMultilineUsageMessage();
-					final SimpleComponent[] newUsage = subcommand.getMultilineUsage();
-
-					if (legacyUsage != null || newUsage != null || subcommand.getUsage() != null)
-						hover.add(SimpleLocalization.Commands.HELP_TOOLTIP_USAGE
-								.replaceBracket("usage", legacyUsage != null || newUsage != null ? SimpleComponent.empty() : CommonCore.getOrDefault(subcommand.getUsage(), SimpleComponent.empty())));
-
-					if (legacyUsage != null)
-						for (final String line : legacyUsage)
-							for (final String subline : this.splitLine(CompChatColor.translateColorCodes(subcommand.colorizeUsage(line))))
-								hover.add(subcommand.replacePlaceholders(SimpleComponent.fromSection(subline)));
-
-					else if (newUsage != null)
-						for (final SimpleComponent component : newUsage)
-							for (final String subline : this.splitLine(component.toLegacy()))
-								hover.add(subcommand.replacePlaceholders(SimpleComponent.fromSection(subline)));
-
-					SimpleComponent line = SimpleComponent
-							.fromPlain("  /" + this.getLabel())
-
-							.appendMini(" &n" + subcommand.getSublabel() + "&r ")
-							.onClickSuggestCmd("/" + this.getLabel() + " " + subcommand.getSublabel())
-							.onHover(hover);
-
-					if (subcommand.getUsage() != null)
-						line = line.append(subcommand.getUsage());
-
-					lines.add(line);
-				}
-
-				if (!lines.isEmpty()) {
-					final ChatPaginator pages = new ChatPaginator(12);
-
-					if (SimpleCommandGroup.this.getHelpHeader() != null)
-						pages.setHeader(SimpleCommandGroup.this.getHelpHeader());
-
-					pages.setPages(lines);
-
-					// Allow "? <page>" page parameter
-					final int page = (this.args.length > 1 && ValidCore.isInteger(this.args[1]) ? Integer.parseInt(this.args[1]) : 1);
-
-					pages.send(this.sender, page);
-
-				} else
-					this.tellError(SimpleLocalization.Commands.HEADER_NO_SUBCOMMANDS_PERMISSION);
-
-			} finally {
-				System.out.println("compile help took " + String.format("%.3f", (System.nanoTime() - nanoTime) / 1_000_000D) + "ms");
+				return;
 			}
+
+			final List<SimpleComponent> lines = new ArrayList<>();
+
+			for (final SimpleSubCommandCore subcommand : SimpleCommandGroup.this.subcommands) {
+				if (!subcommand.showInHelp() || !this.hasPerm(subcommand.getPermission()))
+					continue;
+
+				// Simulate the sender to enable permission checks in getMultilineHelp for ex.
+				subcommand.sender = this.sender;
+				subcommand.args = this.compileSubcommandArgs();
+
+				final List<SimpleComponent> hover = new ArrayList<>();
+
+				if (subcommand.getDescription() != null)
+					hover.add(SimpleLocalization.Commands.HELP_TOOLTIP_DESCRIPTION.replaceBracket("description", subcommand.getDescription()));
+
+				if (subcommand.getPermission() != null)
+					hover.add(SimpleLocalization.Commands.HELP_TOOLTIP_PERMISSION.replaceBracket("permission", subcommand.getPermission()));
+
+				final String[] legacyUsage = subcommand.getMultilineUsageMessage();
+				final SimpleComponent[] newUsage = subcommand.getMultilineUsage();
+
+				if (legacyUsage != null || newUsage != null || subcommand.getUsage() != null)
+					hover.add(SimpleLocalization.Commands.HELP_TOOLTIP_USAGE
+							.replaceBracket("usage", legacyUsage != null || newUsage != null ? SimpleComponent.empty() : CommonCore.getOrDefault(subcommand.getUsage(), SimpleComponent.empty())));
+
+				if (legacyUsage != null)
+					for (final String line : legacyUsage)
+						for (final String subline : this.splitLine(CompChatColor.translateColorCodes(subcommand.colorizeUsage(line))))
+							hover.add(subcommand.replacePlaceholders(SimpleComponent.fromSection(subline)));
+
+				else if (newUsage != null)
+					for (final SimpleComponent component : newUsage)
+						for (final String subline : this.splitLine(component.toLegacy()))
+							hover.add(subcommand.replacePlaceholders(SimpleComponent.fromSection(subline)));
+
+				SimpleComponent line = SimpleComponent
+						.fromPlain("  /" + this.getLabel())
+
+						.appendMini(" &n" + subcommand.getSublabel() + "&r ")
+						.onClickSuggestCmd("/" + this.getLabel() + " " + subcommand.getSublabel())
+						.onHover(hover);
+
+				if (subcommand.getUsage() != null)
+					line = line.append(subcommand.getUsage());
+
+				lines.add(line);
+			}
+
+			if (!lines.isEmpty()) {
+				final ChatPaginator pages = new ChatPaginator(12);
+
+				if (SimpleCommandGroup.this.getHelpHeader() != null)
+					pages.setHeader(SimpleCommandGroup.this.getHelpHeader());
+
+				pages.setPages(lines);
+
+				// Allow "? <page>" page parameter
+				final int page = (this.args.length > 1 && ValidCore.isInteger(this.args[1]) ? Integer.parseInt(this.args[1]) : 1);
+
+				pages.send(this.sender, page);
+
+			} else
+				this.tellError(SimpleLocalization.Commands.HEADER_NO_SUBCOMMANDS_PERMISSION);
 		}
 
 		/*
