@@ -6,11 +6,11 @@ import java.util.Map;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
-import org.mineacademy.fo.settings.PlatformNeutralYamlRepresenter;
+import org.mineacademy.fo.settings.YamlRepresenter;
 import org.snakeyaml.engine.v2.api.DumpSettings;
 import org.snakeyaml.engine.v2.nodes.Node;
 
-public class BukkitYamlRepresenter extends PlatformNeutralYamlRepresenter {
+public class BukkitYamlRepresenter extends YamlRepresenter {
 
 	public BukkitYamlRepresenter(DumpSettings settings) {
 		super(settings);

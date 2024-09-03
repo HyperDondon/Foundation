@@ -263,7 +263,7 @@ public abstract class FileConfiguration extends MemorySection {
 	 */
 	/*public final void deleteFile() {
 		ValidCore.checkNotNull(this.file, "Cannot delete a null file");
-
+	
 		if (this.file.exists())
 			this.file.delete();
 	}*/

@@ -7,9 +7,9 @@ import org.snakeyaml.engine.v2.nodes.MappingNode;
 import org.snakeyaml.engine.v2.nodes.Node;
 import org.snakeyaml.engine.v2.nodes.Tag;
 
-public class PlatformNeutralYamlConstructor extends StandardConstructor {
+public class YamlConstructor extends StandardConstructor {
 
-	public PlatformNeutralYamlConstructor(LoadSettings loadSettings) {
+	public YamlConstructor(LoadSettings loadSettings) {
 		super(loadSettings);
 
 		this.tagConstructors.put(Tag.COMMENT, new ConstructComment());

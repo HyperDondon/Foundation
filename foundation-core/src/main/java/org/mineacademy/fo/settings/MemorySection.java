@@ -10,7 +10,9 @@ import java.util.Set;
 
 import org.mineacademy.fo.ValidCore;
 
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 
 /**
  * A type of configuration that is stored in memory.
@@ -693,4 +695,41 @@ public class MemorySection {
 		}
 		return 0;
 	}
+
+	/**
+	 * Represents a single node in a configuration.
+	 */
+	@Getter
+	@Setter
+	final class SectionPathData {
+
+		/**
+		 * The data that is stored in this section.
+		 */
+		private Object data;
+
+		/**
+		 * If no comments exist, an empty list will be returned. A null entry in the
+		 * list represents an empty line and an empty String represents an empty
+		 * comment line.
+		 */
+		private List<String> comments = Collections.emptyList();
+
+		/**
+		 * If no comments exist, an empty list will be returned. A null entry in the
+		 * list represents an empty line and an empty String represents an empty
+		 * comment line.
+		 */
+		private List<String> inlineComments = Collections.emptyList();
+
+		/**
+		 * Creates a new instance of SectionPathData.
+		 *
+		 * @param data
+		 */
+		public SectionPathData(Object data) {
+			this.data = data;
+		}
+	}
+
 }

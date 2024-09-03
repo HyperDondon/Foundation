@@ -226,9 +226,9 @@ public abstract class YamlStaticConfig {
 		return TEMPORARY_INSTANCE.isSet(path);
 	}
 
-	protected static final boolean isSetDefault(final String path) {
+	/*protected static final boolean isSetDefault(final String path) {
 		return TEMPORARY_INSTANCE.isSetDefault(path);
-	}
+	}*/
 
 	protected static final void move(final String fromRelative, final String toAbsolute) {
 		TEMPORARY_INSTANCE.move(fromRelative, toAbsolute);

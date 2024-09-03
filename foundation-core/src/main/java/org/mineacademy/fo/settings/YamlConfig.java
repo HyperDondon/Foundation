@@ -49,19 +49,19 @@ public class YamlConfig extends FileConfiguration {
 	 * The custom constructor to convert strings to values in the config
 	 */
 	@Setter
-	private static Function<LoadSettings, PlatformNeutralYamlConstructor> customConstructor = loadSettings -> new PlatformNeutralYamlConstructor(loadSettings);
+	private static Function<LoadSettings, YamlConstructor> customConstructor = loadSettings -> new YamlConstructor(loadSettings);
 
 	/**
 	 * The custom representer to convert values to strings in the config
 	 */
 	@Setter
-	private static Function<DumpSettings, PlatformNeutralYamlRepresenter> customRepresenter = dumpSettings -> new PlatformNeutralYamlRepresenter(dumpSettings);
+	private static Function<DumpSettings, YamlRepresenter> customRepresenter = dumpSettings -> new YamlRepresenter(dumpSettings);
 
 	private final Dump dumper;
 	private final Compose composer;
 
-	private final PlatformNeutralYamlConstructor constructor;
-	private final PlatformNeutralYamlRepresenter representer;
+	private final YamlConstructor constructor;
+	private final YamlRepresenter representer;
 
 	private List<String> header = Collections.emptyList();
 	private List<String> footer = Collections.emptyList();

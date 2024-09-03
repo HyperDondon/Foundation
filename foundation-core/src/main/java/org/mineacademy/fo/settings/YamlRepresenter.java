@@ -11,9 +11,9 @@ import org.snakeyaml.engine.v2.exceptions.YamlEngineException;
 import org.snakeyaml.engine.v2.nodes.Node;
 import org.snakeyaml.engine.v2.representer.StandardRepresenter;
 
-public class PlatformNeutralYamlRepresenter extends StandardRepresenter {
+public class YamlRepresenter extends StandardRepresenter {
 
-	public PlatformNeutralYamlRepresenter(DumpSettings settings) {
+	public YamlRepresenter(DumpSettings settings) {
 		super(settings);
 
 		this.parentClassRepresenters.put(MemorySection.class, new RepresentMemorySection());
