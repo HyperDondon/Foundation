@@ -83,7 +83,7 @@ public final class BossBarMessage implements ConfigSerializable {
 		final BossBar.Overlay overlay = ReflectionUtilCore.lookupEnum(BossBar.Overlay.class, map.getString("Style"));
 		final int seconds = map.getInteger("Seconds");
 		final float progress = map.getFloat("Progress", 1F);
-		final SimpleComponent message = map.get("Message", SimpleComponent.class);
+		final SimpleComponent message = map.getComponent("Message");
 
 		return new BossBarMessage(color, overlay, seconds, progress, message);
 	}

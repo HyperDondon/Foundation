@@ -18,6 +18,7 @@ import org.mineacademy.fo.exception.EventHandledException;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.plugin.SimplePlugin;
 import org.mineacademy.fo.remain.CompChatColor;
+import org.mineacademy.fo.remain.Remain;
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.ListenerPriority;
@@ -31,7 +32,6 @@ import com.comphenix.protocol.wrappers.EnumWrappers.ChatType;
 import com.comphenix.protocol.wrappers.WrappedChatComponent;
 import com.comphenix.protocol.wrappers.WrappedGameProfile;
 import com.comphenix.protocol.wrappers.WrappedServerPing;
-import com.google.gson.Gson;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -474,7 +474,7 @@ public abstract class PacketListener {
 				json = ComponentSerializer.toString(comps);
 
 			} catch (final Throwable t) {
-				json = new Gson().toJson(new TextComponent(comps).toLegacyText());
+				json = Remain.GSON.toJson(new TextComponent(comps).toLegacyText());
 			}
 
 			return json;

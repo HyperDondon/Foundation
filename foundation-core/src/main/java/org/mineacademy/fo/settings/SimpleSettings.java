@@ -34,7 +34,7 @@ public class SimpleSettings extends YamlStaticConfig {
 	// --------------------------------------------------------------------
 
 	@Override
-	protected final void onLoad() throws Exception {
+	protected final void load() throws Exception {
 		this.loadConfiguration(this.getSettingsFileName());
 	}
 
@@ -45,45 +45,6 @@ public class SimpleSettings extends YamlStaticConfig {
 	 */
 	protected String getSettingsFileName() {
 		return "settings.yml";
-	}
-
-	// --------------------------------------------------------------------
-	// Version
-	// --------------------------------------------------------------------
-
-	/**
-	 * The configuration version number, found in the "Version" key in the file.
-	 *
-	 * Defaults to 1 if not set in the file.
-	 */
-	public static Integer VERSION = 1;
-
-	/**
-	 * Set and update the config version automatically, however the {@link #VERSION} will
-	 * contain the older version used in the file on the disk so you can use
-	 * it for comparing in the init() methods
-	 * <p>
-	 * Please call this as a super method when overloading this!
-	 */
-	@Override
-	protected void preLoad() {
-		// Load version first so we can use it later
-		setPathPrefix(null);
-
-		if (isSetDefault("Version"))
-			if ((VERSION = getInteger("Version")) != this.getConfigVersion())
-				set("Version", this.getConfigVersion());
-	}
-
-	/**
-	 * Return the very latest config version
-	 * <p>
-	 * Any changes here must also be made to the "Version" key in your settings file.
-	 *
-	 * @return
-	 */
-	protected int getConfigVersion() {
-		return 1;
 	}
 
 	// --------------------------------------------------------------------
@@ -148,12 +109,9 @@ public class SimpleSettings extends YamlStaticConfig {
 	public static StrictList<String> MAIN_COMMAND_ALIASES = new StrictList<>();
 
 	/**
-	 * The localization prefix, given you are using {@link SimpleLocalization} class to load and manage your
-	 * locale file. Typically the file path is: localization/messages_PREFIX.yml with this prefix below.
-	 * <p>
+	 * The localization prefix,
+	 *
 	 * Typically: Locale: en
-	 * <p>
-	 * // ONLY MANDATORY IF YOU USE SIMPLELOCALIZATION //
 	 */
 	public static String LOCALE_PREFIX = "en";
 
@@ -225,15 +183,6 @@ public class SimpleSettings extends YamlStaticConfig {
 		}
 
 		settingsClassCalled = true;
-	}
-
-	/**
-	 * Was this class loaded?
-	 *
-	 * @return
-	 */
-	public static final Boolean isSettingsCalled() {
-		return settingsClassCalled;
 	}
 
 	/**

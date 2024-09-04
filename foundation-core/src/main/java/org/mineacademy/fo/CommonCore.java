@@ -803,22 +803,23 @@ public abstract class CommonCore {
 	 */
 	public static void throwError(Throwable throwable, final String... messages) {
 		synchronized (logPrefix) {
+
+			if (throwable instanceof FoException)
+				throw (FoException) throwable;
+
 			Throwable cause = throwable;
 
 			while (cause.getCause() != null)
 				cause = cause.getCause();
 
 			// Delegate to only print out the relevant stuff
-			if (throwable instanceof FoException)
+			if (cause instanceof FoException)
 				throw (FoException) throwable;
 
 			if (messages != null)
 				logFramed(false, replaceErrorVariable(throwable, messages));
 
-			// Do not save FoException even at the case because it already was saved
-			if (!(cause instanceof FoException))
-				Debugger.saveError(throwable, messages);
-
+			Debugger.saveError(throwable, messages);
 			RemainCore.sneaky(throwable);
 		}
 	}

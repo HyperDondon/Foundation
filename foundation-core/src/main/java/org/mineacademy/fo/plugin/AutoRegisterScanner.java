@@ -28,7 +28,6 @@ import org.mineacademy.fo.platform.FoundationPlugin;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.proxy.ProxyListener;
 import org.mineacademy.fo.remain.RemainCore;
-import org.mineacademy.fo.settings.SimpleLocalization;
 import org.mineacademy.fo.settings.SimpleSettings;
 import org.mineacademy.fo.settings.YamlConfig;
 import org.mineacademy.fo.settings.YamlStaticConfig;
@@ -167,7 +166,6 @@ final class AutoRegisterScanner {
 	 */
 	public static void reloadSettings() {
 		SimpleSettings.resetSettingsCall();
-		SimpleLocalization.resetLocalizationCall();
 
 		registeredCommandGroups.clear();
 
@@ -186,23 +184,16 @@ final class AutoRegisterScanner {
 	 */
 	private static void registerSettings(List<Class<?>> classes) {
 		final List<Class<?>> staticSettingsFound = new ArrayList<>();
-		final List<Class<?>> staticLocalizations = new ArrayList<>();
 		final List<Class<?>> staticCustom = new ArrayList<>();
 
 		for (final Class<?> clazz : classes) {
 			boolean load = false;
 
-			if (clazz == SimpleLocalization.class || clazz == SimpleSettings.class || clazz == YamlStaticConfig.class)
+			if (clazz == SimpleSettings.class || clazz == YamlStaticConfig.class)
 				continue;
 
 			if (SimpleSettings.class.isAssignableFrom(clazz)) {
 				staticSettingsFound.add(clazz);
-
-				load = true;
-			}
-
-			if (SimpleLocalization.class.isAssignableFrom(clazz)) {
-				staticLocalizations.add(clazz);
 
 				load = true;
 			}
@@ -212,7 +203,6 @@ final class AutoRegisterScanner {
 		}
 
 		boolean staticSettingsFileExist = false;
-		boolean staticLocalizationFileExist = false;
 
 		try (final JarFile jarFile = new JarFile(Platform.getPlugin().getFile())) {
 			for (final Enumeration<JarEntry> it = jarFile.entries(); it.hasMoreElements();) {
@@ -221,14 +211,11 @@ final class AutoRegisterScanner {
 
 				if (name.matches("settings\\.yml"))
 					staticSettingsFileExist = true;
-				else if (name.matches("localization\\/messages\\_(.*)\\.yml"))
-					staticLocalizationFileExist = true;
 			}
 		} catch (final IOException ex) {
 		}
 
 		ValidCore.checkBoolean(staticSettingsFound.size() < 2, "Cannot have more than one class extend SimpleSettings: " + staticSettingsFound);
-		ValidCore.checkBoolean(staticLocalizations.size() < 2, "Cannot have more than one class extend SimpleLocalization: " + staticLocalizations);
 
 		if (staticSettingsFound.isEmpty() && staticSettingsFileExist)
 			YamlStaticConfig.load(SimpleSettings.class);
@@ -244,11 +231,6 @@ final class AutoRegisterScanner {
 
 		for (final Class<?> delayedSettings : delayedLoading)
 			YamlStaticConfig.load((Class<? extends YamlStaticConfig>) delayedSettings);
-
-		if (staticLocalizations.isEmpty() && staticLocalizationFileExist) {
-			YamlStaticConfig.load(SimpleLocalization.class);
-		}
-
 	}
 
 	/*

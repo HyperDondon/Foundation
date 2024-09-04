@@ -90,7 +90,6 @@ import org.mineacademy.fo.model.UUIDToNameConverter;
 import org.mineacademy.fo.plugin.SimplePlugin;
 import org.mineacademy.fo.remain.nbt.NBTEntity;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import lombok.AccessLevel;
@@ -795,7 +794,7 @@ public final class Remain extends RemainCore {
 	 */
 	/*public static Object convertLegacyToIChatBase(String legacyText) {
 		final String json = SimpleComponent.fromMini(legacyText).toAdventureJson();
-	
+
 		return convertJsonToIChatBase(json);
 	}*/
 
@@ -3168,7 +3167,7 @@ final class AdvancementAccessor {
 		json.add("criteria", criteria);
 		json.add("display", display);
 
-		return new Gson().toJson(json);
+		return Remain.GSON.toJson(json);
 	}
 
 	private void grantAdvancement(final Player plazer) {

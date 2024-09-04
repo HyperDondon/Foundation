@@ -38,7 +38,6 @@ import org.mineacademy.fo.jsonsimple.JSONObject;
 import org.mineacademy.fo.jsonsimple.JSONParseException;
 import org.mineacademy.fo.jsonsimple.JSONParser;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonPrimitive;
 
 /**
@@ -47,8 +46,6 @@ import com.google.gson.JsonPrimitive;
  * @author DevSrSouza (https://github.com/DevSrSouza)
  */
 public class JsonItemStack {
-
-	private static final Gson gson = new Gson();
 
 	private static final String[] BYPASS_CLASS = {
 			"CraftMetaBlockState",
@@ -64,7 +61,7 @@ public class JsonItemStack {
 	 * @return The JSON string
 	 */
 	public static String toJson(@Nullable ItemStack itemStack) {
-		return gson.toJson(toJson0(itemStack));
+		return Remain.GSON.toJson(toJson0(itemStack));
 	}
 
 	/*

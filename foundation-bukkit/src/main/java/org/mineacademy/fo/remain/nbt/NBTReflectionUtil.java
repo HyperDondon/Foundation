@@ -17,8 +17,7 @@ import org.bukkit.block.BlockState;
 import org.bukkit.entity.Entity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-
-import com.google.gson.Gson;
+import org.mineacademy.fo.remain.Remain;
 
 /**
  * Utility class for translating NBTApi calls to reflections into NMS code All
@@ -29,8 +28,6 @@ import com.google.gson.Gson;
  */
 
 public class NBTReflectionUtil {
-
-	private static Gson gson = new Gson();
 
 	private static Field field_unhandledTags = null;
 	private static Field field_handle = null;
@@ -564,7 +561,7 @@ public class NBTReflectionUtil {
 	 */
 	public static void setObject(NBTCompound comp, String key, Object value) {
 		try {
-			final String json = gson.toJson(value);
+			final String json = Remain.GSON.toJson(value);
 
 			setData(comp, ReflectionMethod.COMPOUND_SET_STRING, key, json);
 		} catch (final Exception e) {
@@ -585,7 +582,7 @@ public class NBTReflectionUtil {
 		if (json == null)
 			return null;
 
-		final T obj = gson.fromJson(json, type);
+		final T obj = Remain.GSON.fromJson(json, type);
 		return type.cast(obj);
 	}
 

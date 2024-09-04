@@ -51,11 +51,6 @@ import lombok.RequiredArgsConstructor;
 public final class CompMetadata {
 
 	/**
-	 * Should we use file storage for metadata on Minecraft below 1.14?
-	 */
-	public static boolean ENABLE_LEGACY_FILE_STORAGE = true;
-
-	/**
 	 * Minecraft 1.14+ supports persistent metadata meaning entities/tiles can have custom tags easily
 	 */
 	private static boolean hasPersistentMetadata = MinecraftVersion.atLeast(V.v1_14);
@@ -394,7 +389,7 @@ public final class CompMetadata {
 		private boolean loaded = false;
 
 		private MetadataFile() {
-			if (!hasPersistentMetadata && ENABLE_LEGACY_FILE_STORAGE) {
+			if (!hasPersistentMetadata) {
 				this.setPathPrefix("Metadata");
 
 				this.setHeader(
@@ -422,13 +417,8 @@ public final class CompMetadata {
 		}
 
 		@Override
-		protected boolean skipSaveIfNoFile() {
-			return true;
-		}
-
-		@Override
-		protected boolean canSaveFile() {
-			return !hasPersistentMetadata && ENABLE_LEGACY_FILE_STORAGE;
+		protected boolean canSave() {
+			return !hasPersistentMetadata && this.getBoolean("Initialized", false);
 		}
 
 		@Override
@@ -450,7 +440,7 @@ public final class CompMetadata {
 		private void loadEntities() {
 			this.entityMetadata.clear();
 
-			for (final String uuidString : this.getConfigurationSection("Entity").getKeys(false)) {
+			for (final String uuidString : this.getMap("Entity").keySet()) {
 				final UUID uuid = UUID.fromString(uuidString);
 
 				// Remove broken keys
@@ -480,7 +470,7 @@ public final class CompMetadata {
 		private void loadBlockStates() {
 			this.blockMetadata.clear();
 
-			for (final String locationString : this.getConfigurationSection("Block").getKeys(false)) {
+			for (final String locationString : this.getMap("Block").keySet()) {
 				final Location location = SerializeUtil.deserialize(SerializeUtil.Language.YAML, Location.class, locationString);
 
 				final Block block = location.getBlock();
@@ -511,6 +501,7 @@ public final class CompMetadata {
 
 		protected void setMetadata(final Entity entity, @NonNull final String key, final String value) {
 			this.loadIfHasnt();
+			this.set("Initialized", true);
 
 			final UUID uniqueId = entity.getUniqueId();
 			final Set<String> metadata = this.entityMetadata.getOrDefault(uniqueId, new HashSet<>());
@@ -565,6 +556,7 @@ public final class CompMetadata {
 
 		protected void setMetadata(final BlockState entity, final String key, final String value) {
 			this.loadIfHasnt();
+			this.set("Initialized", true);
 
 			final Location location = entity.getLocation();
 			BlockCache blockCache = this.blockMetadata.get(location);

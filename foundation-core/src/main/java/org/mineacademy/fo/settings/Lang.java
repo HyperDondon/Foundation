@@ -4,12 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.mineacademy.fo.CommonCore;
+import org.mineacademy.fo.FileUtil;
 import org.mineacademy.fo.ValidCore;
-import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.Variables;
 
-import lombok.NoArgsConstructor;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 /**
  * Represents the new way of internalization, with the greatest
@@ -18,29 +20,40 @@ import lombok.NoArgsConstructor;
  * The downside is that keys are not checked during load so any
  * malformed or missing key will fail later and may be unnoticed.
  */
-@NoArgsConstructor
 public final class Lang {
 
 	/**
 	 * The instance of this class
 	 */
-	private static YamlConfig instance;
+	private static final Lang instance = new Lang();
+
+	private final JsonObject base;
+
+	private Lang() {
+		this.base = FileUtil.readJsonFromUrl("https://raw.githubusercontent.com/kangarko/Foundation/v7/translations/en_US.json");
+	}
+
+	private JsonArray retrieveList(String path) {
+		final JsonElement element = this.retrieve(path);
+
+		if (element.isJsonArray())
+			return element.getAsJsonArray();
+
+		final JsonArray array = new JsonArray();
+
+		array.add(element.getAsString());
+		return array;
+	}
+
+	private JsonElement retrieve(String path) {
+		ValidCore.checkBoolean(this.base.has(path), "Missing localization key '" + path + "'");
+
+		return this.base.get(path);
+	}
 
 	// ------------------------------------------------------------------------------------------------------------
 	// Getters
 	// ------------------------------------------------------------------------------------------------------------
-
-	/**
-	 * Return a boolean at path
-	 *
-	 * @param path
-	 * @return
-	 */
-	public static boolean getOption(String path) {
-		checkInit();
-
-		return instance.getBoolean(path);
-	}
 
 	/**
 	 * Return a component list from the localization file with {0} {1} etc. variables replaced.
@@ -165,12 +178,7 @@ public final class Lang {
 	 * @return
 	 */
 	public static SimpleComponent ofVars(String path, Object... replacements) {
-		checkInit();
-
-		final SimpleComponent component = instance.get(path, SimpleComponent.class);
-
-		if (component == null)
-			throw new FoException("Missing localization key '" + path + "' from " + instance.getFile());
+		final SimpleComponent component = SimpleComponent.fromMini(instance.retrieve(path).getAsString());
 
 		return Variables.replace(component, null, CommonCore.newHashMap(replacements));
 	}
@@ -193,15 +201,10 @@ public final class Lang {
 	 * @return
 	 */
 	public static SimpleComponent[] ofArrayVars(String path, Object... replacements) {
-		checkInit();
-
-		if (!instance.isSet(path))
-			throw new FoException("Missing localization key '" + path + "' from " + instance.getFile());
-
 		final List<SimpleComponent> components = new ArrayList<>();
 
-		for (final String mini : instance.getStringList(path))
-			components.add(Variables.replace(SimpleComponent.fromMini(mini), null, CommonCore.newHashMap(replacements)));
+		for (final JsonElement listElement : instance.retrieveList(path))
+			components.add(Variables.replace(SimpleComponent.fromMini(listElement.getAsString()), null, CommonCore.newHashMap(replacements)));
 
 		return components.toArray(new SimpleComponent[components.size()]);
 	}
@@ -214,32 +217,11 @@ public final class Lang {
 	 * @return
 	 */
 	public static String[] ofLegacyArrayVars(String path, Object... replacements) {
-		checkInit();
-
-		if (!instance.isSet(path))
-			throw new FoException("Missing localization key '" + path + "' from " + instance.getFile());
-
 		final List<String> lines = new ArrayList<>();
 
-		for (final String line : instance.getStringList(path))
-			lines.add(Variables.replace(line, null, CommonCore.newHashMap(replacements)));
+		for (final JsonElement listElement : instance.retrieveList(path))
+			lines.add(Variables.replace(listElement.getAsString(), null, CommonCore.newHashMap(replacements)));
 
 		return CommonCore.toArray(lines);
-	}
-
-	/*
-	 * Check if this class has properly been initialized
-	 */
-	private static void checkInit() {
-		ValidCore.checkNotNull(instance, "Cannot use Lang class without localization/messages_x.yml file in your src/main/resources folder!");
-	}
-
-	/*
-	 * Sets the lang instance from the other instance we borrow from SimpleLocalization
-	 */
-	static void setInstance(YamlConfig instance) {
-		instance.setPathPrefix(null);
-
-		Lang.instance = instance;
 	}
 }

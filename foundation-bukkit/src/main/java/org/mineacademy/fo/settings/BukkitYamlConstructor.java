@@ -4,13 +4,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
-import org.mineacademy.fo.settings.YamlConstructor;
 import org.snakeyaml.engine.v2.api.LoadSettings;
 import org.snakeyaml.engine.v2.exceptions.YamlEngineException;
 import org.snakeyaml.engine.v2.nodes.Node;
 import org.snakeyaml.engine.v2.nodes.Tag;
 
-public class BukkitYamlConstructor extends YamlConstructor {
+public class BukkitYamlConstructor extends YamlConfig.YamlConstructor {
 
 	public BukkitYamlConstructor(LoadSettings loadSettings) {
 		super(loadSettings);

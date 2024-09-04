@@ -34,6 +34,8 @@ import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.remain.CompChatColor;
 import org.mineacademy.fo.remain.RemainCore;
 
+import com.google.gson.JsonObject;
+
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
@@ -163,14 +165,40 @@ public final class FileUtil {
 	// ----------------------------------------------------------------------------------------------------
 
 	/**
+	 * Return all lines from the given file as a json element
+	 *
+	 * @param url
+	 * @return
+	 */
+	public static JsonObject readJsonFromUrl(String url) {
+		final List<String> baseContent = FileUtil.readLinesFromUrl("https://raw.githubusercontent.com/kangarko/Foundation/v7/translations/en_US.json");
+		final String joined = String.join("\n", baseContent);
+
+		return RemainCore.GSON.fromJson(joined, JsonObject.class);
+	}
+
+	/**
 	 * Return all lines from the given URL, opening a connection with a fake user agent first
 	 *
 	 * @param url
 	 * @return
-	 * @throws IOException
 	 */
-	public static List<String> readLines(URL url) throws IOException {
+	public static List<String> readLinesFromUrl(String url) {
+		try {
+			return readLinesFromUrl(new URL(url));
 
+		} catch (final IOException ex) {
+			throw new FoException(ex, "Could not read lines from " + url);
+		}
+	}
+
+	/**
+	 * Return all lines from the given URL, opening a connection with a fake user agent first
+	 *
+	 * @param url
+	 * @return
+	 */
+	public static List<String> readLinesFromUrl(URL url) throws IOException {
 		final URLConnection connection = url.openConnection();
 
 		// Set a random user agent to prevent most webhostings from rejecting with 403
@@ -179,7 +207,7 @@ public final class FileUtil {
 		connection.setReadTimeout(6000);
 		connection.setDoOutput(true);
 
-		return readLines(connection);
+		return readLinesFromUrl(connection);
 	}
 
 	/**
@@ -188,7 +216,7 @@ public final class FileUtil {
 	 * @param connection
 	 * @return
 	 */
-	public static List<String> readLines(URLConnection connection) {
+	public static List<String> readLinesFromUrl(URLConnection connection) {
 		final List<String> lines = new ArrayList<>();
 
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {

@@ -4,7 +4,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,12 +17,14 @@ import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.collection.StrictList;
-import org.mineacademy.fo.model.AccusativeHelper;
+import org.mineacademy.fo.model.CaseNumberFormat;
 import org.mineacademy.fo.model.IsInList;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.SimpleTime;
-import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.remain.RemainCore;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 /**
  * A special case {@link YamlConfig} that allows static access to config.
@@ -40,26 +45,13 @@ public abstract class YamlStaticConfig {
 	/**
 	 * The temporary {@link YamlConfig} instance we store here to get values from
 	 */
-	static YamlConfig TEMPORARY_INSTANCE;
+	private static YamlConfig TEMPORARY_INSTANCE;
 
 	/**
 	 * Internal use only: Create a new {@link YamlConfig} instance and link it to load fields via
 	 * reflection.
 	 */
 	protected YamlStaticConfig() {
-		TEMPORARY_INSTANCE = new YamlConfig() {
-
-			{
-				YamlStaticConfig.this.beforeLoad();
-
-				this.setUncommentedSections(YamlStaticConfig.this.getUncommentedSections());
-			}
-
-			@Override
-			protected void onLoad() {
-				YamlStaticConfig.this.loadViaReflection();
-			}
-		};
 	}
 
 	// -----------------------------------------------------------------------------------------------------
@@ -75,8 +67,13 @@ public abstract class YamlStaticConfig {
 		try {
 			final YamlStaticConfig config = clazz.newInstance();
 
-			config.onLoad();
+			TEMPORARY_INSTANCE = new YamlConfig();
+			TEMPORARY_INSTANCE.setUncommentedSections(config.getUncommentedSections());
 
+			config.load();
+			config.invokeInitMethods();
+
+			TEMPORARY_INSTANCE.save();
 			TEMPORARY_INSTANCE = null;
 
 		} catch (final Throwable t) {
@@ -85,27 +82,11 @@ public abstract class YamlStaticConfig {
 	}
 
 	/**
-	 * Call this method if you need to make and changes to the settings file BEFORE it is actually
-	 * loaded.
-	 */
-	protected void beforeLoad() {
-	}
-
-	/**
-	 * Invoke code before this class is being scanned and invoked using reflection
-	 * <p>
-	 * This method if called AFTER we load our file
-	 */
-	protected void preLoad() {
-	}
-
-	/**
-	 * Called automatically in {@link #load(List)}, you should call the standard load method from
-	 * {@link YamlConfig} here
+	 * Load your configuration here.
 	 *
 	 * @throws Exception
 	 */
-	protected abstract void onLoad() throws Exception;
+	protected abstract void load() throws Exception;
 
 	/**
 	 * See {@link #saveComments()}
@@ -119,12 +100,11 @@ public abstract class YamlStaticConfig {
 	/*
 	 * Loads the class via reflection, scanning for "private static void init()" methods to run
 	 */
-	private void loadViaReflection() {
+	private void invokeInitMethods() {
 		ValidCore.checkNotNull(TEMPORARY_INSTANCE, "Instance cannot be null " + getFileName());
 		ValidCore.checkNotNull(TEMPORARY_INSTANCE.hasDefaults(), "Default config cannot be null for " + getFileName());
 
 		try {
-			this.preLoad();
 
 			// Parent class if applicable.
 			if (YamlStaticConfig.class.isAssignableFrom(this.getClass().getSuperclass())) {
@@ -155,16 +135,17 @@ public abstract class YamlStaticConfig {
 			this.invokeAll(subClazz);
 	}
 
+	public static JsonObject REMOVEME_JSON_MAP = new JsonObject();
+
 	/*
 	 * Invoke all "private static void init()" methods in the class
 	 */
 	private void invokeMethodsIn(final Class<?> clazz) throws Exception {
-
 		for (final Method method : clazz.getDeclaredMethods()) {
 
-			// After each invocation check if the invoication broke the plugin and ignore
-			if (!Platform.getPlugin().isEnabled())
-				return;
+			// TODO After each invocation check if the invoication broke the plugin and ignore
+			//if (!Platform.getPlugin().isEnabled())
+			//	return;
 
 			final int mod = method.getModifiers();
 
@@ -188,8 +169,23 @@ public abstract class YamlStaticConfig {
 	 */
 	private void checkFields(final Class<?> clazz) throws Exception {
 
+		System.out.println("Here at " + clazz);
+
 		if (clazz == YamlStaticConfig.class)
 			return;
+
+		String prefix = null;
+
+		{
+			String clName = clazz.toString().replace("class org.mineacademy.fo.settings.SimpleLocalization", "");
+
+			if (clName.startsWith("$"))
+				clName = clName.substring(1);
+
+			clName = clName.toLowerCase();
+
+			prefix = clName.trim();
+		}
 
 		for (final Field field : clazz.getDeclaredFields()) {
 			field.setAccessible(true);
@@ -198,12 +194,52 @@ public abstract class YamlStaticConfig {
 				ValidCore.checkBoolean(!field.getType().isPrimitive(), "Field '" + field.getName() + "' in " + clazz + " must not be primitive!");
 
 			Object result = null;
+
 			try {
 				result = field.get(null);
 			} catch (final NullPointerException ex) {
 			}
+
+			{
+				final String jsonPath = (prefix.isEmpty() ? "" : prefix + "-") + field.getName().toLowerCase().replace("_", "-");
+
+				if (result instanceof String || isPrimitiveWrapper(result) || result instanceof SimpleComponent || result instanceof CaseNumberFormat)
+					YamlStaticConfig.REMOVEME_JSON_MAP.addProperty(jsonPath, result.toString());
+
+				else if (result instanceof Collection || result.getClass().isArray()) {
+					final JsonArray array = new JsonArray();
+
+					if (result instanceof Collection)
+						for (final Object collectionElement : (Collection) result) {
+							if (collectionElement instanceof String || isPrimitiveWrapper(collectionElement) || collectionElement instanceof SimpleComponent || collectionElement instanceof CaseNumberFormat)
+								array.add(collectionElement.toString());
+							else
+								throw new IllegalArgumentException("Unsupported collection element type " + collectionElement.getClass() + " at " + jsonPath);
+						}
+					else
+						for (final Object collectionElement : Arrays.asList((Object[]) result)) {
+							if (collectionElement instanceof String || isPrimitiveWrapper(collectionElement) || collectionElement instanceof SimpleComponent || collectionElement instanceof CaseNumberFormat)
+								array.add(collectionElement.toString());
+							else
+								throw new IllegalArgumentException("Unsupported collection element type " + collectionElement.getClass() + " at " + jsonPath);
+						}
+
+					YamlStaticConfig.REMOVEME_JSON_MAP.add(jsonPath, array);
+				} else
+					throw new IllegalArgumentException("Unsupported field type " + field.getType() + " at " + jsonPath);
+
+				System.out.println("Mapping field " + jsonPath + " -> " + result);
+			}
+
 			ValidCore.checkNotNull(result, "Null " + field.getType().getSimpleName() + " field '" + field.getName() + "' in " + clazz);
 		}
+	}
+
+	/*
+	 * Return if the input is a primitive wrapper
+	 */
+	private static boolean isPrimitiveWrapper(Object input) {
+		return input instanceof Integer || input instanceof Boolean || input instanceof Character || input instanceof Byte || input instanceof Short || input instanceof Double || input instanceof Long || input instanceof Float;
 	}
 
 	// -----------------------------------------------------------------------------------------------------
@@ -226,13 +262,13 @@ public abstract class YamlStaticConfig {
 		return TEMPORARY_INSTANCE.isSet(path);
 	}
 
-	/*protected static final boolean isSetDefault(final String path) {
+	protected static final boolean isSetDefault(final String path) {
 		return TEMPORARY_INSTANCE.isSetDefault(path);
-	}*/
-
-	protected static final void move(final String fromRelative, final String toAbsolute) {
-		TEMPORARY_INSTANCE.move(fromRelative, toAbsolute);
 	}
+
+	/*protected static final void move(final String fromRelative, final String toAbsolute) {
+		TEMPORARY_INSTANCE.move(fromRelative, toAbsolute);
+	}*/
 
 	protected static final void setPathPrefix(final String pathPrefix) {
 		TEMPORARY_INSTANCE.setPathPrefix(pathPrefix);
@@ -286,6 +322,10 @@ public abstract class YamlStaticConfig {
 		return TEMPORARY_INSTANCE.getComponent(path);
 	}
 
+	protected static final ZoneId getTimezone(final String path) {
+		return TEMPORARY_INSTANCE.getTimezone(path);
+	}
+
 	protected static final String getString(final String path) {
 		return TEMPORARY_INSTANCE.getString(path);
 	}
@@ -298,23 +338,15 @@ public abstract class YamlStaticConfig {
 		return TEMPORARY_INSTANCE.getDouble(path);
 	}
 
-	//protected static final SimpleSound getSound(final String path) {
-	//	return TEMPORARY_INSTANCE.getSound(path);
-	//}
-
-	protected static final AccusativeHelper getCasus(final String path) {
-		return TEMPORARY_INSTANCE.getAccusativePeriod(path);
+	protected static final CaseNumberFormat getCaseNumberFormat(final String path) {
+		return TEMPORARY_INSTANCE.getCaseNumberFormat(path);
 	}
-
-	//protected static final TitleHelper getTitle(final String path) {
-	///	return TEMPORARY_INSTANCE.getTitle(path);
-	//}
 
 	protected static final SimpleTime getTime(final String path) {
 		return TEMPORARY_INSTANCE.getTime(path);
 	}
 
-	protected static final double getPercentage(String path) {
+	protected static final Double getPercentage(String path) {
 		return TEMPORARY_INSTANCE.getPercentage(path);
 	}
 

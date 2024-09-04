@@ -449,7 +449,7 @@ public abstract class SimpleCommandGroup {
 					return cmd.delegateTabComplete(this.sender, this.getLabel(), Arrays.copyOfRange(this.args, 1, this.args.length));
 			}
 
-			return null;
+			return NO_COMPLETE;
 		}
 
 		/**

@@ -28,7 +28,7 @@ public abstract class RemainCore {
 	/**
 	 * The Google Json instance
 	 */
-	private final static Gson GSON = new Gson();
+	public final static Gson GSON = new Gson();
 
 	// ----------------------------------------------------------------------------------------------------
 	// Misc

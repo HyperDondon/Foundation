@@ -594,7 +594,7 @@ public abstract class SimpleCommandCore {
 	 * @param enumType
 	 * @param enumValue
 	 * @param condition
-	
+
 	 * @return
 	 * @throws CommandException
 	 */
@@ -864,23 +864,23 @@ public abstract class SimpleCommandCore {
 	 * @param messages
 	 */
 	/*protected final void tell(String... messages) {
-	
+
 		if (messages == null)
 			return;
-	
+
 		final String oldTellPrefix = CommonCore.getTellPrefix();
-	
+
 		if (this.tellPrefix != null)
 			CommonCore.setTellPrefix(this.tellPrefix);
-	
+
 		try {
 			messages = this.replacePlaceholders(messages);
-	
+
 			if (messages.length > 2)
 				CommonCore.tellNoPrefix(this.sender, messages);
 			else
 				CommonCore.tell(this.sender, messages);
-	
+
 		} finally {
 			CommonCore.setTellPrefix(oldTellPrefix);
 		}
@@ -1084,10 +1084,10 @@ public abstract class SimpleCommandCore {
 	/*public final String[] replacePlaceholders(final String[] messages) {
 		for (int i = 0; i < messages.length; i++)
 			messages[i] = this.replacePlaceholders(messages[i]);
-	
+
 		return messages;
 	}
-	
+
 	// TODO get rid of
 	protected String replacePlaceholders(String legacy) {
 		return RemainCore.convertAdventureToLegacy(replacePlaceholders(RemainCore.convertLegacyToAdventure(legacy)));
@@ -1141,7 +1141,7 @@ public abstract class SimpleCommandCore {
 	/*protected final void setArg(final int position, final String value) {
 		if (this.args.length <= position)
 			this.args = Arrays.copyOf(this.args, position + 1);
-	
+
 		this.args[position] = value;
 	}*/
 
@@ -1219,16 +1219,12 @@ public abstract class SimpleCommandCore {
 		this.args = args;
 
 		if (this.hasPerm(this.getPermission())) {
-			List<String> suggestions = this.tabComplete();
+			final List<String> suggestions = this.tabComplete();
 
-			// Return online player names when suggestions are null - simulate Bukkit behaviour
-			if (suggestions == null)
-				suggestions = this.completeLastWordPlayerNames();
-
-			return suggestions;
+			return suggestions == null ? NO_COMPLETE : suggestions;
 		}
 
-		return new ArrayList<>();
+		return NO_COMPLETE;
 	}
 
 	/**

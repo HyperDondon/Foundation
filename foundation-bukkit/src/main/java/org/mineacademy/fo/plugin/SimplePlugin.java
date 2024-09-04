@@ -385,7 +385,7 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 			if (this.areToolsEnabled())
 				this.registerEvents(new ToolsListener());
 
-			if (CompMetadata.isLegacy() && CompMetadata.ENABLE_LEGACY_FILE_STORAGE)
+			if (CompMetadata.isLegacy())
 				this.registerEvents(CompMetadata.MetadataFile.getInstance());
 
 			// Register DiscordSRV listener
@@ -541,7 +541,7 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 			Common.log("&cPlugin might not shut down property. Got " + t.getClass().getSimpleName() + ": " + t.getMessage());
 		}
 
-		if (CompMetadata.isLegacy() && CompMetadata.ENABLE_LEGACY_FILE_STORAGE)
+		if (CompMetadata.isLegacy() && CompMetadata.MetadataFile.getInstance().getFile() != null)
 			CompMetadata.MetadataFile.getInstance().save();
 
 		for (final Player online : Remain.getOnlinePlayers()) {
@@ -620,7 +620,7 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 	public final void reload() {
 
 		try {
-			if (CompMetadata.isLegacy() && CompMetadata.ENABLE_LEGACY_FILE_STORAGE)
+			if (CompMetadata.isLegacy())
 				CompMetadata.MetadataFile.getInstance().save();
 
 			this.onPluginPreReload();

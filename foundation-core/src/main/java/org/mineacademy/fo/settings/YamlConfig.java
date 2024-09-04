@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,7 @@ import org.mineacademy.fo.SerializeUtilCore;
 import org.mineacademy.fo.SerializeUtilCore.Language;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.exception.FoException;
+import org.mineacademy.fo.model.ConfigSerializable;
 import org.snakeyaml.engine.v2.api.Dump;
 import org.snakeyaml.engine.v2.api.DumpSettings;
 import org.snakeyaml.engine.v2.api.LoadSettings;
@@ -28,6 +30,9 @@ import org.snakeyaml.engine.v2.api.lowlevel.Compose;
 import org.snakeyaml.engine.v2.comments.CommentLine;
 import org.snakeyaml.engine.v2.comments.CommentType;
 import org.snakeyaml.engine.v2.common.FlowStyle;
+import org.snakeyaml.engine.v2.constructor.ConstructScalar;
+import org.snakeyaml.engine.v2.constructor.StandardConstructor;
+import org.snakeyaml.engine.v2.exceptions.YamlEngineException;
 import org.snakeyaml.engine.v2.nodes.AnchorNode;
 import org.snakeyaml.engine.v2.nodes.MappingNode;
 import org.snakeyaml.engine.v2.nodes.Node;
@@ -35,6 +40,7 @@ import org.snakeyaml.engine.v2.nodes.NodeTuple;
 import org.snakeyaml.engine.v2.nodes.ScalarNode;
 import org.snakeyaml.engine.v2.nodes.SequenceNode;
 import org.snakeyaml.engine.v2.nodes.Tag;
+import org.snakeyaml.engine.v2.representer.StandardRepresenter;
 
 import lombok.NonNull;
 import lombok.Setter;
@@ -178,7 +184,7 @@ public class YamlConfig extends FileConfiguration {
 				this.fromNodeTree((MappingNode) value, section.createSection(keyString));
 
 			else
-				section.set(keyString, this.constructor.construct(value));
+				section.store(keyString, this.constructor.construct(value));
 
 			section.setComments(keyString, this.getCommentLines(key.getBlockComments()));
 
@@ -205,38 +211,29 @@ public class YamlConfig extends FileConfiguration {
 		return false;
 	}
 
-	public final <T> T get(String path, Class<T> clazz, Object... deserializeParams) {
-		final Object object = this.getObject(path);
-
-		if (clazz.isInstance(object))
-			return clazz.cast(object);
-
-		return SerializeUtilCore.deserialize(Language.YAML, clazz, object, deserializeParams);
-	}
-
 	/*private MappingNode toNodeTree(MemorySection section) {
 		final List<NodeTuple> nodeTuples = new ArrayList<>();
-	
+
 		for (final Map.Entry<String, Object> entry : section.getValues(false).entrySet()) {
 			final Node key = this.representer.represent(entry.getKey());
-	
+
 			Node value;
-	
+
 			if (entry.getValue() instanceof MemorySection)
 				value = this.toNodeTree((MemorySection) entry.getValue());
 			else
 				value = this.representer.represent(entry.getValue());
-	
+
 			key.setBlockComments(this.getCommentLines(section.getComments(entry.getKey()), CommentType.BLOCK));
-	
+
 			if (value instanceof MappingNode || value instanceof SequenceNode)
 				key.setInLineComments(this.getCommentLines(section.getInlineComments(entry.getKey()), CommentType.IN_LINE));
 			else
 				value.setInLineComments(this.getCommentLines(section.getInlineComments(entry.getKey()), CommentType.IN_LINE));
-	
+
 			nodeTuples.add(new NodeTuple(key, value));
 		}
-	
+
 		return new MappingNode(Tag.MAP, nodeTuples, FlowStyle.BLOCK);
 	}*/
 
@@ -250,7 +247,7 @@ public class YamlConfig extends FileConfiguration {
 			for (final Map.Entry<String, Object> entry : section.getValues(true).entrySet()) {
 				final String path = entry.getKey();
 
-				if (defaults != null && !defaults.isSet(path)) {
+				if (defaults != null && !defaults.isStored(path)) {
 					boolean isUncommentedSection = false;
 
 					for (final String uncommented : this.uncommentedSections) {
@@ -264,7 +261,7 @@ public class YamlConfig extends FileConfiguration {
 					if (!isUncommentedSection) {
 						unusedKeys.put(path, entry.getValue());
 
-						section.set(path, null);
+						section.store(path, null);
 					}
 				}
 			}
@@ -274,7 +271,7 @@ public class YamlConfig extends FileConfiguration {
 				final YamlConfig unusedConfig = YamlConfig.fromFile(unusedFile);
 
 				for (final Map.Entry<String, Object> entry : unusedKeys.entrySet())
-					unusedConfig.set(entry.getKey(), entry.getValue());
+					unusedConfig.store(entry.getKey(), entry.getValue());
 
 				unusedConfig.save();
 				CommonCore.warning("The following entries in " + this.getFile().getName() + " are unused and were moved to " + unusedFile + ": " + unusedKeys.keySet());
@@ -296,8 +293,8 @@ public class YamlConfig extends FileConfiguration {
 			final Node key = this.representer.represent(entry.getKey());
 			Node value;
 
-			final boolean hasDiskValue = section.isSet(entry.getKey());
-			final Object diskValue = section.getObject(entry.getKey());
+			final boolean hasDiskValue = section.isStored(entry.getKey());
+			final Object diskValue = section.retrieve(entry.getKey());
 
 			boolean isUncommentedSection = !pullFromDefaults;
 			String deepPath = entry.getKey();
@@ -318,7 +315,7 @@ public class YamlConfig extends FileConfiguration {
 				if (hasDiskValue)
 					ValidCore.checkBoolean(diskValue instanceof MemorySection, "Expected " + entry.getKey() + " in " + this.getFile() + " to be a Map, got " + diskValue.getClass().getSimpleName());
 
-				value = this.toNodeTreeWithDefaults0((MemorySection) (hasDiskValue ? diskValue : entry.getValue()), defaults != null ? defaults.getConfigurationSection(entry.getKey()) : null, !isUncommentedSection);
+				value = this.toNodeTreeWithDefaults0((MemorySection) (hasDiskValue ? diskValue : entry.getValue()), defaults != null ? defaults.retrieveMemorySection(entry.getKey()) : null, !isUncommentedSection);
 
 			} else
 				value = this.representer.represent(hasDiskValue ? diskValue : entry.getValue());
@@ -460,7 +457,13 @@ public class YamlConfig extends FileConfiguration {
 	 * @param value New header, every entry represents one line.
 	 */
 	public final void setHeader(List<String> value) {
-		this.header = value;
+		final List<String> actualLines = new ArrayList<>();
+
+		for (final String line : value)
+			for (final String subline : line.split("\n"))
+				actualLines.add(subline);
+
+		this.header = actualLines;
 	}
 
 	/**
@@ -539,19 +542,99 @@ public class YamlConfig extends FileConfiguration {
 	 */
 	/*public static YamlConfiguration loadConfiguration(@NonNull Reader reader) {
 		final YamlConfiguration config = new YamlConfiguration();
-	
+
 		try {
 			config.load(reader);
-
+	
 		} catch (final IOException ex) {
 			CommonCore.error(ex, "Cannot load configuration from stream");
-	
+
 		} catch (final InvalidConfigurationException ex) {
 			CommonCore.error(ex, "Invalid configuration from stream");
 		}
-	
+
 		return config;
 	}*/
+
+	public static class YamlConstructor extends StandardConstructor {
+
+		public YamlConstructor(LoadSettings loadSettings) {
+			super(loadSettings);
+
+			this.tagConstructors.put(Tag.COMMENT, new ConstructComment());
+		}
+
+		@Override
+		public void flattenMapping(final MappingNode node) {
+			super.flattenMapping(node);
+		}
+
+		@Override
+		public Object construct(Node node) {
+			return constructObject(node);
+		}
+
+		private static class ConstructComment extends ConstructScalar {
+			@Override
+			public Object construct(Node node) {
+
+				// Handle the comment node - For now, we'll just return null.
+				return null;
+			}
+		}
+	}
+
+	public static class YamlRepresenter extends StandardRepresenter {
+
+		public YamlRepresenter(DumpSettings settings) {
+			super(settings);
+
+			this.parentClassRepresenters.put(MemorySection.class, new RepresentMemorySection());
+			this.parentClassRepresenters.put(ConfigSerializable.class, new RepresentConfigSerializable());
+
+			// We could just switch YamlConstructor to extend Constructor rather than SafeConstructor, however there is a very small risk of issues with plugins treating config as untrusted input
+			// So instead we will just allow future plugins to have their enums extend ConfigurationSerializable
+			this.parentClassRepresenters.remove(Enum.class);
+		}
+
+		@Override
+		public Node represent(Object data) {
+
+			data = SerializeUtilCore.serialize(Language.YAML, data);
+
+			try {
+				return super.represent(data);
+
+			} catch (final YamlEngineException ex) {
+				if (ex.getMessage().startsWith("Representer is not defined for"))
+					throw new YamlEngineException("Does not know how to serialize " + data.getClass() + ", make it implement ConfigSerializable!");
+
+				throw ex;
+			}
+		}
+
+		// Used by configuration sections that are nested within lists or maps.
+		private class RepresentMemorySection extends RepresentMap {
+
+			@Override
+			public Node representData(Object data) {
+				return super.representData(((MemorySection) data).getValues(false));
+			}
+		}
+
+		private class RepresentConfigSerializable extends RepresentMap {
+
+			@Override
+			public Node representData(Object data) {
+				final ConfigSerializable serializable = (ConfigSerializable) data;
+				final Map<String, Object> values = new LinkedHashMap<>();
+
+				values.putAll(serializable.serialize().asMap());
+
+				return super.representData(values);
+			}
+		}
+	}
 
 	/*
 	 * Internal helper class to support dumping to String

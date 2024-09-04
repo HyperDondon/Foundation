@@ -6,7 +6,7 @@ import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.command.DebugCommand;
 import org.mineacademy.fo.command.PermsCommand;
 import org.mineacademy.fo.command.ReloadCommand;
-import org.mineacademy.fo.model.AccusativeHelper;
+import org.mineacademy.fo.model.CaseNumberFormat;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.platform.Platform;
 
@@ -18,14 +18,6 @@ import org.mineacademy.fo.platform.Platform;
  */
 @SuppressWarnings("unused")
 public class SimpleLocalization extends YamlStaticConfig {
-
-	/**
-	 * A flag indicating that this class has been loaded
-	 * <p>
-	 * You can place this class to {@link SimplePlugin#getSettings()} to make
-	 * it load automatically
-	 */
-	private static boolean localizationClassCalled;
 
 	// --------------------------------------------------------------------
 	// Loading
@@ -40,7 +32,7 @@ public class SimpleLocalization extends YamlStaticConfig {
 	 * if it does not exists, or updated if it is out of date.
 	 */
 	@Override
-	protected final void onLoad() throws Exception {
+	protected final void load() throws Exception {
 		final String localePath = "localization/messages_" + SimpleSettings.LOCALE_PREFIX + ".yml";
 		final Object content = FileUtil.getInternalFileContent(localePath);
 
@@ -49,46 +41,7 @@ public class SimpleLocalization extends YamlStaticConfig {
 
 		this.loadConfiguration(localePath);
 
-		Lang.setInstance(TEMPORARY_INSTANCE); // pass thru and make permanent, this is null right after this call
-	}
-
-	// --------------------------------------------------------------------
-	// Version
-	// --------------------------------------------------------------------
-
-	/**
-	 * The configuration version number, found in the "Version" key in the file.,
-	 *
-	 * Defaults to 1 if not set in the file.
-	 */
-	public static Integer VERSION = 1;
-
-	/**
-	 * Set and update the config version automatically, however the {@link #VERSION} will
-	 * contain the older version used in the file on the disk so you can use
-	 * it for comparing in the init() methods
-	 * <p>
-	 * Please call this as a super method when overloading this!
-	 */
-	@Override
-	protected final void preLoad() {
-		// Load version first so we can use it later
-		setPathPrefix(null);
-
-		if (isSetDefault("Version"))
-			if ((VERSION = getInteger("Version")) != this.getConfigVersion())
-				set("Version", this.getConfigVersion());
-	}
-
-	/**
-	 * Return the very latest config version
-	 * <p>
-	 * Any changes here must also be made to the "Version" key in your settings file.
-	 *
-	 * @return
-	 */
-	protected int getConfigVersion() {
-		return 1;
+		//Lang.setInstance(TEMPORARY_INSTANCE); // pass thru and make permanent, this is null right after this call
 	}
 
 	// --------------------------------------------------------------------
@@ -637,37 +590,37 @@ public class SimpleLocalization extends YamlStaticConfig {
 	 */
 	public static class Cases {
 
-		public static AccusativeHelper SECOND = AccusativeHelper.of("second", "seconds");
-		public static AccusativeHelper MINUTE = AccusativeHelper.of("minute", "minutes");
-		public static AccusativeHelper HOUR = AccusativeHelper.of("hour", "hours");
-		public static AccusativeHelper DAY = AccusativeHelper.of("day", "days");
-		public static AccusativeHelper WEEK = AccusativeHelper.of("week", "weeks");
-		public static AccusativeHelper MONTH = AccusativeHelper.of("month", "months");
-		public static AccusativeHelper YEAR = AccusativeHelper.of("year", "years");
+		public static CaseNumberFormat SECOND = CaseNumberFormat.of("second", "seconds");
+		public static CaseNumberFormat MINUTE = CaseNumberFormat.of("minute", "minutes");
+		public static CaseNumberFormat HOUR = CaseNumberFormat.of("hour", "hours");
+		public static CaseNumberFormat DAY = CaseNumberFormat.of("day", "days");
+		public static CaseNumberFormat WEEK = CaseNumberFormat.of("week", "weeks");
+		public static CaseNumberFormat MONTH = CaseNumberFormat.of("month", "months");
+		public static CaseNumberFormat YEAR = CaseNumberFormat.of("year", "years");
 
 		private static void init() {
 			setPathPrefix("Cases");
 
 			if (isSetDefault("Second"))
-				SECOND = getCasus("Second");
+				SECOND = getCaseNumberFormat("Second");
 
 			if (isSetDefault("Minute"))
-				MINUTE = getCasus("Minute");
+				MINUTE = getCaseNumberFormat("Minute");
 
 			if (isSetDefault("Hour"))
-				HOUR = getCasus("Hour");
+				HOUR = getCaseNumberFormat("Hour");
 
 			if (isSetDefault("Day"))
-				DAY = getCasus("Day");
+				DAY = getCaseNumberFormat("Day");
 
 			if (isSetDefault("Week"))
-				WEEK = getCasus("Week");
+				WEEK = getCaseNumberFormat("Week");
 
 			if (isSetDefault("Month"))
-				MONTH = getCasus("Month");
+				MONTH = getCaseNumberFormat("Month");
 
 			if (isSetDefault("Year"))
-				YEAR = getCasus("Year");
+				YEAR = getCaseNumberFormat("Year");
 		}
 	}
 
@@ -740,12 +693,6 @@ public class SimpleLocalization extends YamlStaticConfig {
 	public static SimpleComponent NO_PERMISSION = SimpleComponent.fromMini("<red>Insufficient permission ({permission}).");
 
 	/**
-	 * The server prefix. Example: you have to use it manually if you are sending messages
-	 * from the console to players
-	 */
-	public static String SERVER_PREFIX = "[Server]";
-
-	/**
 	 * The console localized name. Example: Console
 	 */
 	public static String CONSOLE_NAME = "Console";
@@ -761,13 +708,9 @@ public class SimpleLocalization extends YamlStaticConfig {
 	 */
 	private static void init() {
 		setPathPrefix(null);
-		ValidCore.checkBoolean(!localizationClassCalled, "Localization class already loaded!");
 
 		if (isSetDefault("No_Permission"))
 			NO_PERMISSION = getComponent("No_Permission");
-
-		if (isSetDefault("Server_Prefix"))
-			SERVER_PREFIX = getString("Server_Prefix");
 
 		if (isSetDefault("Console_Name"))
 			CONSOLE_NAME = getString("Console_Name");
@@ -777,24 +720,5 @@ public class SimpleLocalization extends YamlStaticConfig {
 
 		if (isSetDefault("None"))
 			NONE = getString("None");
-
-		localizationClassCalled = true;
-	}
-
-	/**
-	 * Was this class loaded?
-	 *
-	 * @return
-	 */
-	public static final Boolean isLocalizationCalled() {
-		return localizationClassCalled;
-	}
-
-	/**
-	 * Reset the flag indicating that the class has been loaded,
-	 * used in reloading.
-	 */
-	public static final void resetLocalizationCall() {
-		localizationClassCalled = false;
 	}
 }

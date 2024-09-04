@@ -7,7 +7,7 @@ import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.model.CompToastStyle;
 import org.mineacademy.fo.model.SimpleComponent;
-import org.mineacademy.fo.settings.SimpleLocalization;
+import org.mineacademy.fo.settings.Lang;
 
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
@@ -34,7 +34,7 @@ public abstract class FoundationPlayer {
 	public abstract boolean isOnline();
 
 	public final String getName() {
-		return this.isConsole() ? SimpleLocalization.CONSOLE_NAME : this.getSenderName0();
+		return this.isConsole() ? Lang.ofLegacy("console-name") : this.getSenderName0();
 	}
 
 	protected abstract String getSenderName0();

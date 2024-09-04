@@ -21,6 +21,7 @@ import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.jsonsimple.JSONObject;
 import org.mineacademy.fo.jsonsimple.JSONParser;
 import org.mineacademy.fo.model.IsInList;
+import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.Tuple;
 import org.mineacademy.fo.settings.MemorySection;
 
@@ -488,6 +489,30 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 	 */
 	public <K, V> Tuple<K, V> getTuple(final String key, final Tuple<K, V> def, Class<K> keyType, Class<V> valueType) {
 		return this.get(key, Tuple.class, def, keyType, valueType);
+	}
+
+	/**
+	 * Return a {@link SimpleComponent} value from the key at the given path.
+	 *
+	 * @param path
+	 * @return
+	 */
+	public SimpleComponent getComponent(final String path) {
+		return this.getComponent(path, null);
+	}
+
+	/**
+	 * Return a {@link SimpleComponent} value from the key at the given path
+	 * or supply with default if path is not set.
+	 *
+	 * @param path
+	 * @param def
+	 * @return
+	 */
+	public SimpleComponent getComponent(final String path, final SimpleComponent def) {
+		final String string = this.getString(path);
+
+		return string != null ? SimpleComponent.fromMini(string) : def;
 	}
 
 	/**
