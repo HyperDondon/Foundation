@@ -66,6 +66,7 @@
   "conversation-conversation-error": "Oups! There was a problem in this conversation! Please contact the administrator to review the console for details.",
   "conversation-not-conversing": "You can only use this command when you are asked to type something in the chat.",
   "data-missing": "<red>{name} lacks database information! Please only create {type} in-game! Skipping..",
+  "menu-button-info-name": "<white>Menu Information",
   "menu-button-return-lore": [
     "",
     "Return back."
@@ -79,7 +80,6 @@
   "menu-page-next": "Page {page} <dark_gray>>>",
   "menu-page-previous": "<dark_gray><< <white>Page {page}",
   "menu-title-tools": "Tools Menu",
-  "menu-tooltip-info": "<white>Menu Information",
   "no-permission": "<red>No permission: {permission}",
   "none": "None",
   "page-go-to-first-page": "<gray>Go to the first page",
