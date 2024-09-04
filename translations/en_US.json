@@ -20,7 +20,7 @@
   "command-header-center-letter": "-",
   "command-header-center-padding": "130",
   "command-header-no-subcommands": "<red>There are no arguments for this command.",
-  "command-header-no-subcommand-permission": "<red>You don't have permissions to view any subcommands.",
+  "command-header-no-subcommands-permission": "<red>You don't have permissions to view any subcommands.",
   "command-help-tooltip-description": "<gray>Description: <white>{description}",
   "command-help-tooltip-permission": "<gray>Permission: <white>{permission}",
   "command-help-tooltip-usage": "<gray>Usage: <white>{usage}",
