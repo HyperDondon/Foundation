@@ -502,17 +502,17 @@ public abstract class ValidCore {
 	/*public static boolean valuesEqual(final Collection<String> values) {
 		final List<String> copy = new ArrayList<>(values);
 		String lastValue = null;
-	
+
 		for (final String value : copy) {
 			if (lastValue == null)
 				lastValue = value;
-	
+
 			if (!lastValue.equals(value))
 				return false;
-	
+
 			lastValue = value;
 		}
-	
+
 		return true;
 	}*/
 
@@ -533,6 +533,28 @@ public abstract class ValidCore {
 	 */
 	public static boolean isInList(final String element, final boolean isBlacklist, final Iterable<String> list) {
 		return isBlacklist == ValidCore.isInList(element, list);
+	}
+
+	/**
+	 * Return true if any element in the given list contains (case ignored) your given element
+	 *
+	 * @param element
+	 * @param list
+	 * @return
+	 *
+	 * @deprecated can lead to unwanted matches such as when /time is in list, /t will also get caught
+	 */
+	@Deprecated
+	public static boolean isInListContains(final String element, final Iterable<String> list) {
+		try {
+			for (final String matched : list)
+				if (removeSlash(element).toLowerCase().contains(removeSlash(matched).toLowerCase()))
+					return true;
+
+		} catch (final ClassCastException ex) { // for example when YAML translates "yes" to "true" to boolean (!) (#wontfix)
+		}
+
+		return false;
 	}
 
 	/**
@@ -645,10 +667,10 @@ public abstract class ValidCore {
 			for (final String matched : list)
 				if (removeSlash(element).toLowerCase().contains(removeSlash(matched).toLowerCase()))
 					return true;
-
+	
 		} catch (final ClassCastException ex) { // for example when YAML translates "yes" to "true" to boolean (!) (#wontfix)
 		}
-
+	
 		return false;
 	}*/
 

@@ -1,13 +1,11 @@
 package org.mineacademy.fo.settings;
 
-import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
-import org.mineacademy.fo.FileUtil;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.model.CaseNumberFormat;
 import org.mineacademy.fo.model.SimpleComponent;
@@ -25,12 +23,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class SettingsMapper {
 
-	public static JsonObject mapLocaleYaml(String filePath) {
-		final File file = FileUtil.getFile(filePath);
-		ValidCore.checkBoolean(file.exists(), "File " + file + " does not exist!");
-
+	public static JsonObject mapLocaleYaml(String internalPath) {
 		final JsonObject dictionary = new JsonObject();
-		final YamlConfig config = YamlConfig.fromFile(file);
+		final YamlConfig config = YamlConfig.fromInternalPath(internalPath);
 
 		for (final Map.Entry<String, Object> entry : config.getValues(true).entrySet()) {
 			final String key = entry.getKey()
@@ -51,11 +46,14 @@ public final class SettingsMapper {
 		return dictionary;
 	}
 
-	public static JsonObject mapClass(Class<?> clazz) throws Exception {
+	public static <T extends YamlStaticConfig> JsonObject mapClass(Class<T> clazz) throws Exception {
 		final JsonObject dictionary = new JsonObject();
 
 		try {
+			YamlStaticConfig.load(clazz);
+
 			mapClass(clazz, dictionary);
+
 		} catch (final Exception ex) {
 			ex.printStackTrace();
 		}
@@ -63,7 +61,7 @@ public final class SettingsMapper {
 		return dictionary;
 	}
 
-	public static JsonObject mapClass(Class<?> clazz, JsonObject dictionary) throws Exception {
+	private static JsonObject mapClass(Class<?> clazz, JsonObject dictionary) throws Exception {
 		mapClassFields(clazz, dictionary);
 
 		for (final Class<?> subClazz : clazz.getDeclaredClasses())

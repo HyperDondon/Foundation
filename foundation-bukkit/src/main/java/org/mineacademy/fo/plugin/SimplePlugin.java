@@ -618,7 +618,7 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 	public final void reload() {
 
 		try {
-			if (CompMetadata.isLegacy())
+			if (CompMetadata.isLegacy() && CompMetadata.MetadataFile.getInstance().getFile() != null)
 				CompMetadata.MetadataFile.getInstance().save();
 
 			this.onPluginPreReload();

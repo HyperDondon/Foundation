@@ -1,5 +1,6 @@
 package org.mineacademy.fo.remain;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -24,6 +25,7 @@ import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataHolder;
 import org.bukkit.persistence.PersistentDataType;
 import org.mineacademy.fo.Common;
+import org.mineacademy.fo.FileUtil;
 import org.mineacademy.fo.MinecraftVersion;
 import org.mineacademy.fo.MinecraftVersion.V;
 import org.mineacademy.fo.SerializeUtil;
@@ -404,7 +406,15 @@ public final class CompMetadata {
 
 		private void loadIfHasnt() {
 			if (!this.loaded) {
-				this.loadConfiguration(NO_DEFAULT, "legacy-metadata.yml");
+
+				// Avoid file creation unless actually used in the set method below
+				final File file = FileUtil.getFile("legacy-metadata.yml");
+
+				if (file.exists())
+					this.load(file);
+
+				else
+					this.setFile(file);
 
 				this.loaded = true;
 			}
@@ -418,6 +428,8 @@ public final class CompMetadata {
 
 		@Override
 		protected boolean canSave() {
+			System.out.println("Can save ? " + (!hasPersistentMetadata && this.getBoolean("Initialized", false)));
+
 			return !hasPersistentMetadata && this.getBoolean("Initialized", false);
 		}
 
@@ -464,6 +476,9 @@ public final class CompMetadata {
 					if (entity == null)
 						iterator.remove();
 				}
+
+				if (!this.entityMetadata.isEmpty())
+					this.set("Initialized", true);
 			});
 		}
 
@@ -480,6 +495,9 @@ public final class CompMetadata {
 				if (block != null && CompMaterial.fromBlock(block) == blockCache.getType())
 					this.blockMetadata.put(location, blockCache);
 			}
+
+			if (!this.blockMetadata.isEmpty())
+				this.set("Initialized", true);
 		}
 
 		protected String getMetadata(final Entity entity, @NonNull final String key) {

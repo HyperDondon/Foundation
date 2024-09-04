@@ -155,7 +155,7 @@ final class FoundationListener implements Listener {
 
 			clickableFooter = clickableFooter
 					.appendMini("&f" + (page + 1)).onHover(Lang.component("page-go-to-first-page")).onClickRunCmd("/#flp 1")
-					.appendMini("&7/").onHover(Lang.component("page-tooltip"))
+					.appendMini("&7/").onHover(Lang.componentArray("page-tooltip"))
 					.appendMini("&f" + pages.size() + "").onHover(Lang.component("page-go-to-last-page")).onClickRunCmd("/#flp " + pages.size());
 
 			if (page + 1 >= pages.size())

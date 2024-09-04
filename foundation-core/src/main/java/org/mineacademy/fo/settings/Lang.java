@@ -236,7 +236,7 @@ public final class Lang {
 	 * @return
 	 */
 	public static SimpleComponent[] componentArray(String path) {
-		return componentArray(path);
+		return componentArrayVars(path);
 	}
 
 	/**

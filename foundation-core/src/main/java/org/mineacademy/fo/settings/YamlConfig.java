@@ -117,7 +117,7 @@ public class YamlConfig extends FileConfiguration {
 	}
 
 	@Override
-	public final void loadFromString(@NonNull String contents) {
+	public final void onLoadFromString(@NonNull String contents) {
 
 		MappingNode node;
 		final Node rawNode = this.composer.composeString(contents).orElse(null);
@@ -213,27 +213,27 @@ public class YamlConfig extends FileConfiguration {
 
 	/*private MappingNode toNodeTree(MemorySection section) {
 		final List<NodeTuple> nodeTuples = new ArrayList<>();
-
+	
 		for (final Map.Entry<String, Object> entry : section.getValues(false).entrySet()) {
 			final Node key = this.representer.represent(entry.getKey());
-
+	
 			Node value;
-
+	
 			if (entry.getValue() instanceof MemorySection)
 				value = this.toNodeTree((MemorySection) entry.getValue());
 			else
 				value = this.representer.represent(entry.getValue());
-
+	
 			key.setBlockComments(this.getCommentLines(section.getComments(entry.getKey()), CommentType.BLOCK));
-
+	
 			if (value instanceof MappingNode || value instanceof SequenceNode)
 				key.setInLineComments(this.getCommentLines(section.getInlineComments(entry.getKey()), CommentType.IN_LINE));
 			else
 				value.setInLineComments(this.getCommentLines(section.getInlineComments(entry.getKey()), CommentType.IN_LINE));
-
+	
 			nodeTuples.add(new NodeTuple(key, value));
 		}
-
+	
 		return new MappingNode(Tag.MAP, nodeTuples, FlowStyle.BLOCK);
 	}*/
 
@@ -513,17 +513,26 @@ public class YamlConfig extends FileConfiguration {
 	}
 
 	/**
+	 * Creates a new {@link YamlConfig}, loading from the given internal path.
+	 *
+	 * @param path the path in the plugin's jar
+	 * @return Resulting configuration
+	 */
+	public static YamlConfig fromInternalPath(@NonNull String path) {
+		final YamlConfig config = new YamlConfig();
+		final List<String> content = FileUtil.getInternalFileContent(path);
+		ValidCore.checkNotNull(content, "Inbuilt " + path + " not found! Did you reload?");
+
+		config.loadFromString(String.join("\n", content));
+
+		return config;
+	}
+
+	/**
 	 * Creates a new {@link YamlConfig}, loading from the given file.
-	 * <p>
-	 * Any errors loading the Configuration will be logged and then ignored.
-	 * If the specified input is not a valid config, a blank config will be
-	 * returned.
-	 * <p>
-	 * The encoding used may follow the system dependent default.
 	 *
 	 * @param file Input file
 	 * @return Resulting configuration
-	 * @throws IllegalArgumentException Thrown if file is null
 	 */
 	public static YamlConfig fromFile(@NonNull File file) {
 		final YamlConfig config = new YamlConfig();
@@ -542,17 +551,17 @@ public class YamlConfig extends FileConfiguration {
 	 */
 	/*public static YamlConfiguration loadConfiguration(@NonNull Reader reader) {
 		final YamlConfiguration config = new YamlConfiguration();
-
+	
 		try {
 			config.load(reader);
-	
+
 		} catch (final IOException ex) {
 			CommonCore.error(ex, "Cannot load configuration from stream");
-
+	
 		} catch (final InvalidConfigurationException ex) {
 			CommonCore.error(ex, "Invalid configuration from stream");
 		}
-
+	
 		return config;
 	}*/
 

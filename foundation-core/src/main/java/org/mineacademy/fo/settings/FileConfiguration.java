@@ -73,6 +73,10 @@ public abstract class FileConfiguration extends MemorySection {
 	// Loading
 	// ------------------------------------------------------------------------------------------------------------
 
+	public final void loadConfiguration(String internalPath) {
+		this.loadConfiguration(internalPath, internalPath);
+	}
+
 	public final void loadConfiguration(String from, String to) {
 		if (from != null) {
 			final List<String> defaultContent = FileUtil.getInternalFileContent(from);
@@ -161,7 +165,18 @@ public abstract class FileConfiguration extends MemorySection {
 	 *
 	 * @param contents Contents of a Configuration to load.
 	 */
-	protected abstract void loadFromString(String contents);
+	protected final void loadFromString(String contents) {
+		this.onLoadFromString(contents);
+
+		try {
+			this.onLoad();
+
+		} catch (final Throwable t) {
+			CommonCore.error(t, "Failed to call onLoad in configuration " + this.file);
+		}
+	}
+
+	protected abstract void onLoadFromString(String contents);
 
 	/**
 	 * Called automatically after the configuration is loaded
@@ -728,10 +743,16 @@ public abstract class FileConfiguration extends MemorySection {
 	}
 
 	public final List<Object> getList(final String path, List<Object> def) {
-		final Object obj = this.getObject(path);
+		Object obj = this.getObject(path);
 
 		if (obj == null)
 			return def != null ? def : new ArrayList<>();
+
+		if (obj instanceof String)
+			obj = Arrays.asList(((String) obj).split("\n"));
+
+		else if (ValidCore.isPrimitiveWrapper(obj))
+			obj = Arrays.asList(obj.toString());
 
 		ValidCore.checkBoolean(obj instanceof Collection, "Expected a list at " + path + " in " + this.file + ", got " + obj.getClass().getSimpleName() + " instead!");
 		return new ArrayList<>((Collection<?>) obj);
@@ -866,6 +887,10 @@ public abstract class FileConfiguration extends MemorySection {
 	 */
 	public final File getFile() {
 		return file;
+	}
+
+	protected final void setFile(File file) {
+		this.file = file;
 	}
 
 	/**

@@ -171,7 +171,7 @@ public final class FileUtil {
 	 * @return
 	 */
 	public static JsonObject readJsonFromUrl(String url) {
-		final List<String> baseContent = FileUtil.readLinesFromUrl("https://raw.githubusercontent.com/kangarko/Foundation/v7/translations/en_US.json");
+		final List<String> baseContent = FileUtil.readLinesFromUrl("https://raw.githubusercontent.com/kangarko/Foundation/v7/lang/en_US.json");
 		final String joined = String.join("\n", baseContent);
 
 		return RemainCore.GSON.fromJson(joined, JsonObject.class);
@@ -185,7 +185,10 @@ public final class FileUtil {
 	 */
 	public static JsonObject readJsonFromInternal(String path) {
 		final List<String> baseContent = FileUtil.getInternalFileContent(path);
-		final String joined = String.join("\n", baseContent);
+		final String joined = baseContent == null ? "{}" : String.join("\n", baseContent);
+
+		if (baseContent == null)
+			CommonCore.warning("Internal path with JSON file at '" + path + "' does not exist!");
 
 		return RemainCore.GSON.fromJson(joined, JsonObject.class);
 	}

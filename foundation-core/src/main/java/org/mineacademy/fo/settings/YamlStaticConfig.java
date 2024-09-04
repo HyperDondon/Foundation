@@ -19,7 +19,6 @@ import org.mineacademy.fo.model.CaseNumberFormat;
 import org.mineacademy.fo.model.IsInList;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.SimpleTime;
-import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.remain.RemainCore;
 
 /**
@@ -62,6 +61,8 @@ public abstract class YamlStaticConfig {
 	public static final void load(Class<? extends YamlStaticConfig> clazz) {
 		try {
 			final YamlStaticConfig config = clazz.newInstance();
+
+			System.out.println("Making new insntance of YamlConfig's " + clazz);
 
 			TEMPORARY_INSTANCE = new YamlConfig();
 			TEMPORARY_INSTANCE.setUncommentedSections(config.getUncommentedSections());
@@ -137,9 +138,9 @@ public abstract class YamlStaticConfig {
 	private void invokeMethodsIn(final Class<?> clazz) throws Exception {
 		for (final Method method : clazz.getDeclaredMethods()) {
 
-			// After each invocation check if the invoication broke the plugin and ignore
-			if (!Platform.getPlugin().isEnabled())
-				return;
+			// After each invocation check if the invocation broke the plugin and ignore
+			// TODO if (!Platform.getPlugin().isEnabled())
+			//	return;
 
 			final int mod = method.getModifiers();
 
