@@ -12,12 +12,11 @@ import org.mineacademy.fo.model.RangedValue;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.remain.CompChatColor;
-import org.mineacademy.fo.settings.SimpleLocalization;
+import org.mineacademy.fo.settings.Lang;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import net.kyori.adventure.text.Component;
 
 /**
  * Utility class for checking conditions and throwing our safe exception that is
@@ -138,7 +137,7 @@ public abstract class ValidCore {
 	}
 
 	/**
-	 * Check if the player has the given permission, if false we send him {@link SimpleLocalization#NO_PERMISSION}
+	 * Check if the player has the given permission, if false we send him the no permissions message
 	 * message and return false, otherwise no message is sent and we return true
 	 *
 	 * @param sender
@@ -147,7 +146,7 @@ public abstract class ValidCore {
 	 */
 	public static boolean checkPermission(final FoundationPlayer sender, final String permission) {
 		if (!sender.hasPermission(permission)) {
-			sender.sendMessage(SimpleLocalization.NO_PERMISSION.replaceBracket("permission", SimpleComponent.fromAdventure(Component.text(permission))));
+			sender.sendMessage(Lang.componentVars("no-permission", "permission", SimpleComponent.fromPlain(permission)));
 
 			return false;
 		}
@@ -429,6 +428,16 @@ public abstract class ValidCore {
 		return object instanceof UUID;
 	}
 
+	/**
+	 * Return if the input is a primitive wrapper
+	 *
+	 * @param input
+	 * @return
+	 */
+	public static boolean isPrimitiveWrapper(Object input) {
+		return input instanceof Integer || input instanceof Boolean || input instanceof Character || input instanceof Byte || input instanceof Short || input instanceof Double || input instanceof Long || input instanceof Float;
+	}
+
 	// ------------------------------------------------------------------------------------------------------------
 	// Equality checks
 	// ------------------------------------------------------------------------------------------------------------
@@ -493,17 +502,17 @@ public abstract class ValidCore {
 	/*public static boolean valuesEqual(final Collection<String> values) {
 		final List<String> copy = new ArrayList<>(values);
 		String lastValue = null;
-
+	
 		for (final String value : copy) {
 			if (lastValue == null)
 				lastValue = value;
-
+	
 			if (!lastValue.equals(value))
 				return false;
-
+	
 			lastValue = value;
 		}
-
+	
 		return true;
 	}*/
 
@@ -636,10 +645,10 @@ public abstract class ValidCore {
 			for (final String matched : list)
 				if (removeSlash(element).toLowerCase().contains(removeSlash(matched).toLowerCase()))
 					return true;
-	
+
 		} catch (final ClassCastException ex) { // for example when YAML translates "yes" to "true" to boolean (!) (#wontfix)
 		}
-	
+
 		return false;
 	}*/
 

@@ -6,7 +6,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.util.Vector;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.remain.Remain;
-import org.mineacademy.fo.settings.SimpleLocalization;
+import org.mineacademy.fo.settings.Lang;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 public final class Valid extends ValidCore {
 
 	/**
-	 * Check if the player has the given permission, if false we send him {@link SimpleLocalization#NO_PERMISSION}
+	 * Check if the player has the given permission, if false we send him a no permissions
 	 * message and return false, otherwise no message is sent and we return true
 	 *
 	 * @param sender
@@ -24,7 +24,7 @@ public final class Valid extends ValidCore {
 	 */
 	public static boolean checkPermission(final CommandSender sender, final String permission) {
 		if (!sender.hasPermission(permission)) {
-			SimpleLocalization.NO_PERMISSION.replaceBracket("permission", permission).send(Platform.toPlayer(sender));
+			Lang.componentVars("no-permission", "permission", permission).send(Platform.toPlayer(sender));
 
 			return false;
 		}

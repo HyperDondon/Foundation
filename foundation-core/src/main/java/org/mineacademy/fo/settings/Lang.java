@@ -6,8 +6,10 @@ import java.util.List;
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.FileUtil;
 import org.mineacademy.fo.ValidCore;
+import org.mineacademy.fo.model.CaseNumberFormat;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.Variables;
+import org.mineacademy.fo.remain.CompChatColor;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -27,10 +29,16 @@ public final class Lang {
 	 */
 	private static final Lang instance = new Lang();
 
-	private final JsonObject base;
+	private final JsonObject dictionary;
 
 	private Lang() {
-		this.base = FileUtil.readJsonFromUrl("https://raw.githubusercontent.com/kangarko/Foundation/v7/translations/en_US.json");
+		final JsonObject base = FileUtil.readJsonFromUrl("https://raw.githubusercontent.com/kangarko/Foundation/v7/lang/en_US.json");
+		final JsonObject overlay = FileUtil.readJsonFromInternal("lang/en_US.json");
+
+		for (final String key : overlay.keySet())
+			base.add(key, overlay.get(key));
+
+		this.dictionary = base;
 	}
 
 	private JsonArray retrieveList(String path) {
@@ -46,9 +54,13 @@ public final class Lang {
 	}
 
 	private JsonElement retrieve(String path) {
-		ValidCore.checkBoolean(this.base.has(path), "Missing localization key '" + path + "'");
+		ValidCore.checkBoolean(this.dictionary.has(path), "Missing localization key '" + path + "'");
 
-		return this.base.get(path);
+		return this.dictionary.get(path);
+	}
+
+	private boolean has(String path) {
+		return this.dictionary.has(path);
 	}
 
 	// ------------------------------------------------------------------------------------------------------------
@@ -109,7 +121,7 @@ public final class Lang {
 	 * @return
 	 */
 	public static String ofCaseNoAmount(long amount, String path) {
-		final String key = ofLegacy(path);
+		final String key = legacy(path);
 		final String[] split = key.split(", ");
 
 		ValidCore.checkBoolean(split.length == 1 || split.length == 2, "Invalid syntax of key at '" + path + "', this key is a special one and "
@@ -125,21 +137,55 @@ public final class Lang {
 	 * Return a key from the localization file
 	 *
 	 * @param path
+	 * @param replacements
 	 * @return
 	 */
-	public static String ofLegacy(String path) {
-		return ofLegacyVars(path);
+	public static String legacyVars(String path, Object... replacements) {
+		final String value = legacy(path);
+
+		return Variables.replace(value, null, CommonCore.newHashMap(replacements));
 	}
 
 	/**
 	 * Return a key from the localization file
 	 *
 	 * @param path
-	 * @param replacements
+	 * @parm count
+	 *
 	 * @return
 	 */
-	public static String ofLegacyVars(String path, Object... replacements) {
-		return ofVars(path, replacements).toLegacy();
+	public static String formattedNumber(String path, long count) {
+		return new CaseNumberFormat(legacy(path)).formatWithCount(count);
+	}
+
+	/**
+	 * Return a key from the localization file
+	 *
+	 * @param path
+	 * @return
+	 */
+	public static String legacy(String path) {
+		return CompChatColor.translateColorCodes(plain(path));
+	}
+
+	/**
+	 * Return a key from the localization file
+	 *
+	 * @param path
+	 * @return
+	 */
+	public static String plain(String path) {
+		return instance.retrieve(path).getAsString();
+	}
+
+	/**
+	 * Return if the given key exists
+	 *
+	 * @param path
+	 * @return
+	 */
+	public static boolean exists(String path) {
+		return instance.has(path);
 	}
 
 	/**
@@ -149,26 +195,16 @@ public final class Lang {
 	 * @param path
 	 * @return
 	 */
-	public static SimpleComponent ofNumericVars(String path, Object... replacements) {
+	/*public static SimpleComponent ofNumericVars(String path, Object... replacements) {
 		final List<Object> replacementsList = new ArrayList<>();
-
+	
 		for (int i = 0; i < replacements.length; i++) {
 			replacementsList.add(String.valueOf(i));
 			replacementsList.add(replacements[i]);
 		}
-
+	
 		return ofVars(path, replacementsList.toArray());
-	}
-
-	/**
-	 * Return a key from the localization file
-	 *
-	 * @param path
-	 * @return
-	 */
-	public static SimpleComponent of(String path) {
-		return ofVars(path);
-	}
+	}*/
 
 	/**
 	 * Return a key from the localization file
@@ -177,20 +213,30 @@ public final class Lang {
 	 * @param replacements
 	 * @return
 	 */
-	public static SimpleComponent ofVars(String path, Object... replacements) {
-		final SimpleComponent component = SimpleComponent.fromMini(instance.retrieve(path).getAsString());
+	public static SimpleComponent componentVars(String path, Object... replacements) {
+		final SimpleComponent component = component(path);
 
 		return Variables.replace(component, null, CommonCore.newHashMap(replacements));
 	}
 
 	/**
+	 * Return a key from the localization file
+	 *
+	 * @param path
+	 * @return
+	 */
+	public static SimpleComponent component(String path) {
+		return SimpleComponent.fromMini(plain(path));
+	}
+
+	/**
 	 * Return an array from the localization file with {0} {1} etc. variables replaced.
 	 *
 	 * @param path
 	 * @return
 	 */
-	public static SimpleComponent[] ofArray(String path) {
-		return ofArrayVars(path);
+	public static SimpleComponent[] componentArray(String path) {
+		return componentArray(path);
 	}
 
 	/**
@@ -200,7 +246,7 @@ public final class Lang {
 	 * @param replacements
 	 * @return
 	 */
-	public static SimpleComponent[] ofArrayVars(String path, Object... replacements) {
+	public static SimpleComponent[] componentArrayVars(String path, Object... replacements) {
 		final List<SimpleComponent> components = new ArrayList<>();
 
 		for (final JsonElement listElement : instance.retrieveList(path))
@@ -216,7 +262,7 @@ public final class Lang {
 	 * @param replacements
 	 * @return
 	 */
-	public static String[] ofLegacyArrayVars(String path, Object... replacements) {
+	public static String[] legacyArrayVars(String path, Object... replacements) {
 		final List<String> lines = new ArrayList<>();
 
 		for (final JsonElement listElement : instance.retrieveList(path))

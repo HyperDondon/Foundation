@@ -26,7 +26,7 @@ import org.mineacademy.fo.plugin.SimplePlugin;
 import org.mineacademy.fo.remain.CompChatColor;
 import org.mineacademy.fo.remain.CompSound;
 import org.mineacademy.fo.remain.Remain;
-import org.mineacademy.fo.settings.SimpleLocalization;
+import org.mineacademy.fo.settings.Lang;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -387,7 +387,7 @@ public abstract class SimpleConversation implements ConversationAbandonedListene
 					this.abandon(new ConversationAbandonedEvent(this));
 
 				} catch (final Throwable t) {
-					Messenger.error((CommandSender) this.context.getForWhom(), SimpleLocalization.Conversation.CONVERSATION_ERROR);
+					Messenger.error((CommandSender) this.context.getForWhom(), Lang.component("conversation-error"));
 
 					t.printStackTrace();
 				}
@@ -404,10 +404,10 @@ public abstract class SimpleConversation implements ConversationAbandonedListene
 					if (!askedQuestions.containsKey(question)) {
 						askedQuestions.put(question, null);
 
-						if (!CompChatColor.stripColorCodes(question).contains(SimpleLocalization.Prefix.QUESTION.toPlain())) {
+						if (!CompChatColor.stripColorCodes(question).contains(Lang.component("prefix-question").toPlain())) {
 							final String prefix = this.prefix.getPrefix(this.context);
 
-							question = (!prefix.isEmpty() ? prefix : SimpleLocalization.Prefix.QUESTION.toLegacy()) + " " + question;
+							question = (!prefix.isEmpty() ? prefix : Lang.legacy("prefix-question")) + " " + question;
 						}
 
 						this.context.setSessionData("Asked_" + promptClass, askedQuestions);

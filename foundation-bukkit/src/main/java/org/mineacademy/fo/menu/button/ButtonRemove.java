@@ -13,7 +13,7 @@ import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.remain.CompColor;
 import org.mineacademy.fo.remain.CompItemFlag;
 import org.mineacademy.fo.remain.CompMaterial;
-import org.mineacademy.fo.settings.SimpleLocalization;
+import org.mineacademy.fo.settings.Lang;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -136,8 +136,8 @@ public class ButtonRemove extends Button {
 			player.closeInventory();
 			ButtonRemove.this.removeAction.run();
 
-			SimpleLocalization.Menu.ITEM_DELETED
-					.replaceBracket("item", (!ButtonRemove.this.toRemoveType.isEmpty() ? ButtonRemove.this.toRemoveType + " " : "") + ButtonRemove.this.toRemoveName)
+			Lang
+					.componentVars("menu-item-deleted", "item", (!ButtonRemove.this.toRemoveType.isEmpty() ? ButtonRemove.this.toRemoveType + " " : "") + ButtonRemove.this.toRemoveName)
 					.send(Platform.toPlayer(player));
 		}
 	}

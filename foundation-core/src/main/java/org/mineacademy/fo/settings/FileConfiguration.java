@@ -389,7 +389,7 @@ public abstract class FileConfiguration extends MemorySection {
 		else if (object.getClass().isArray())
 			return CommonCore.join((Object[]) object);
 
-		else if (this.isPrimitiveWrapper(object) || object instanceof Number)
+		else if (ValidCore.isPrimitiveWrapper(object) || object instanceof Number)
 			return String.valueOf(object);
 
 		else if (object instanceof String)
@@ -616,7 +616,7 @@ public abstract class FileConfiguration extends MemorySection {
 		final List<String> result = new ArrayList<>();
 
 		for (final Object object : list)
-			if ((object instanceof String) || (this.isPrimitiveWrapper(object)))
+			if ((object instanceof String) || (ValidCore.isPrimitiveWrapper(object)))
 				result.add(String.valueOf(object));
 
 		return result;
@@ -894,13 +894,6 @@ public abstract class FileConfiguration extends MemorySection {
 	// ------------------------------------------------------------------------------------------------------------
 	// Helpers
 	// ------------------------------------------------------------------------------------------------------------
-
-	/*
-	 * Return if the input is a primitive wrapper
-	 */
-	private boolean isPrimitiveWrapper(Object input) {
-		return input instanceof Integer || input instanceof Boolean || input instanceof Character || input instanceof Byte || input instanceof Short || input instanceof Double || input instanceof Long || input instanceof Float;
-	}
 
 	/*
 	 * Attempts to force a certain class type for the given object, used to prevent mistakes

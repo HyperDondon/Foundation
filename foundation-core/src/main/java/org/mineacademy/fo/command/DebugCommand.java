@@ -11,7 +11,7 @@ import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.FileUtil;
 import org.mineacademy.fo.TimeUtil;
 import org.mineacademy.fo.platform.Platform;
-import org.mineacademy.fo.settings.SimpleLocalization;
+import org.mineacademy.fo.settings.Lang;
 import org.mineacademy.fo.settings.YamlConfig;
 
 import lombok.Setter;
@@ -48,7 +48,7 @@ public final class DebugCommand extends SimpleSubCommandCore {
 
 	@Override
 	protected void onCommand() {
-		this.tellInfo(SimpleLocalization.Commands.DEBUG_PREPARING);
+		this.tellInfo(Lang.component("commands-debug-preparing"));
 
 		final File debugFolder = FileUtil.getFile("debug");
 		final List<File> files = this.listFilesRecursively(Platform.getPlugin().getDataFolder(), new ArrayList<>());
@@ -65,7 +65,7 @@ public final class DebugCommand extends SimpleSubCommandCore {
 		// Zip the folder
 		this.zipAndRemoveFolder(debugFolder);
 
-		this.tellSuccess(SimpleLocalization.Commands.DEBUG_SUCCESS.replaceBracket("amount", String.valueOf(files.size())));
+		this.tellSuccess(Lang.componentVars("commands-debug-success", "amount", String.valueOf(files.size())));
 	}
 
 	/*
@@ -121,7 +121,7 @@ public final class DebugCommand extends SimpleSubCommandCore {
 			} catch (final Exception ex) {
 				ex.printStackTrace();
 
-				this.returnTell(SimpleLocalization.Commands.DEBUG_COPY_FAIL.replaceBracket("file", file.getName()));
+				this.returnTell(Lang.componentVars("commands-debug-copy-fail", "file", file.getName()));
 			}
 	}
 
@@ -138,7 +138,7 @@ public final class DebugCommand extends SimpleSubCommandCore {
 		} catch (final IOException ex) {
 			ex.printStackTrace();
 
-			this.returnTell(SimpleLocalization.Commands.DEBUG_ZIP_FAIL);
+			this.returnTell(Lang.component("commands-debug-zip-fail"));
 		}
 	}
 

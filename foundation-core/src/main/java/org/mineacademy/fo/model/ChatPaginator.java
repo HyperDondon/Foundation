@@ -12,7 +12,7 @@ import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.command.PermsCommand;
 import org.mineacademy.fo.constants.FoConstants;
 import org.mineacademy.fo.platform.FoundationPlayer;
-import org.mineacademy.fo.settings.SimpleLocalization;
+import org.mineacademy.fo.settings.Lang;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -71,7 +71,7 @@ public final class ChatPaginator {
 	 * @return
 	 */
 	public ChatPaginator setFoundationHeader(String title) {
-		return this.setHeader("&8&m" + ChatUtil.center("&r " + title + " &8&m", SimpleLocalization.Commands.HEADER_CENTER_LETTER.charAt(0), SimpleLocalization.Commands.HEADER_CENTER_PADDING));
+		return this.setHeader("&8&m" + ChatUtil.center("&r " + title + " &8&m", Lang.legacy("commands-header-center-letter").charAt(0), Integer.parseInt(Lang.legacy("commands-header-center-padding"))));
 	}
 
 	/**

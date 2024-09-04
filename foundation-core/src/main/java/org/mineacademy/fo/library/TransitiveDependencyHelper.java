@@ -168,11 +168,6 @@ final class TransitiveDependencyHelper {
 					if (!repository.endsWith("/"))
 						repository = repository + '/';
 
-					// TODO Uncomment the line below once LibraryManager#resolveLibrary stops resolving snapshots
-					//      for every repository before trying direct URLs
-					// Make sure the repository is added as fallback if the dependency isn't found at the constructed URL
-					// libraryBuilder.fallbackRepository(repository);
-
 					// For snapshots, getVersion() returns version-timestamp-buildNumber instead of version-SNAPSHOT
 					final String version = (String) this.artifactGetVersionMethod.invoke(artifact);
 

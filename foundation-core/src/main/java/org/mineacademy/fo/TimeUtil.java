@@ -8,7 +8,7 @@ import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.mineacademy.fo.settings.SimpleLocalization.Cases;
+import org.mineacademy.fo.settings.Lang;
 import org.mineacademy.fo.settings.SimpleSettings;
 
 import lombok.AccessLevel;
@@ -222,10 +222,10 @@ public final class TimeUtil {
 			final long hour = seconds / 60 / 60;
 			minute %= 60;
 
-			hourMsg = Cases.HOUR.formatWithCount(hour) + " ";
+			hourMsg = Lang.formattedNumber("case-hour", hour) + " ";
 		}
 
-		return hourMsg + (minute != 0 ? Cases.MINUTE.formatWithCount(minute) + " " : "") + Cases.SECOND.formatWithCount(second);
+		return hourMsg + (minute != 0 ? Lang.formattedNumber("case-minute", minute) + " " : "") + Lang.formattedNumber("case-second", second);
 	}
 
 	/**
@@ -239,10 +239,10 @@ public final class TimeUtil {
 		final long hours = minutes / 60;
 		final long days = hours / 24;
 
-		return (days != 0 ? Cases.DAY.formatWithCount(days) + " " : "")
-				+ (hours % 24 != 0 ? Cases.HOUR.formatWithCount(hours % 24) + " " : "")
-				+ (minutes % 60 != 0 ? Cases.MINUTE.formatWithCount(minutes % 60) + " " : "")
-				+ Cases.SECOND.formatWithCount(seconds % 60);
+		return (days != 0 ? Lang.formattedNumber("case-day", days) + " " : "")
+				+ (hours % 24 != 0 ? Lang.formattedNumber("case-hour", hours % 24) + " " : "")
+				+ (minutes % 60 != 0 ? Lang.formattedNumber("case-minute", minutes % 60) + " " : "")
+				+ Lang.formattedNumber("case-second", seconds % 60);
 	}
 
 	/**

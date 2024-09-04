@@ -18,7 +18,7 @@ import org.mineacademy.fo.menu.model.ItemCreator;
 import org.mineacademy.fo.menu.tool.Tool;
 import org.mineacademy.fo.plugin.SimplePlugin;
 import org.mineacademy.fo.remain.Remain;
-import org.mineacademy.fo.settings.SimpleLocalization;
+import org.mineacademy.fo.settings.Lang;
 
 /**
  * A standardized menu to display a list of tools player can toggle to get in
@@ -52,7 +52,7 @@ public abstract class MenuTools extends Menu {
 		final int pages = items < 9 ? 9 * 1 : items < 9 * 2 ? 9 * 2 : items < 9 * 3 ? 9 * 3 : items < 9 * 4 ? 9 * 4 : 9 * 5;
 
 		this.setSize(pages);
-		this.setTitle(SimpleLocalization.Menu.TITLE_TOOLS);
+		this.setTitle(Lang.legacy("menu-title-tools"));
 	}
 
 	/**

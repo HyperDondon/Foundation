@@ -3,7 +3,7 @@ package org.mineacademy.fo.command;
 import java.util.List;
 
 import org.mineacademy.fo.CommonCore;
-import org.mineacademy.fo.settings.SimpleLocalization;
+import org.mineacademy.fo.settings.Lang;
 
 /**
  * A ready to use sub command enabling users to send conversation
@@ -27,7 +27,7 @@ public final class ConversationCommand extends SimpleSubCommand {
 	@Override
 	protected void onCommand() {
 		this.checkConsole();
-		this.checkBoolean(this.getPlayer().isConversing(), SimpleLocalization.Conversation.NOT_CONVERSING);
+		this.checkBoolean(this.getPlayer().isConversing(), Lang.component("conversation-not-conversing"));
 
 		this.getPlayer().acceptConversationInput(CommonCore.joinRange(0, this.args));
 	}

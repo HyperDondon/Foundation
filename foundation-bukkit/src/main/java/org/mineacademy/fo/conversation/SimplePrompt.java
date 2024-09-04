@@ -16,7 +16,7 @@ import org.mineacademy.fo.menu.Menu;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.Variables;
 import org.mineacademy.fo.platform.Platform;
-import org.mineacademy.fo.settings.SimpleLocalization;
+import org.mineacademy.fo.settings.Lang;
 
 /**
  * Represents one question for the player during a server conversation
@@ -203,7 +203,7 @@ public abstract class SimplePrompt extends ValidatingPrompt {
 				final String failPrompt = this.getFailedValidationText(context, input);
 
 				if (failPrompt != null)
-					this.tellLater(0, context.getForWhom(), Variables.replace(SimpleLocalization.Prefix.ERROR.appendMini(" " + failPrompt), Platform.toPlayer(this.getPlayer(context))));
+					this.tellLater(0, context.getForWhom(), Variables.replace(Lang.component("prefix-error").appendMini(" " + failPrompt), Platform.toPlayer(this.getPlayer(context))));
 
 				// Redisplay this prompt to the user to re-collect input
 				return this;
@@ -258,7 +258,7 @@ public abstract class SimplePrompt extends ValidatingPrompt {
 				final Player player = SimplePrompt.this.getPlayer(event.getContext());
 
 				if (!event.gracefulExit())
-					Messenger.warn(player, canceledFromInactivity ? SimpleLocalization.Conversation.CANCELLED_INACTIVE : SimpleLocalization.Conversation.CANCELLED);
+					Messenger.warn(player, Lang.component(canceledFromInactivity ? "conversation-cancelled-inactive" : "conversation-cancelled"));
 			}
 		};
 

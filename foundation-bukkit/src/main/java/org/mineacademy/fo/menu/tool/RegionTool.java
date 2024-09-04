@@ -14,7 +14,7 @@ import org.mineacademy.fo.menu.model.ItemCreator;
 import org.mineacademy.fo.region.DiskRegion;
 import org.mineacademy.fo.region.Region;
 import org.mineacademy.fo.remain.CompMaterial;
-import org.mineacademy.fo.settings.SimpleLocalization.Commands;
+import org.mineacademy.fo.settings.Lang;
 import org.mineacademy.fo.visual.VisualTool;
 import org.mineacademy.fo.visual.VisualizedRegion;
 
@@ -130,7 +130,7 @@ public final class RegionTool extends VisualTool {
 
 		if (primary) {
 			if (region.isSecondary(location)) {
-				Messenger.error(player, Commands.REGION_BLOCK_ALREADY_SECONDARY);
+				Messenger.error(player, Lang.component("command-region-block-already-secondary"));
 
 				return;
 			}
@@ -145,7 +145,7 @@ public final class RegionTool extends VisualTool {
 		} else {
 
 			if (region.isPrimary(location)) {
-				Messenger.error(player, Commands.REGION_BLOCK_ALREADY_PRIMARY);
+				Messenger.error(player, Lang.component("command-region-block-already-primary"));
 
 				return;
 			}
@@ -163,7 +163,14 @@ public final class RegionTool extends VisualTool {
 		if (whole && !player.isConversing())
 			CreateRegionPrompt.showToOrHint(player);
 		else
-			Messenger.success(player, primary ? (removed ? Commands.REGION_REMOVE_PRIMARY : Commands.REGION_SET_PRIMARY) : (removed ? Commands.REGION_REMOVE_SECONDARY : Commands.REGION_SET_SECONDARY));
+			Messenger.success(player, primary
+					? (removed
+							? Lang.component("command-region-remove-primary")
+							: Lang.component("command-region-set-primary"))
+					: (removed
+							? Lang.component("command-region-remove-secondary")
+							: Lang.component("command-region-set-secondary")));
+
 	}
 
 	/**

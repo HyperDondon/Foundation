@@ -5,8 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.mineacademy.fo.platform.Platform;
-import org.mineacademy.fo.settings.SimpleLocalization;
-import org.mineacademy.fo.settings.SimpleLocalization.Commands;
+import org.mineacademy.fo.settings.Lang;
 import org.mineacademy.fo.settings.YamlConfig;
 
 /**
@@ -32,13 +31,13 @@ public final class ReloadCommand extends SimpleSubCommandCore {
 	public ReloadCommand() {
 		super("reload|rl");
 
-		this.setDescription(Commands.RELOAD_DESCRIPTION);
+		this.setDescription(Lang.component("command-reload-description"));
 	}
 
 	@Override
 	protected void onCommand() {
 		try {
-			this.tellInfo(Commands.RELOAD_STARTED);
+			this.tellInfo(Lang.component("command-reload-started"));
 
 			// Syntax check YML files before loading
 			boolean syntaxParsed = true;
@@ -58,16 +57,16 @@ public final class ReloadCommand extends SimpleSubCommandCore {
 				}
 
 			if (!syntaxParsed) {
-				this.tellError(SimpleLocalization.Commands.RELOAD_FILE_LOAD_ERROR);
+				this.tellError(Lang.component("command-reload-file-load-error"));
 
 				return;
 			}
 
 			Platform.getPlugin().reload();
-			this.tellSuccess(SimpleLocalization.Commands.RELOAD_SUCCESS);
+			this.tellSuccess(Lang.component("command-reload-success"));
 
 		} catch (final Throwable t) {
-			this.tellError(SimpleLocalization.Commands.RELOAD_FAIL.replaceBracket("error", t.getMessage() != null ? t.getMessage() : "unknown"));
+			this.tellError(Lang.componentVars("command-reload-fail", "error", t.getMessage() != null ? t.getMessage() : "unknown"));
 
 			t.printStackTrace();
 		}

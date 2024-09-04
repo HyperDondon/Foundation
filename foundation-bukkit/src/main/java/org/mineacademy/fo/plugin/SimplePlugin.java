@@ -286,8 +286,6 @@ public abstract class SimplePlugin extends JavaPlugin implements Listener, Found
 					final FindInstance mode = tuple.getKey();
 					final Object instance = tuple.getValue();
 
-					// TODO check if proxy listener still works
-
 					if (SimpleListener.class.isAssignableFrom(clazz)) {
 						enforceModeFor(clazz, mode, FindInstance.SINGLETON);
 

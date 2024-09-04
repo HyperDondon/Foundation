@@ -17,7 +17,7 @@ import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.remain.CompChatColor;
-import org.mineacademy.fo.settings.SimpleLocalization;
+import org.mineacademy.fo.settings.Lang;
 import org.mineacademy.fo.settings.SimpleSettings;
 
 import lombok.Getter;
@@ -224,10 +224,10 @@ public abstract class SimpleCommandGroup {
 			final int foundedYear = Platform.getPlugin().getFoundedYear();
 			final int currentYear = Calendar.getInstance().get(Calendar.YEAR);
 
-			messages.add("  &7" + SimpleLocalization.Commands.LABEL_AUTHORS + " &f" + authors + (foundedYear != -1 ? " &7\u00A9 " + foundedYear + (currentYear != foundedYear ? " - " + currentYear : "") : ""));
+			messages.add("  " + Lang.plain("command-label-authors") + " &f" + authors + (foundedYear != -1 ? " &7\u00A9 " + foundedYear + (currentYear != foundedYear ? " - " + currentYear : "") : ""));
 		}
 
-		messages.add("  <gray>Visit <white><click:open_url:'https://mineacademy.org/plugins'>mineacademy.org/plugins</click> <gray>for more information");
+		messages.add("  " + Lang.plain("command-label-credits"));
 		messages.add("&8" + CommonCore.chatLineSmooth());
 
 		return messages;
@@ -245,8 +245,8 @@ public abstract class SimpleCommandGroup {
 				"&8" + CommonCore.chatLineSmooth(),
 				"  " + this.getHeaderPrefix() + Platform.getPlugin().getName() + " &r&7" + Platform.getPlugin().getVersion(),
 				"  ",
-				"  &2[] &7= " + SimpleLocalization.Commands.LABEL_OPTIONAL_ARGS,
-				"  &6<> &7= " + SimpleLocalization.Commands.LABEL_REQUIRED_ARGS,
+				"  &2[] &7= " + Lang.plain("command-label-optional-args"),
+				"  &6<> &7= " + Lang.plain("command-label-required-args"),
 				"  "
 		};
 	}
@@ -335,7 +335,7 @@ public abstract class SimpleCommandGroup {
 		 */
 		protected void tellSubcommandsHelp() {
 			if (SimpleCommandGroup.this.subcommands.isEmpty()) {
-				this.tellError(SimpleLocalization.Commands.HEADER_NO_SUBCOMMANDS);
+				this.tellError(Lang.component("command-header-no-subcommands"));
 
 				return;
 			}
@@ -353,17 +353,16 @@ public abstract class SimpleCommandGroup {
 				final List<SimpleComponent> hover = new ArrayList<>();
 
 				if (subcommand.getDescription() != null)
-					hover.add(SimpleLocalization.Commands.HELP_TOOLTIP_DESCRIPTION.replaceBracket("description", subcommand.getDescription()));
+					hover.add(Lang.componentVars("command-help-tooltip-description", "description", subcommand.getDescription()));
 
 				if (subcommand.getPermission() != null)
-					hover.add(SimpleLocalization.Commands.HELP_TOOLTIP_PERMISSION.replaceBracket("permission", subcommand.getPermission()));
+					hover.add(Lang.componentVars("command-help-tooltip-permission", "permission", subcommand.getPermission()));
 
 				final String[] legacyUsage = subcommand.getMultilineUsageMessage();
 				final SimpleComponent[] newUsage = subcommand.getMultilineUsage();
 
 				if (legacyUsage != null || newUsage != null || subcommand.getUsage() != null)
-					hover.add(SimpleLocalization.Commands.HELP_TOOLTIP_USAGE
-							.replaceBracket("usage", legacyUsage != null || newUsage != null ? SimpleComponent.empty() : CommonCore.getOrDefault(subcommand.getUsage(), SimpleComponent.empty())));
+					hover.add(Lang.componentVars("command-help-tooltip-usage", "usage", legacyUsage != null || newUsage != null ? SimpleComponent.empty() : CommonCore.getOrDefault(subcommand.getUsage(), SimpleComponent.empty())));
 
 				if (legacyUsage != null)
 					for (final String line : legacyUsage)
@@ -377,7 +376,6 @@ public abstract class SimpleCommandGroup {
 
 				SimpleComponent line = SimpleComponent
 						.fromPlain("  /" + this.getLabel())
-
 						.appendMini(" &n" + subcommand.getSublabel() + "&r ")
 						.onClickSuggestCmd("/" + this.getLabel() + " " + subcommand.getSublabel())
 						.onHover(hover);
@@ -402,7 +400,7 @@ public abstract class SimpleCommandGroup {
 				pages.send(this.sender, page);
 
 			} else
-				this.tellError(SimpleLocalization.Commands.HEADER_NO_SUBCOMMANDS_PERMISSION);
+				this.tellError(Lang.component("command-header-no-subcommands-permission"));
 		}
 
 		/*

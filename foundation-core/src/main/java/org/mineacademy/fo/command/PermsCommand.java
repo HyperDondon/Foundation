@@ -11,7 +11,7 @@ import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.model.ChatPaginator;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.platform.Platform;
-import org.mineacademy.fo.settings.SimpleLocalization.Commands;
+import org.mineacademy.fo.settings.Lang;
 
 import lombok.NonNull;
 
@@ -52,8 +52,8 @@ public final class PermsCommand extends SimpleSubCommandCore {
 		this.classToList = classToList;
 
 		this.setPermission(Platform.getPlugin().getName().toLowerCase() + ".command.permissions");
-		this.setDescription(Commands.PERMS_DESCRIPTION);
-		this.setUsage(Commands.PERMS_USAGE);
+		this.setDescription(Lang.component("command-perms-description"));
+		this.setUsage(Lang.component("command-perms-usage"));
 
 		// Invoke to check for errors early
 		this.list();
@@ -65,7 +65,7 @@ public final class PermsCommand extends SimpleSubCommandCore {
 		final String phrase = this.args.length > 0 ? this.joinArgs(0) : null;
 
 		new ChatPaginator(15)
-				.setFoundationHeader(Commands.PERMS_HEADER.toLegacy())
+				.setFoundationHeader(Lang.legacy("command-perms-header"))
 				.setPages(this.list(phrase))
 				.send(this.sender);
 	}
@@ -109,7 +109,7 @@ public final class PermsCommand extends SimpleSubCommandCore {
 			throw new FoException("Please place @PermissionGroup over " + clazz);
 
 		messages.add(SimpleComponent
-				.fromMini("&7- ").append(messages.isEmpty() ? Commands.PERMS_MAIN : SimpleComponent.fromPlain(group.value()))
+				.fromMini("&7- ").append(messages.isEmpty() ? Lang.component("command-perms-main") : SimpleComponent.fromPlain(group.value()))
 				.onClickOpenUrl(""));
 
 		for (final Field field : clazz.getDeclaredFields()) {
@@ -133,11 +133,11 @@ public final class PermsCommand extends SimpleSubCommandCore {
 
 			if (phrase == null || node.contains(phrase))
 				messages.add(SimpleComponent
-						.fromMini("  " + (has ? "&a" : "&7") + node).append(def ? SimpleComponent.fromPlain(" ").append(Commands.PERMS_TRUE_BY_DEFAULT) : SimpleComponent.empty())
+						.fromMini("  " + (has ? "&a" : "&7") + node).append(def ? SimpleComponent.fromPlain(" ").append(Lang.component("command-perms-true-by-default")) : SimpleComponent.empty())
 						.onClickOpenUrl("")
-						.onHover(Commands.PERMS_INFO.toLegacy() + info,
-								Commands.PERMS_DEFAULT.append(def ? Commands.PERMS_YES : Commands.PERMS_NO).toLegacy(),
-								Commands.PERMS_APPLIED.append(has ? Commands.PERMS_YES : Commands.PERMS_NO).toLegacy()));
+						.onHover(Lang.legacy("command-perms-info") + info,
+								Lang.component("command-perms-default").append(def ? Lang.component("command-perms-yes") : Lang.component("command-perms-no")).toLegacy(),
+								Lang.component("command-perms-applied").append(has ? Lang.component("command-perms-yes") : Lang.component("command-perms-no")).toLegacy()));
 		}
 
 		for (final Class<?> inner : clazz.getDeclaredClasses()) {

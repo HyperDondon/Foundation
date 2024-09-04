@@ -26,7 +26,7 @@ public abstract class FoundationPlatform {
 	 *
 	 * @return
 	 */
-	public final String getCustomServerName() { // TODO check where this is called, was Bukkit#getName
+	public final String getCustomServerName() {
 		if (!this.hasCustomServerName())
 			throw new IllegalArgumentException("Please instruct developer of " + Platform.getPlugin().getName() + " to call Platform#setCustomServerName");
 

@@ -28,7 +28,7 @@ import org.mineacademy.fo.event.RocketExplosionEvent;
 import org.mineacademy.fo.model.SimpleRunnable;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.remain.Remain;
-import org.mineacademy.fo.settings.SimpleLocalization;
+import org.mineacademy.fo.settings.Lang;
 
 import lombok.Data;
 
@@ -90,9 +90,8 @@ public final class ToolsListener implements Listener {
 			} catch (final Throwable t) {
 				event.setCancelled(true);
 
-				Common.tell(player, SimpleLocalization.Tool.ERROR);
-				Common.error(t,
-						"Failed to handle " + event.getAction() + " using tool: " + tool.getClass());
+				Common.tell(player, Lang.component("tool-error"));
+				Common.error(t, "Failed to handle " + event.getAction() + " using tool: " + tool.getClass());
 			}
 	}
 
@@ -120,9 +119,8 @@ public final class ToolsListener implements Listener {
 			} catch (final Throwable t) {
 				event.setCancelled(true);
 
-				Common.tell(player, SimpleLocalization.Tool.ERROR);
-				Common.error(t,
-						"Failed to handle placing " + event.getBlock() + " using tool: " + tool.getClass());
+				Common.tell(player, Lang.component("tool-error"));
+				Common.error(t, "Failed to handle placing " + event.getBlock() + " using tool: " + tool.getClass());
 			}
 	}
 
@@ -262,9 +260,8 @@ public final class ToolsListener implements Listener {
 			} catch (final Throwable t) {
 				event.setCancelled(true);
 
-				Common.tell(player, SimpleLocalization.Tool.ERROR);
-				Common.error(t,
-						"Failed to shoot rocket " + tool.getClass());
+				Common.tell(player, Lang.component("tool-error"));
+				Common.error(t, "Failed to shoot rocket " + tool.getClass());
 			}
 	}
 
@@ -295,10 +292,10 @@ public final class ToolsListener implements Listener {
 
 				} else
 					projectile.remove();
+
 			} catch (final Throwable t) {
-				Common.tell(shooter, SimpleLocalization.Tool.ERROR);
-				Common.error(t,
-						"Failed to handle impact by rocket " + shot.getRocket().getClass());
+				Common.tell(shooter, Lang.component("tool-error"));
+				Common.error(t, "Failed to handle impact by rocket " + shot.getRocket().getClass());
 			}
 		}
 	}

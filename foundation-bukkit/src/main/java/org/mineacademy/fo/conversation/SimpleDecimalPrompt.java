@@ -6,7 +6,7 @@ import org.bukkit.conversations.ConversationContext;
 import org.bukkit.conversations.Prompt;
 import org.bukkit.entity.Player;
 import org.mineacademy.fo.Valid;
-import org.mineacademy.fo.settings.SimpleLocalization;
+import org.mineacademy.fo.settings.Lang;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -71,7 +71,7 @@ public class SimpleDecimalPrompt extends SimplePrompt {
 	 */
 	@Override
 	protected String getFailedValidationText(final ConversationContext context, final String invalidInput) {
-		return SimpleLocalization.Commands.INVALID_NUMBER.replaceBracket("input", invalidInput).toLegacy();
+		return Lang.legacyVars("command-invalid-number", "input", invalidInput);
 	}
 
 	/**

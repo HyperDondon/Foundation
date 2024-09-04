@@ -29,7 +29,7 @@ import org.mineacademy.fo.model.SimpleScoreboard;
 import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.remain.CompMaterial;
-import org.mineacademy.fo.settings.SimpleLocalization;
+import org.mineacademy.fo.settings.Lang;
 
 /**
  * Listens for some events we handle for you automatically
@@ -69,7 +69,7 @@ final class FoundationListener implements Listener {
 		final String[] args = message.split(" ");
 
 		if (args.length != 2) {
-			SimpleLocalization.Pages.NO_PAGE_NUMBER.send(sender);
+			Lang.component("page-no-page-number").send(sender);
 
 			event.setCancelled(true);
 			return;
@@ -88,7 +88,7 @@ final class FoundationListener implements Listener {
 			page = Integer.parseInt(numberRaw) - 1;
 
 		} catch (final NumberFormatException ex) {
-			SimpleLocalization.Pages.INVALID_PAGE.replaceBracket("input", numberRaw).send(sender);
+			Lang.componentVars("page-invalid-page", "input", numberRaw).send(sender);
 
 			event.setCancelled(true);
 			return;
@@ -101,7 +101,10 @@ final class FoundationListener implements Listener {
 		pages.entrySet().removeIf(entry -> entry.getValue().isEmpty());
 
 		if (pages.isEmpty() || !pages.containsKey(page)) {
-			Messenger.error(player, pages.isEmpty() ? SimpleLocalization.Pages.NO_PAGES : SimpleLocalization.Pages.NO_PAGE);
+			Messenger.error(player, pages.isEmpty()
+					? Lang.component("page-no-pages")
+					: Lang.component("page-no-page"));
+
 			event.setCancelled(true);
 
 			return;
@@ -147,20 +150,20 @@ final class FoundationListener implements Listener {
 			else
 				clickableFooter = clickableFooter
 						.appendMini(" &6« ")
-						.onHover(SimpleLocalization.Pages.GO_TO_PAGE.replaceBracket("page", String.valueOf(page)))
+						.onHover(Lang.componentVars("page-go-to-page", "page", String.valueOf(page)))
 						.onClickRunCmd("/#flp " + page);
 
 			clickableFooter = clickableFooter
-					.appendMini("&f" + (page + 1)).onHover(SimpleLocalization.Pages.GO_TO_FIRST_PAGE).onClickRunCmd("/#flp 1")
-					.appendMini("&7/").onHover(SimpleLocalization.Pages.TOOLTIP)
-					.appendMini("&f" + pages.size() + "").onHover(SimpleLocalization.Pages.GO_TO_LAST_PAGE).onClickRunCmd("/#flp " + pages.size());
+					.appendMini("&f" + (page + 1)).onHover(Lang.component("page-go-to-first-page")).onClickRunCmd("/#flp 1")
+					.appendMini("&7/").onHover(Lang.component("page-tooltip"))
+					.appendMini("&f" + pages.size() + "").onHover(Lang.component("page-go-to-last-page")).onClickRunCmd("/#flp " + pages.size());
 
 			if (page + 1 >= pages.size())
 				clickableFooter = clickableFooter.appendMini(" &7» ");
 			else
 				clickableFooter = clickableFooter
 						.appendMini(" &6» ")
-						.onHover(SimpleLocalization.Pages.GO_TO_PAGE.replaceBracket("page", String.valueOf(page + 2)))
+						.onHover(Lang.componentVars("page-go-to-page", "page", String.valueOf(page + 2)))
 						.onClickRunCmd("/#flp " + (page + 2));
 
 			clickableFooter

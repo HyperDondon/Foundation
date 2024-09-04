@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 public final class Messenger extends MessengerCore {
 
 	/**
-	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
+	 * Send a message prepended with the appropriate prefixes.
 	 *
 	 * @param sender
 	 * @param message
@@ -21,7 +21,7 @@ public final class Messenger extends MessengerCore {
 	}
 
 	/**
-	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
+	 * Send a message prepended with the appropriate prefixes.
 	 *
 	 * @param sender
 	 * @param component
@@ -31,7 +31,7 @@ public final class Messenger extends MessengerCore {
 	}
 
 	/**
-	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
+	 * Send a message prepended with the appropriate prefixes.
 	 *
 	 * @param sender
 	 * @param message
@@ -41,7 +41,7 @@ public final class Messenger extends MessengerCore {
 	}
 
 	/**
-	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
+	 * Send a message prepended with the appropriate prefixes.
 	 *
 	 * @param sender
 	 * @param component
@@ -51,7 +51,7 @@ public final class Messenger extends MessengerCore {
 	}
 
 	/**
-	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
+	 * Send a message prepended with the appropriate prefixes.
 	 *
 	 * @param sender
 	 * @param message
@@ -61,7 +61,7 @@ public final class Messenger extends MessengerCore {
 	}
 
 	/**
-	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
+	 * Send a message prepended with the appropriate prefixes.
 	 *
 	 * @param sender
 	 * @param component
@@ -71,7 +71,7 @@ public final class Messenger extends MessengerCore {
 	}
 
 	/**
-	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
+	 * Send a message prepended with the appropriate prefixes.
 	 *
 	 * @param sender
 	 * @param message
@@ -81,7 +81,7 @@ public final class Messenger extends MessengerCore {
 	}
 
 	/**
-	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
+	 * Send a message prepended with the appropriate prefixes.
 	 *
 	 * @param sender
 	 * @param component
@@ -91,7 +91,7 @@ public final class Messenger extends MessengerCore {
 	}
 
 	/**
-	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
+	 * Send a message prepended with the appropriate prefixes.
 	 *
 	 * @param sender
 	 * @param message
@@ -101,7 +101,7 @@ public final class Messenger extends MessengerCore {
 	}
 
 	/**
-	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
+	 * Send a message prepended with the appropriate prefixes.
 	 *
 	 * @param sender
 	 * @param component
@@ -111,7 +111,7 @@ public final class Messenger extends MessengerCore {
 	}
 
 	/**
-	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
+	 * Send a message prepended with the appropriate prefixes.
 	 *
 	 * @param sender
 	 * @param message
@@ -121,7 +121,7 @@ public final class Messenger extends MessengerCore {
 	}
 
 	/**
-	 * Send a message prepended with the {@link org.mineacademy.fo.settings.SimpleLocalization.Prefix} prefixes.
+	 * Send a message prepended with the appropriate prefixes.
 	 *
 	 * @param sender
 	 * @param component

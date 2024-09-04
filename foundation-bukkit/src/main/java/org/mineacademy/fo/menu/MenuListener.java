@@ -19,7 +19,7 @@ import org.mineacademy.fo.menu.button.Button;
 import org.mineacademy.fo.menu.model.MenuClickLocation;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.remain.Remain;
-import org.mineacademy.fo.settings.SimpleLocalization;
+import org.mineacademy.fo.settings.Lang;
 
 /**
  * The bukkit listener responsible for menus to function.
@@ -103,7 +103,7 @@ public final class MenuListener implements Listener {
 							menu.onMenuClick(player, slot, action, event.getClick(), cursor, slotItem, !allowed);
 
 					} catch (final Throwable t) {
-						SimpleLocalization.Menu.ERROR.send(Platform.toPlayer(player));
+						Lang.component("menu-error").send(Platform.toPlayer(player));
 						player.closeInventory();
 
 						Common.error(t, "Error clicking in menu " + menu);

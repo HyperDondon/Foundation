@@ -13,7 +13,7 @@ import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.collection.StrictList;
 import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
-import org.mineacademy.fo.settings.SimpleLocalization;
+import org.mineacademy.fo.settings.Lang;
 import org.mineacademy.fo.settings.SimpleSettings;
 
 import lombok.Getter;
@@ -128,7 +128,7 @@ public final class Variables {
 		});
 	}
 
-	// TODO readd cache
+	// TODO measure performance and readd cache
 	private static SimpleComponent replaceVariable(String variable, FoundationPlayer audience, @NonNull Map<String, Object> replacements) {
 		boolean frontSpace = false;
 		boolean backSpace = false;
@@ -168,19 +168,19 @@ public final class Variables {
 			}
 
 		replacements.put("prefix_plugin", SimpleSettings.PLUGIN_PREFIX);
-		replacements.put("prefix_info", SimpleLocalization.Prefix.INFO);
-		replacements.put("prefix_success", SimpleLocalization.Prefix.SUCCESS);
-		replacements.put("prefix_warn", SimpleLocalization.Prefix.WARN);
-		replacements.put("prefix_error", SimpleLocalization.Prefix.ERROR);
-		replacements.put("prefix_question", SimpleLocalization.Prefix.QUESTION);
-		replacements.put("prefix_announce", SimpleLocalization.Prefix.ANNOUNCE);
+		replacements.put("prefix_info", Lang.component("prefix-info"));
+		replacements.put("prefix_success", Lang.component("prefix-success"));
+		replacements.put("prefix_warn", Lang.component("prefix-warn"));
+		replacements.put("prefix_error", Lang.component("prefix-error"));
+		replacements.put("prefix_question", Lang.component("prefix-question"));
+		replacements.put("prefix_announce", Lang.component("prefix-announce"));
 		replacements.put("server_name", Platform.hasCustomServerName() ? Platform.getCustomServerName() : "");
 		replacements.put("date", TimeUtil.getFormattedDate());
 		replacements.put("date_short", TimeUtil.getFormattedDateShort());
 		replacements.put("date_month", TimeUtil.getFormattedDateMonth());
 		replacements.put("chat_line", CommonCore.chatLine());
 		replacements.put("chat_line_smooth", CommonCore.chatLineSmooth());
-		replacements.put("label", Platform.getPlugin().getDefaultCommandGroup() != null ? Platform.getPlugin().getDefaultCommandGroup().getLabel() : SimpleLocalization.NONE);
+		replacements.put("label", Platform.getPlugin().getDefaultCommandGroup() != null ? Platform.getPlugin().getDefaultCommandGroup().getLabel() : Lang.legacy("none"));
 
 		replacements.put("sender_is_discord", audience != null && audience.isDiscord() ? "true" : "false");
 		replacements.put("sender_is_console", audience != null && audience.isConsole() ? "true" : "false");

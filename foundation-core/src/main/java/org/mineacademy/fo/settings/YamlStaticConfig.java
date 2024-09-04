@@ -6,8 +6,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,10 +19,8 @@ import org.mineacademy.fo.model.CaseNumberFormat;
 import org.mineacademy.fo.model.IsInList;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.SimpleTime;
+import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.remain.RemainCore;
-
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 
 /**
  * A special case {@link YamlConfig} that allows static access to config.
@@ -135,17 +131,15 @@ public abstract class YamlStaticConfig {
 			this.invokeAll(subClazz);
 	}
 
-	public static JsonObject REMOVEME_JSON_MAP = new JsonObject();
-
 	/*
 	 * Invoke all "private static void init()" methods in the class
 	 */
 	private void invokeMethodsIn(final Class<?> clazz) throws Exception {
 		for (final Method method : clazz.getDeclaredMethods()) {
 
-			// TODO After each invocation check if the invoication broke the plugin and ignore
-			//if (!Platform.getPlugin().isEnabled())
-			//	return;
+			// After each invocation check if the invoication broke the plugin and ignore
+			if (!Platform.getPlugin().isEnabled())
+				return;
 
 			final int mod = method.getModifiers();
 
@@ -168,24 +162,8 @@ public abstract class YamlStaticConfig {
 	 * Safety check whether all fields have been set
 	 */
 	private void checkFields(final Class<?> clazz) throws Exception {
-
-		System.out.println("Here at " + clazz);
-
 		if (clazz == YamlStaticConfig.class)
 			return;
-
-		String prefix = null;
-
-		{
-			String clName = clazz.toString().replace("class org.mineacademy.fo.settings.SimpleLocalization", "");
-
-			if (clName.startsWith("$"))
-				clName = clName.substring(1);
-
-			clName = clName.toLowerCase();
-
-			prefix = clName.trim();
-		}
 
 		for (final Field field : clazz.getDeclaredFields()) {
 			field.setAccessible(true);
@@ -200,46 +178,8 @@ public abstract class YamlStaticConfig {
 			} catch (final NullPointerException ex) {
 			}
 
-			{
-				final String jsonPath = (prefix.isEmpty() ? "" : prefix + "-") + field.getName().toLowerCase().replace("_", "-");
-
-				if (result instanceof String || isPrimitiveWrapper(result) || result instanceof SimpleComponent || result instanceof CaseNumberFormat)
-					YamlStaticConfig.REMOVEME_JSON_MAP.addProperty(jsonPath, result.toString());
-
-				else if (result instanceof Collection || result.getClass().isArray()) {
-					final JsonArray array = new JsonArray();
-
-					if (result instanceof Collection)
-						for (final Object collectionElement : (Collection) result) {
-							if (collectionElement instanceof String || isPrimitiveWrapper(collectionElement) || collectionElement instanceof SimpleComponent || collectionElement instanceof CaseNumberFormat)
-								array.add(collectionElement.toString());
-							else
-								throw new IllegalArgumentException("Unsupported collection element type " + collectionElement.getClass() + " at " + jsonPath);
-						}
-					else
-						for (final Object collectionElement : Arrays.asList((Object[]) result)) {
-							if (collectionElement instanceof String || isPrimitiveWrapper(collectionElement) || collectionElement instanceof SimpleComponent || collectionElement instanceof CaseNumberFormat)
-								array.add(collectionElement.toString());
-							else
-								throw new IllegalArgumentException("Unsupported collection element type " + collectionElement.getClass() + " at " + jsonPath);
-						}
-
-					YamlStaticConfig.REMOVEME_JSON_MAP.add(jsonPath, array);
-				} else
-					throw new IllegalArgumentException("Unsupported field type " + field.getType() + " at " + jsonPath);
-
-				System.out.println("Mapping field " + jsonPath + " -> " + result);
-			}
-
 			ValidCore.checkNotNull(result, "Null " + field.getType().getSimpleName() + " field '" + field.getName() + "' in " + clazz);
 		}
-	}
-
-	/*
-	 * Return if the input is a primitive wrapper
-	 */
-	private static boolean isPrimitiveWrapper(Object input) {
-		return input instanceof Integer || input instanceof Boolean || input instanceof Character || input instanceof Byte || input instanceof Short || input instanceof Double || input instanceof Long || input instanceof Float;
 	}
 
 	// -----------------------------------------------------------------------------------------------------

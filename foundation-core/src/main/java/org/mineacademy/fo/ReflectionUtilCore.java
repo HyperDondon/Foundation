@@ -18,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import org.mineacademy.fo.MinecraftVersion.V;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.exception.MissingEnumException;
 import org.mineacademy.fo.exception.ReflectionException;
@@ -27,14 +28,31 @@ import org.mineacademy.fo.remain.RemainCore;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.SneakyThrows;
-import net.kyori.adventure.bossbar.BossBar;
 
 /**
  * Utility class for various reflection methods
  */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ReflectionUtilCore {
+
+	/**
+	 * The legacy enum name translator
+	 */
+	@Setter
+	private static LegacyEnumNameTranslator legacyEnumNameTranslator;
+
+	/**
+	 * Compatible enum classes that fail gracefully so that
+	 * plugin loads even on old MC versions where those types are non existent
+	 * but are present in plugin's default configuration files
+	 */
+	private static final Map<Class<? extends Enum<?>>, Map<String, V>> legacyEnumTypes = new HashMap<>();
+
+	public static void addLegacyEnumType(Class<? extends Enum<?>> enumClass, Map<String, V> map) {
+		legacyEnumTypes.put(enumClass, map);
+	}
 
 	/**
 	 * Reflection utilizes a simple cache for fastest performance
@@ -613,8 +631,47 @@ public class ReflectionUtilCore {
 	 */
 	public static <E extends Enum<E>> E lookupEnum(final Class<E> enumType, final String name) {
 		return lookupEnum(enumType, name, enumType.getSimpleName() + " value '" + name + "' is not found! Available: {available}");
-	} // TODO kinda bad no compatible methods here, use Platform for this
+	}
 
+	/**
+	 * Attempts to lookup an enum by its multiple names, typically the case for
+	 * multiple MC versions where names have changed but enum class stayed the same.
+	 *
+	 * NOTE: For Material class, use our dedicated CompMaterial instead of this method.
+	 *
+	 * @param enumClass
+	 * @param names
+	 * @return
+	 */
+	public static <T extends Enum<T>> T lookupLegacyEnum(final Class<T> enumClass, String... names) {
+
+		for (final String name : names) {
+			final T foundEnum = lookupEnumSilent(enumClass, name);
+
+			if (foundEnum != null)
+				return foundEnum;
+		}
+
+		return null;
+	}
+
+	/**
+	 * Attempts to find an enum, throwing formatted error showing all available
+	 * values if not found Use {available} in errMessage to get all enum values.
+	 *
+	 * The field name is uppercased, spaces are replaced with underscores and even
+	 * plural S is added in attempts to detect the correct enum
+	 *
+	 * If the given type is known to be found in new MC versions, we may return null
+	 * instead of throwing an error. This is to prevent default configs containing
+	 * this enum from crashing the plugin when loaded on legacy MC version.
+	 *
+	 * @param enumType
+	 * @param name
+	 * @param errMessage
+	 *
+	 * @return the enum or error with exceptions, see above
+	 */
 	/**
 	 * Attempts to find an enum, throwing formatted error showing all available
 	 * values if not found Use {available} in errMessage to get all enum values.
@@ -636,9 +693,7 @@ public class ReflectionUtilCore {
 		ValidCore.checkNotNull(enumType, "Type missing for " + name);
 		ValidCore.checkNotNull(name, "Name missing for " + enumType);
 
-		if (enumType == BossBar.Overlay.class)
-			name = name.toUpperCase().replace("SEGMENTED", "NOTCHED").replace("SOLID", "PROGRESS");
-
+		final String rawName = name.toUpperCase().replace(" ", "_");
 		final String oldName = name;
 
 		E result = lookupEnumSilent(enumType, name);
@@ -661,8 +716,20 @@ public class ReflectionUtilCore {
 		if (result == null)
 			result = lookupEnumSilent(enumType, name.replace("_", ""));
 
-		if (result == null)
+		if (result == null) {
+
+			// Return null for legacy types
+			final Map<String, V> legacyMap = legacyEnumTypes.get(enumType);
+
+			if (legacyMap != null) {
+				final V since = legacyMap.get(rawName);
+
+				if (since != null && MinecraftVersion.olderThan(since))
+					return null;
+			}
+
 			throw new MissingEnumException(oldName, errMessage.replace("{available}", CommonCore.join(enumType.getEnumConstants(), ", ")));
+		}
 
 		return result;
 	}
@@ -674,8 +741,14 @@ public class ReflectionUtilCore {
 	 * @param name
 	 * @return the enum, or null if not exists
 	 */
-	public static <E extends Enum<E>> E lookupEnumSilent(final Class<E> enumType, final String name) {
+	public static <E extends Enum<E>> E lookupEnumSilent(Class<E> enumType, String name) {
 		try {
+
+			// Some compatibility workaround for ChatControl, Boss, CoreArena and other plugins
+			// having these values in their default config. This prevents
+			// malfunction on plugin's first load, in case it is loaded on an older MC version.
+			if (legacyEnumNameTranslator != null)
+				name = legacyEnumNameTranslator.adjustName(enumType, name);
 
 			// Since we obfuscate our plugins, enum names are changed.
 			// Therefore we look up a special fromKey method in some of our enums
@@ -787,6 +860,13 @@ public class ReflectionUtilCore {
 	/* ------------------------------------------------------------------------------- */
 	/* Classes */
 	/* ------------------------------------------------------------------------------- */
+
+	/**
+	 * Helps to translate legacy names into something the current server can recognize
+	 */
+	public interface LegacyEnumNameTranslator {
+		<E extends Enum<E>> String adjustName(Class<E> enumType, String name);
+	}
 
 	private static final class ReflectionData<T> {
 		private final Class<T> clazz;

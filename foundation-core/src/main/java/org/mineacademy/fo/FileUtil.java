@@ -165,13 +165,26 @@ public final class FileUtil {
 	// ----------------------------------------------------------------------------------------------------
 
 	/**
-	 * Return all lines from the given file as a json element
+	 * Return all lines from the given external file as a json element
 	 *
 	 * @param url
 	 * @return
 	 */
 	public static JsonObject readJsonFromUrl(String url) {
 		final List<String> baseContent = FileUtil.readLinesFromUrl("https://raw.githubusercontent.com/kangarko/Foundation/v7/translations/en_US.json");
+		final String joined = String.join("\n", baseContent);
+
+		return RemainCore.GSON.fromJson(joined, JsonObject.class);
+	}
+
+	/**
+	 * Return all lines from the given internal file as a json element
+	 *
+	 * @param path
+	 * @return
+	 */
+	public static JsonObject readJsonFromInternal(String path) {
+		final List<String> baseContent = FileUtil.getInternalFileContent(path);
 		final String joined = String.join("\n", baseContent);
 
 		return RemainCore.GSON.fromJson(joined, JsonObject.class);

@@ -18,7 +18,7 @@ import org.mineacademy.fo.platform.BukkitPlayer;
 import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.remain.CompMaterial;
 import org.mineacademy.fo.remain.Remain;
-import org.mineacademy.fo.settings.SimpleLocalization;
+import org.mineacademy.fo.settings.Lang;
 
 public interface SharedCommandCore {
 
@@ -31,7 +31,7 @@ public interface SharedCommandCore {
 	 */
 	default void checkConsole() throws CommandException {
 		if (!this.isPlayer())
-			throw new CommandException(SimpleLocalization.Commands.NO_CONSOLE);
+			throw new CommandException(Lang.component("command-requires-player"));
 	}
 
 	void checkNotNull(Object object, SimpleComponent nullMessage);
@@ -90,8 +90,7 @@ public interface SharedCommandCore {
 				uuid = UUID.fromString(name);
 
 			} catch (final IllegalArgumentException ex) {
-				this.returnTell(SimpleLocalization.Commands.INVALID_UUID
-						.replaceBracket("uuid", name));
+				this.returnTell(Lang.componentVars("command-invalid-uuid", "uuid", name));
 			}
 
 			this.findOfflinePlayer(uuid, syncCallback);
@@ -99,8 +98,7 @@ public interface SharedCommandCore {
 		} else
 			this.runAsync(() -> {
 				final OfflinePlayer targetPlayer = Bukkit.getOfflinePlayer(name);
-				this.checkBoolean(targetPlayer != null && (targetPlayer.isOnline() || targetPlayer.hasPlayedBefore()), SimpleLocalization.Player.NOT_PLAYED_BEFORE
-						.replaceBracket("player", name));
+				this.checkBoolean(targetPlayer != null && (targetPlayer.isOnline() || targetPlayer.hasPlayedBefore()), Lang.componentVars("player-not-played-before", "player", name));
 
 				this.runLater(() -> syncCallback.accept(targetPlayer));
 			});
@@ -116,8 +114,7 @@ public interface SharedCommandCore {
 	default void findOfflinePlayer(final UUID uniqueId, final Consumer<OfflinePlayer> syncCallback) throws CommandException {
 		this.runAsync(() -> {
 			final OfflinePlayer targetPlayer = Remain.getOfflinePlayerByUUID(uniqueId);
-			this.checkBoolean(targetPlayer != null && (targetPlayer.isOnline() || targetPlayer.hasPlayedBefore()), SimpleLocalization.Player.INVALID_UUID
-					.replaceBracket("uuid", uniqueId.toString()));
+			this.checkBoolean(targetPlayer != null && (targetPlayer.isOnline() || targetPlayer.hasPlayedBefore()), Lang.componentVars("player-invalid-uuid", "uuid", uniqueId.toString()));
 
 			this.runLater(() -> syncCallback.accept(targetPlayer));
 		});
@@ -132,7 +129,7 @@ public interface SharedCommandCore {
 	 * @throws CommandException
 	 */
 	default Player findPlayer(final String name) throws CommandException {
-		return this.findPlayer(name, SimpleLocalization.Player.NOT_ONLINE);
+		return this.findPlayer(name, Lang.component("player-not-online"));
 	}
 
 	/**
@@ -145,8 +142,7 @@ public interface SharedCommandCore {
 	 */
 	default Player findPlayer(final String name, final SimpleComponent falseMessage) throws CommandException {
 		final Player player = this.findPlayerInternal(name);
-		this.checkBoolean(player != null && player.isOnline() && !PlayerUtil.isVanished(player), falseMessage
-				.replaceBracket("player", name));
+		this.checkBoolean(player != null && player.isOnline() && !PlayerUtil.isVanished(player), falseMessage.replaceBracket("player", name));
 
 		return player;
 	}
@@ -173,15 +169,14 @@ public interface SharedCommandCore {
 	 */
 	default Player findPlayerOrSelf(final int argsIndex) throws CommandException {
 		if (argsIndex >= this.getArgs().length) {
-			this.checkBoolean(this.isPlayer(), SimpleLocalization.Commands.CONSOLE_MISSING_PLAYER_NAME);
+			this.checkBoolean(this.isPlayer(), Lang.component("command-console-missing-player-name"));
 
 			return this.getPlayer();
 		}
 
 		final String name = this.getArgs()[argsIndex];
 		final Player player = this.findPlayerInternal(name);
-		this.checkBoolean(player != null && player.isOnline(), SimpleLocalization.Player.NOT_ONLINE
-				.replaceBracket("player", name));
+		this.checkBoolean(player != null && player.isOnline(), Lang.componentVars("player-not-online", "player", name));
 
 		return player;
 	}
@@ -195,14 +190,13 @@ public interface SharedCommandCore {
 	 */
 	default Player findPlayerOrSelf(final String name) throws CommandException {
 		if (name == null) {
-			this.checkBoolean(this.isPlayer(), SimpleLocalization.Commands.CONSOLE_MISSING_PLAYER_NAME);
+			this.checkBoolean(this.isPlayer(), Lang.component("command-console-missing-player-name"));
 
 			return this.getPlayer();
 		}
 
 		final Player player = this.findPlayerInternal(name);
-		this.checkBoolean(player != null && player.isOnline(), SimpleLocalization.Player.NOT_ONLINE
-				.replaceBracket("player", name));
+		this.checkBoolean(player != null && player.isOnline(), Lang.componentVars("player-not-online", "player", name));
 
 		return player;
 	}
@@ -216,15 +210,15 @@ public interface SharedCommandCore {
 	 */
 	default World findWorld(final String name) {
 		if ("~".equals(name)) {
-			this.checkBoolean(this.isPlayer(), SimpleLocalization.Commands.CANNOT_AUTODETECT_WORLD);
+			this.checkBoolean(this.isPlayer(), Lang.component("command-cannot-autodetect-world"));
 
 			return this.getPlayer().getWorld();
 		}
 
 		final World world = Bukkit.getWorld(name);
-		this.checkNotNull(world, SimpleLocalization.Commands.INVALID_WORLD
-				.replaceBracket("world", name)
-				.replaceBracket("available", CommonCore.join(Bukkit.getWorlds(), otherWorld -> otherWorld.getName())));
+		this.checkNotNull(world, Lang.componentVars("command-invalid-world",
+				"world", name,
+				"available", CommonCore.join(Bukkit.getWorlds(), otherWorld -> otherWorld.getName())));
 
 		return world;
 	}

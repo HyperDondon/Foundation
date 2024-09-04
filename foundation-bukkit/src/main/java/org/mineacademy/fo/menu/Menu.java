@@ -44,7 +44,7 @@ import org.mineacademy.fo.plugin.SimplePlugin;
 import org.mineacademy.fo.remain.CompMaterial;
 import org.mineacademy.fo.remain.CompSound;
 import org.mineacademy.fo.remain.Remain;
-import org.mineacademy.fo.settings.SimpleLocalization;
+import org.mineacademy.fo.settings.Lang;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -507,7 +507,7 @@ public abstract class Menu {
 
 		// Prevent menu in conversation
 		if (player.isConversing()) {
-			SimpleLocalization.Menu.CANNOT_OPEN_DURING_CONVERSATION.send(Platform.toPlayer(player));
+			Lang.component("menu-cannot-open-during-conversation").send(Platform.toPlayer(player));
 
 			return;
 		}

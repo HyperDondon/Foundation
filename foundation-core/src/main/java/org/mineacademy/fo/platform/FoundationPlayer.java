@@ -34,7 +34,7 @@ public abstract class FoundationPlayer {
 	public abstract boolean isOnline();
 
 	public final String getName() {
-		return this.isConsole() ? Lang.ofLegacy("console-name") : this.getSenderName0();
+		return this.isConsole() ? Lang.legacy("console-name") : this.getSenderName0();
 	}
 
 	protected abstract String getSenderName0();

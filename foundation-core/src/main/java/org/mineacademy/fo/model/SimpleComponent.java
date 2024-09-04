@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.MatchResult;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.mineacademy.fo.CommonCore;
@@ -50,7 +49,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	/**
 	 * The pattern for matching MiniMessage tags
 	 */
-	private static final Pattern MINIMESSAGE_PATTERN = Pattern.compile("<[!?#]?[a-z0-9_-]*>");
+	//private static final Pattern MINIMESSAGE_PATTERN = Pattern.compile("<[!?#]?[a-z0-9_-]*>");
 
 	static {
 		LEGACY_TO_MINI.put("&0", "<black>");
@@ -749,7 +748,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	/*
 	 * Escapes invalid minimessage tags in the message.
 	 */
-	private static String escapeInvalidTags(String input) {
+	/*private static String escapeInvalidTags(String input) {
 		final Matcher matcher = Pattern.compile("<[^>]*>").matcher(input);
 		final StringBuffer buffer = new StringBuffer();
 
@@ -764,7 +763,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 
 		matcher.appendTail(buffer);
 		return buffer.toString();
-	}
+	}*/
 
 	/**
 	 * Create a new interactive chat component supporting § variables

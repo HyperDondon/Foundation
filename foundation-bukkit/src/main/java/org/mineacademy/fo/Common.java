@@ -64,7 +64,7 @@ public final class Common extends CommonCore {
 	 */
 	/*public static void tell(@NonNull final CommandSender sender, String... messages) {
 		final FoundationPlayer foundationSender = Platform.toPlayer(sender);
-	
+
 		for (final String message : messages)
 			foundationSender.sendMessage(message);
 	}*/
@@ -79,7 +79,7 @@ public final class Common extends CommonCore {
 	 */
 	/*public static void tellNoPrefix(@NonNull final CommandSender sender, String... messages) {
 		final FoundationPlayer audience = Platform.toPlayer(sender);
-	
+
 		for (final String message : messages)
 			CommonCore.tellNoPrefix(audience, message);
 	}*/
@@ -124,7 +124,6 @@ public final class Common extends CommonCore {
 	 * @param vec
 	 * @return
 	 */
-	// TODO can we get rid of this?
 	public static String shortLocation(final Vector vec) {
 		return " [" + MathUtilCore.formatOneDigit(vec.getX()) + ", " + MathUtilCore.formatOneDigit(vec.getY()) + ", " + MathUtilCore.formatOneDigit(vec.getZ()) + "]";
 	}
@@ -138,7 +137,6 @@ public final class Common extends CommonCore {
 	 * @param location
 	 * @return
 	 */
-	// TODO can we get rid of this?
 	public static String shortLocation(final Location location) {
 		if (location == null)
 			return "Location(null)";
@@ -288,22 +286,22 @@ public final class Common extends CommonCore {
 	 */
 	/*public static Map<String, Object> getMapFromSection(@NonNull Object mapOrSection) {
 		mapOrSection = Remain.getRootOfSectionPathData(mapOrSection);
-	
+
 		final Map<String, Object> map = mapOrSection instanceof ConfigSection ? ((ConfigSection) mapOrSection).getValues(false)
 				: mapOrSection instanceof Map ? (Map<String, Object>) mapOrSection
 						: mapOrSection instanceof MemorySection ? ReflectionUtil.getFieldContent(mapOrSection, "map") : null;
-	
+
 		Valid.checkNotNull(map, "Unexpected " + mapOrSection.getClass().getSimpleName() + " '" + mapOrSection + "'. Must be Map or MemorySection! (Do not just send config name here, but the actual section with get('section'))");
-	
+
 		final Map<String, Object> copy = new LinkedHashMap<>();
-	
+
 		for (final Map.Entry<String, Object> entry : map.entrySet()) {
 			final String key = entry.getKey();
 			final Object value = entry.getValue();
-	
+
 			copy.put(key, Remain.getRootOfSectionPathData(value));
 		}
-	
+
 		return copy;
 	}*/
 

@@ -1,7 +1,6 @@
 package org.mineacademy.fo.menu.button;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.function.Supplier;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
@@ -11,7 +10,7 @@ import org.mineacademy.fo.menu.Menu;
 import org.mineacademy.fo.menu.model.ItemCreator;
 import org.mineacademy.fo.remain.CompMaterial;
 import org.mineacademy.fo.remain.Remain;
-import org.mineacademy.fo.settings.SimpleLocalization;
+import org.mineacademy.fo.settings.Lang;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -34,25 +33,10 @@ public final class ButtonReturnBack extends Button {
 	private static CompMaterial material = CompMaterial.OAK_DOOR;
 
 	/**
-	 * The title of this button
+	 * The item for this button
 	 */
-	@Getter
 	@Setter
-	private static String title = SimpleLocalization.Menu.BUTTON_RETURN_TITLE;
-
-	/**
-	 * The lore of this button
-	 */
-	@Getter
-	@Setter
-	private static List<String> lore = Arrays.asList(SimpleLocalization.Menu.BUTTON_RETURN_LORE);
-
-	/**
-	 * You can override how this entire itemstack of the button will look like.
-	 */
-	@Getter
-	@Setter
-	private static ItemStack itemStack = null;
+	private static Supplier<ItemCreator> item = () -> ItemCreator.of(material).name(Lang.legacy("menu-button-return-title")).lore(Lang.legacyArrayVars("menu-button-return-lore"));
 
 	/**
 	 * The parent menu
@@ -72,11 +56,7 @@ public final class ButtonReturnBack extends Button {
 	 */
 	@Override
 	public ItemStack getItem() {
-
-		if (itemStack == null)
-			return ItemCreator.of(material).name(title).lore(lore).make();
-
-		return itemStack;
+		return item.get().make();
 	}
 
 	/**

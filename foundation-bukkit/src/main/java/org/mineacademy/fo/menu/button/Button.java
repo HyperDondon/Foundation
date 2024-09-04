@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
@@ -22,7 +23,7 @@ import org.mineacademy.fo.menu.model.ItemCreator;
 import org.mineacademy.fo.model.RangedValue;
 import org.mineacademy.fo.model.Variables;
 import org.mineacademy.fo.remain.CompMaterial;
-import org.mineacademy.fo.settings.SimpleLocalization;
+import org.mineacademy.fo.settings.Lang;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -41,12 +42,18 @@ public abstract class Button {
 	private static CompMaterial infoButtonMaterial = CompMaterial.NETHER_STAR;
 
 	/**
-	 * The title of the info button, see {@link #makeInfo(String...)}
-	 * <p>
-	 * Colorized automatically.
+	 * The function that creates an info button with the given description
 	 */
 	@Setter
-	private static String infoButtonTitle = SimpleLocalization.Menu.TOOLTIP_INFO;
+	private static Function<String[], Button> infoButtonCreator = description -> {
+		final List<String> lores = new ArrayList<>();
+		lores.add(" ");
+
+		for (final String line : description)
+			lores.add(line);
+
+		return makeDummy(ItemCreator.of(infoButtonMaterial).name(Lang.legacy("menu-button-info-name")).hideTags(true).lore(lores));
+	};
 
 	/**
 	 * The slot of this button in the menu
@@ -96,22 +103,14 @@ public abstract class Button {
 	/**
 	 * Creates a new Nether Star button has no action on clicking
 	 * and it is used purely to display informative text.
-	 * <p>
+	 *
 	 * Each description line starts with gray color by default and has colors replaced.
-	 * <p>
-	 * Use {@link #setInfoButtonMaterial(CompMaterial)} and {@link #setInfoButtonTitle(String)} to customize it.
 	 *
 	 * @param description the description of the button
 	 * @return the button
 	 */
-	public static final DummyButton makeInfo(final String... description) {
-		final List<String> lores = new ArrayList<>();
-		lores.add(" ");
-
-		for (final String line : description)
-			lores.add(line);
-
-		return makeDummy(ItemCreator.of(infoButtonMaterial).name(infoButtonTitle).hideTags(true).lore(lores));
+	public static final Button makeInfo(final String... description) {
+		return infoButtonCreator.apply(description);
 	}
 
 	/**

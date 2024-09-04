@@ -42,6 +42,4 @@ public final class BukkitCommandImpl extends Command {
 	public List<String> tabComplete(CommandSender sender, String label, String[] args) throws IllegalArgumentException {
 		return delegate.delegateTabComplete(Platform.toPlayer(sender), label, args);
 	}
-
-	// TODO implement other stuff like no permision message etc
 }

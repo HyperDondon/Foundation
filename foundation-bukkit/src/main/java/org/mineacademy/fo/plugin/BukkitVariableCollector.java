@@ -18,8 +18,6 @@ import org.mineacademy.fo.remain.Remain;
 
 public final class BukkitVariableCollector implements Variables.Collector {
 
-	// TODO scan code for Audience instanceof and FoundationPlayer instanceof
-
 	@Override
 	public void addVariables(String variable, FoundationPlayer sender, Map<String, Object> replacements) {
 		final Player player = sender.isPlayer() ? ((BukkitPlayer) sender).getPlayer() : null;

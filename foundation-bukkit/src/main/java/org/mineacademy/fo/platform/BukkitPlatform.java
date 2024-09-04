@@ -4,23 +4,30 @@ import java.io.File;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Biome;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
+import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -32,6 +39,8 @@ import org.mineacademy.fo.Common;
 import org.mineacademy.fo.MinecraftVersion;
 import org.mineacademy.fo.MinecraftVersion.V;
 import org.mineacademy.fo.ReflectionUtil;
+import org.mineacademy.fo.ReflectionUtilCore;
+import org.mineacademy.fo.ReflectionUtilCore.LegacyEnumNameTranslator;
 import org.mineacademy.fo.SerializeUtil;
 import org.mineacademy.fo.SerializeUtilCore.Language;
 import org.mineacademy.fo.SerializeUtilCore.Serializer;
@@ -52,6 +61,7 @@ import org.mineacademy.fo.model.Variables;
 import org.mineacademy.fo.plugin.BukkitVariableCollector;
 import org.mineacademy.fo.plugin.SimplePlugin;
 import org.mineacademy.fo.remain.CompEnchantment;
+import org.mineacademy.fo.remain.CompMaterial;
 import org.mineacademy.fo.remain.CompPotionEffectType;
 import org.mineacademy.fo.remain.JsonItemStack;
 import org.mineacademy.fo.remain.Remain;
@@ -60,6 +70,7 @@ import org.mineacademy.fo.settings.BukkitYamlRepresenter;
 import org.mineacademy.fo.settings.YamlConfig;
 
 import lombok.NonNull;
+import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.event.HoverEventSource;
 
 public class BukkitPlatform extends FoundationPlatform {
@@ -77,35 +88,85 @@ public class BukkitPlatform extends FoundationPlatform {
 		// Expand simple component
 		SimpleComponent.setBuilder(HookManager::replaceRelationPlaceholders);
 
-		/**
-		 * Shows the item on hover if it is not air.
-		 * <p>
-		 * NB: Some colors from lore may get lost as a result of Minecraft/Spigot bug.
-		 *
-		 * @param item
-		 * @return
-		 */
-		/*public SimpleComponent onHover(@NonNull final ItemStack item) {
-			if (CompMaterial.isAir(item.getType()))
-				return this.onHover("Air");
-		
-			try {
-				this.modifyLastComponent(component -> component.hoverEvent(Remain.convertItemStackToHoverEvent(item)));
-		
-			} catch (final Throwable t) {
-				CommonCore.logFramed(
-						"Error parsing ItemStack to simple component!",
-						"Item: " + item,
-						"Error: " + t.getMessage());
-		
-				t.printStackTrace();
-			}
-		
-			return this;
-		}*/
-
 		// Initialize platform-specific variables
 		Variables.setCollector(new BukkitVariableCollector());
+
+		ReflectionUtilCore.setLegacyEnumNameTranslator(new LegacyEnumNameTranslator() {
+
+			@Override
+			public <E extends Enum<E>> String adjustName(Class<E> enumType, String name) {
+				final String rawName = name.toUpperCase().replace(" ", "_");
+
+				if (enumType == ChatColor.class && name.contains(ChatColor.COLOR_CHAR + "")) {
+					name = ChatColor.getByChar(name.charAt(1)).name();
+
+				} else if (enumType == Biome.class) {
+					if (MinecraftVersion.atLeast(V.v1_13))
+						if (rawName.equalsIgnoreCase("ICE_MOUNTAINS"))
+							name = "SNOWY_TAIGA";
+
+				} else if (enumType == EntityType.class) {
+					if (MinecraftVersion.atLeast(V.v1_16))
+						if (rawName.equals("PIG_ZOMBIE"))
+							name = "ZOMBIFIED_PIGLIN";
+
+					if (MinecraftVersion.atLeast(V.v1_14))
+						if (rawName.equals("TIPPED_ARROW"))
+							name = "ARROW";
+
+					if (MinecraftVersion.olderThan(V.v1_16))
+						if (rawName.equals("ZOMBIFIED_PIGLIN"))
+							name = "PIG_ZOMBIE";
+
+					if (MinecraftVersion.olderThan(V.v1_9))
+						if (rawName.equals("TRIDENT"))
+							name = "ARROW";
+						else if (rawName.equals("DRAGON_FIREBALL"))
+							name = "FIREBALL";
+
+					if (MinecraftVersion.olderThan(V.v1_13))
+						if (rawName.equals("DROWNED"))
+							name = "ZOMBIE";
+						else if (rawName.equals("ZOMBIE_VILLAGER"))
+							name = "ZOMBIE";
+
+				} else if (enumType == DamageCause.class) {
+					if (MinecraftVersion.olderThan(V.v1_13))
+						if (rawName.equals("DRYOUT"))
+							name = "CUSTOM";
+
+					if (MinecraftVersion.olderThan(V.v1_11))
+						if (rawName.equals("ENTITY_SWEEP_ATTACK"))
+							name = "ENTITY_ATTACK";
+						else if (rawName.equals("CRAMMING"))
+							name = "CUSTOM";
+
+					if (MinecraftVersion.olderThan(V.v1_9))
+						if (rawName.equals("FLY_INTO_WALL"))
+							name = "SUFFOCATION";
+						else if (rawName.equals("HOT_FLOOR"))
+							name = "LAVA";
+
+					if (rawName.equals("DRAGON_BREATH"))
+						try {
+							DamageCause.valueOf("DRAGON_BREATH");
+						} catch (final Throwable t) {
+							name = "ENTITY_ATTACK";
+						}
+
+				} else if (enumType == BossBar.Overlay.class)
+					name = name.toUpperCase().replace("SEGMENTED", "NOTCHED").replace("SOLID", "PROGRESS");
+
+				else if (enumType == CompMaterial.class || enumType == Material.class) {
+					final CompMaterial material = CompMaterial.fromString(name);
+
+					if (material != null)
+						name = enumType == CompMaterial.class ? material.name() : material.getMaterial().name();
+				}
+
+				return name;
+			}
+		});
 
 		// Add platform-specific helpers to translate values to a config and back
 		SerializeUtil.addSerializer(new Serializer() {
@@ -297,6 +358,67 @@ public class BukkitPlatform extends FoundationPlatform {
 				return null;
 			}
 		});
+
+		this.addLegacyEnumTypes();
+	}
+
+	private void addLegacyEnumTypes() {
+		final Map<String, V> entities = new HashMap<>();
+
+		entities.put("TIPPED_ARROW", V.v1_9);
+		entities.put("SPECTRAL_ARROW", V.v1_9);
+		entities.put("SHULKER_BULLET", V.v1_9);
+		entities.put("DRAGON_FIREBALL", V.v1_9);
+		entities.put("SHULKER", V.v1_9);
+		entities.put("AREA_EFFECT_CLOUD", V.v1_9);
+		entities.put("LINGERING_POTION", V.v1_9);
+		entities.put("POLAR_BEAR", V.v1_10);
+		entities.put("HUSK", V.v1_10);
+		entities.put("ELDER_GUARDIAN", V.v1_11);
+		entities.put("WITHER_SKELETON", V.v1_11);
+		entities.put("STRAY", V.v1_11);
+		entities.put("DONKEY", V.v1_11);
+		entities.put("MULE", V.v1_11);
+		entities.put("EVOKER_FANGS", V.v1_11);
+		entities.put("EVOKER", V.v1_11);
+		entities.put("VEX", V.v1_11);
+		entities.put("VINDICATOR", V.v1_11);
+		entities.put("ILLUSIONER", V.v1_12);
+		entities.put("PARROT", V.v1_12);
+		entities.put("TURTLE", V.v1_13);
+		entities.put("PHANTOM", V.v1_13);
+		entities.put("TRIDENT", V.v1_13);
+		entities.put("COD", V.v1_13);
+		entities.put("SALMON", V.v1_13);
+		entities.put("PUFFERFISH", V.v1_13);
+		entities.put("TROPICAL_FISH", V.v1_13);
+		entities.put("DROWNED", V.v1_13);
+		entities.put("DOLPHIN", V.v1_13);
+		entities.put("CAT", V.v1_14);
+		entities.put("PANDA", V.v1_14);
+		entities.put("PILLAGER", V.v1_14);
+		entities.put("RAVAGER", V.v1_14);
+		entities.put("TRADER_LLAMA", V.v1_14);
+		entities.put("WANDERING_TRADER", V.v1_14);
+		entities.put("FOX", V.v1_14);
+		entities.put("BEE", V.v1_15);
+		entities.put("HOGLIN", V.v1_16);
+		entities.put("PIGLIN", V.v1_16);
+		entities.put("STRIDER", V.v1_16);
+		entities.put("ZOGLIN", V.v1_16);
+		entities.put("PIGLIN_BRUTE", V.v1_16);
+		entities.put("AXOLOTL", V.v1_17);
+		entities.put("GLOW_ITEM_FRAME", V.v1_17);
+		entities.put("GLOW_SQUID", V.v1_17);
+		entities.put("GOAT", V.v1_17);
+		entities.put("MARKER", V.v1_17);
+
+		ReflectionUtilCore.addLegacyEnumType(EntityType.class, entities);
+
+		final Map<String, V> spawnReasons = new HashMap<>();
+		spawnReasons.put("DROWNED", V.v1_13);
+
+		ReflectionUtilCore.addLegacyEnumType(SpawnReason.class, spawnReasons);
 	}
 
 	@Override

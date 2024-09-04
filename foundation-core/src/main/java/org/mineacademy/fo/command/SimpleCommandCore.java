@@ -20,7 +20,7 @@ import org.mineacademy.fo.model.SimpleTime;
 import org.mineacademy.fo.model.Task;
 import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
-import org.mineacademy.fo.settings.SimpleLocalization;
+import org.mineacademy.fo.settings.Lang;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -302,7 +302,7 @@ public abstract class SimpleCommandCore {
 	public final boolean delegateExecute(final FoundationPlayer sender, final String label, final String[] args) {
 
 		if (!Platform.getPlugin().isEnabled()) {
-			sender.sendMessage(SimpleLocalization.Commands.CANNOT_USE_WHILE_NULL.replaceBracket("state", SimpleLocalization.Commands.DISABLED));
+			sender.sendMessage(Lang.componentVars("command-cannot-use-while-null", "state", Lang.legacy("command-disabled")));
 
 			return true;
 		}
@@ -334,11 +334,10 @@ public abstract class SimpleCommandCore {
 					this.tellNoPrefix("<dark_gray>" + CommonCore.chatLineSmooth());
 
 				if (this.getDescription() != null)
-					this.tellNoPrefix(SimpleLocalization.Commands.LABEL_DESCRIPTION.replaceBracket("description", this.getDescription()));
+					this.tellNoPrefix(Lang.componentVars("command-label-description", "description", this.getDescription()));
 
 				if (legacyUsage != null || newUsage != null || this.getUsage() != null) {
-					this.tellNoPrefix(SimpleLocalization.Commands.LABEL_USAGE.replaceBracket("usage",
-							SimpleComponent.fromPlain(this.getEffectiveCommand() + " ").append(CommonCore.getOrDefault(this.getUsage(), SimpleComponent.empty()))));
+					this.tellNoPrefix(Lang.componentVars("command-label-usage", "usage", SimpleComponent.fromPlain(this.getEffectiveCommand() + " ").append(CommonCore.getOrDefault(this.getUsage(), SimpleComponent.empty()))));
 
 					if (legacyUsage != null || newUsage != null) {
 						this.tellNoPrefix("<dark_gray>" + CommonCore.chatLineSmooth());
@@ -361,19 +360,16 @@ public abstract class SimpleCommandCore {
 			this.onCommand();
 
 		} catch (final InvalidCommandArgException ex) {
-			this.tellError(SimpleLocalization.Commands.INVALID_ARGUMENT
-					.replaceBracket("arguments", ex.getInvalidArgument())
-					.replaceBracket("help_command", SimpleComponent
-							.fromPlain(this.getEffectiveCommand() + " ?")
-							.onHover("Click to execute.")
-							.onClickRunCmd(this.getEffectiveCommand() + " ?")));
+			this.tellError(Lang.componentVars("command-invalid-argument",
+					"arguments", ex.getInvalidArgument(),
+					"help_command", SimpleComponent.fromPlain(this.getEffectiveCommand() + " ?").onHover("Click to execute.").onClickRunCmd(this.getEffectiveCommand() + " ?")));
 
 		} catch (final CommandException ex) {
 			if (ex.getComponent() != null)
 				this.tellError(ex.getComponent());
 
 		} catch (final Throwable t) {
-			this.tellError(SimpleLocalization.Commands.ERROR.replaceBracket("error", t.toString()));
+			this.tellError(Lang.component("command-error"));
 
 			CommonCore.error(t, "Error executing " + this.getEffectiveCommand() + " " + String.join(" ", args));
 		}
@@ -404,8 +400,7 @@ public abstract class SimpleCommandCore {
 
 		// Check if the command was run earlier within the wait threshold
 		if (lastRun != 0)
-			this.checkBoolean(difference > this.cooldownSeconds, CommonCore.getOrDefault(this.cooldownMessage, SimpleLocalization.Commands.COOLDOWN_WAIT)
-					.replaceBracket("duration", String.valueOf(this.cooldownSeconds - difference + 1)));
+			this.checkBoolean(difference > this.cooldownSeconds, CommonCore.getOrDefault(this.cooldownMessage, Lang.component("command-cooldown-wait")).replaceBracket("duration", String.valueOf(this.cooldownSeconds - difference + 1)));
 
 		// Update the last try with the current time
 		this.cooldownMap.put(this.sender, System.currentTimeMillis());
@@ -563,7 +558,7 @@ public abstract class SimpleCommandCore {
 			return SimpleTime.from(raw);
 
 		} catch (final IllegalArgumentException ex) {
-			this.returnTell(SimpleLocalization.Commands.INVALID_TIME.replaceBracket("input", raw));
+			this.returnTell(Lang.componentVars("command-invalid-time", "input", raw));
 
 			return null;
 		}
@@ -611,10 +606,10 @@ public abstract class SimpleCommandCore {
 			// Not found, pass through below to error out
 		}
 
-		this.checkNotNull(found, SimpleLocalization.Commands.INVALID_ENUM
-				.replaceBracket("type", enumType.getSimpleName().replaceAll("([a-z])([A-Z]+)", "$1 $2").toLowerCase())
-				.replaceBracket("value", enumValue)
-				.replaceBracket("available", CommonCore.join(enumType.getEnumConstants(), constant -> constant.name().toLowerCase())));
+		this.checkNotNull(found, Lang.componentVars("command-invalid-enum",
+				"type", enumType.getSimpleName().replaceAll("([a-z])([A-Z]+)", "$1 $2").toLowerCase(),
+				"value", enumValue,
+				"available", CommonCore.join(enumType.getEnumConstants(), constant -> constant.name().toLowerCase())));
 
 		return found;
 	}
@@ -1088,7 +1083,6 @@ public abstract class SimpleCommandCore {
 		return messages;
 	}
 
-	// TODO get rid of
 	protected String replacePlaceholders(String legacy) {
 		return RemainCore.convertAdventureToLegacy(replacePlaceholders(RemainCore.convertLegacyToAdventure(legacy)));
 	}*/
@@ -1109,7 +1103,6 @@ public abstract class SimpleCommandCore {
 		return component;
 	}
 
-	// TODO get rid of
 	/*private String replaceBasicPlaceholders0(String component) {
 		return RemainCore.convertAdventureToLegacy(this.replaceBasicPlaceholders0(RemainCore.convertLegacyToAdventure(SimpleComponent)));
 	}*/
@@ -1434,7 +1427,7 @@ public abstract class SimpleCommandCore {
 	 * Get the permission for this command, either the one you set or our from Localization
 	 */
 	public final SimpleComponent getPermissionMessage() {
-		return CommonCore.getOrDefault(this.permissionMessage, SimpleLocalization.NO_PERMISSION);
+		return CommonCore.getOrDefault(this.permissionMessage, Lang.component("no-permission"));
 	}
 
 	/**
@@ -1671,7 +1664,7 @@ public abstract class SimpleCommandCore {
 				MessengerCore.error(this.sender, ex.getComponent());
 
 		} catch (final Throwable t) {
-			MessengerCore.error(this.sender, SimpleLocalization.Commands.ERROR.replaceBracket("error", t.toString()));
+			MessengerCore.error(this.sender, Lang.component("command-error"));
 
 			throw t;
 		}

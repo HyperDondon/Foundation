@@ -22,7 +22,7 @@ import org.mineacademy.fo.menu.model.InventoryDrawer;
 import org.mineacademy.fo.menu.model.ItemCreator;
 import org.mineacademy.fo.remain.CompMaterial;
 import org.mineacademy.fo.remain.Remain;
-import org.mineacademy.fo.settings.SimpleLocalization;
+import org.mineacademy.fo.settings.Lang;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -350,8 +350,11 @@ public abstract class MenuPaged<T> extends Menu {
 
 				return ItemCreator
 						.of(this.canGo ? MenuPaged.getActivePageButton() : MenuPaged.getInactivePageButton())
-						.name(previousPage == 0 ? SimpleLocalization.Menu.PAGE_FIRST : SimpleLocalization.Menu.PAGE_PREVIOUS.replace("{page}", String.valueOf(previousPage)))
+						.name(previousPage == 0
+								? Lang.legacy("menu-page-first")
+								: Lang.legacyVars("menu-page-previous", "page", String.valueOf(previousPage)))
 						.make();
+
 			}
 		};
 	}
@@ -378,7 +381,9 @@ public abstract class MenuPaged<T> extends Menu {
 
 				return ItemCreator
 						.of(this.canGo ? MenuPaged.getActivePageButton() : MenuPaged.getInactivePageButton())
-						.name(lastPage ? SimpleLocalization.Menu.PAGE_LAST : SimpleLocalization.Menu.PAGE_NEXT.replace("{page}", String.valueOf(getCurrentPage() + 1)))
+						.name(lastPage
+								? Lang.legacy("menu-page-last")
+								: Lang.legacyVars("menu-page-next", "page", String.valueOf(getCurrentPage() + 1)))
 						.make();
 			}
 		};
