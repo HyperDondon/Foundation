@@ -32,6 +32,7 @@
   "command-invalid-uuid": "Invalid UUID '{uuid}'",
   "command-invalid-world": "Invalid world '{world}'. Available: {available}",
   "command-label-authors": "Made by",
+  "command-label-credits": "<gray>Visit <white><click:open_url:'https://mineacademy.org/plugins'>mineacademy.org/plugins</click> <gray>for more information",
   "command-label-description": "<red>Description: {description}",
   "command-label-help-for": "Help for /{label}",
   "command-label-optional-args": "optional arguments",
