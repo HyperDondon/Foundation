@@ -171,7 +171,7 @@ public final class FileUtil {
 	 * @return
 	 */
 	public static JsonObject readJsonFromUrl(String url) {
-		final List<String> baseContent = FileUtil.readLinesFromUrl("https://raw.githubusercontent.com/kangarko/Foundation/v7/lang/en_US.json");
+		final List<String> baseContent = FileUtil.readLinesFromUrl(url);
 		final String joined = String.join("\n", baseContent);
 
 		return RemainCore.GSON.fromJson(joined, JsonObject.class);
@@ -201,7 +201,9 @@ public final class FileUtil {
 	 */
 	public static List<String> readLinesFromUrl(String url) {
 		try {
-			return readLinesFromUrl(new URL(url));
+
+			// Append time to prevent caching
+			return readLinesFromUrl(new URL(url + "?t=" + System.currentTimeMillis()));
 
 		} catch (final IOException ex) {
 			throw new FoException(ex, "Could not read lines from " + url);
