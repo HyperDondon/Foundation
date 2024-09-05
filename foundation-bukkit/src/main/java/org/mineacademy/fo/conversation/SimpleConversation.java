@@ -407,6 +407,8 @@ public abstract class SimpleConversation implements ConversationAbandonedListene
 						if (!CompChatColor.stripColorCodes(question).contains(Lang.component("prefix-question").toPlain())) {
 							final String prefix = this.prefix.getPrefix(this.context);
 
+							System.out.println("Prefix: " + Lang.plain("prefix-question"));
+
 							question = (!prefix.isEmpty() ? prefix : Lang.legacy("prefix-question")) + " " + question;
 						}
 

@@ -9,7 +9,6 @@ import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.model.CaseNumberFormat;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.Variables;
-import org.mineacademy.fo.remain.CompChatColor;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -165,7 +164,7 @@ public final class Lang {
 	 * @return
 	 */
 	public static String legacy(String path) {
-		return CompChatColor.translateColorCodes(plain(path));
+		return component(path).toLegacy();
 	}
 
 	/**
@@ -197,12 +196,12 @@ public final class Lang {
 	 */
 	/*public static SimpleComponent ofNumericVars(String path, Object... replacements) {
 		final List<Object> replacementsList = new ArrayList<>();
-	
+
 		for (int i = 0; i < replacements.length; i++) {
 			replacementsList.add(String.valueOf(i));
 			replacementsList.add(replacements[i]);
 		}
-	
+
 		return ofVars(path, replacementsList.toArray());
 	}*/
 
