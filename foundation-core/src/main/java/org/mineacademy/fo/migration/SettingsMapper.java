@@ -1,4 +1,4 @@
-package org.mineacademy.fo.settings;
+package org.mineacademy.fo.migration;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -6,9 +6,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
+import org.mineacademy.fo.FileUtil;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.model.CaseNumberFormat;
 import org.mineacademy.fo.model.SimpleComponent;
+import org.mineacademy.fo.settings.Lang;
+import org.mineacademy.fo.settings.MemorySection;
+import org.mineacademy.fo.settings.YamlConfig;
+import org.mineacademy.fo.settings.YamlStaticConfig;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -22,6 +27,19 @@ import lombok.NoArgsConstructor;
 @Deprecated
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class SettingsMapper {
+
+	public static <T extends YamlStaticConfig> void mapFromClassAndHalt(Class<T> clazz) {
+		try {
+			final JsonObject json = SettingsMapper.mapClass(clazz);
+
+			FileUtil.write("exported-lang.json", json.toString());
+
+		} catch (final Throwable t) {
+			t.printStackTrace();
+		}
+
+		Runtime.getRuntime().halt(-1);
+	}
 
 	public static JsonObject mapLocaleYaml(String internalPath) {
 		final JsonObject dictionary = new JsonObject();

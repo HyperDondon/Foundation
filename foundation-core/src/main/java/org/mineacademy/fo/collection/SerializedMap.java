@@ -2,6 +2,7 @@ package org.mineacademy.fo.collection;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -11,19 +12,22 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.SerializeUtilCore;
 import org.mineacademy.fo.SerializeUtilCore.Language;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.exception.FoException;
-import org.mineacademy.fo.jsonsimple.JSONObject;
-import org.mineacademy.fo.jsonsimple.JSONParser;
 import org.mineacademy.fo.model.IsInList;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.Tuple;
+import org.mineacademy.fo.remain.RemainCore;
 import org.mineacademy.fo.settings.MemorySection;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -33,18 +37,18 @@ import lombok.NonNull;
  * configuration easily, such as locations, other maps or lists and
  * much more.
  */
-public final class SerializedMap extends StrictCollection implements Iterable<Map.Entry<String, Object>> {
+public final class SerializedMap implements Iterable<Map.Entry<String, Object>> {
 
 	/**
 	 * The internal map with values
 	 */
-	private final StrictMap<String, Object> map = new StrictMap<>();
+	private final Map<String, Object> map = new HashMap<>();
 
 	/**
 	 * Was this map created from a json string?
 	 */
 	@Getter
-	private SerializeUtilCore.Language mode;
+	private SerializeUtilCore.Language language;
 
 	/**
 	 * Should we remove entries on get for this map instance,
@@ -74,9 +78,7 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 	 * Create a new map
 	 */
 	private SerializedMap(SerializeUtilCore.Language mode) {
-		super("Cannot remove '%s' as it is not in the map!", "Value '%s' is already in the map!");
-
-		this.mode = mode;
+		this.language = mode;
 	}
 
 	/**
@@ -126,7 +128,7 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 				lastKey = (String) obj;
 
 			} else
-				this.map.override(lastKey, obj);
+				this.map.put(lastKey, obj);
 
 			nextIsString = !nextIsString;
 		}
@@ -190,11 +192,8 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 	public void putIf(final String key, final Map<?, ?> value) {
 		if (value != null && !value.isEmpty())
 			this.put(key, value);
-
-		// This value is undesirable to save if null, so if YamlConfig is used
-		// it will remove it from the config
 		else
-			this.map.getSource().put(key, null);
+			this.map.put(key, null);
 	}
 
 	/**
@@ -208,11 +207,8 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 	public void putIf(final String key, final Collection<?> value) {
 		if (value != null && !value.isEmpty())
 			this.put(key, value);
-
-		// This value is undesirable to save if null, so if YamlConfig is used
-		// it will remove it from the config
 		else
-			this.map.getSource().put(key, null);
+			this.map.put(key, null);
 	}
 
 	/**
@@ -226,11 +222,8 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 	public void putIf(final String key, final boolean value) {
 		if (value)
 			this.put(key, value);
-
-		// This value is undesirable to save if null, so if YamlConfig is used
-		// it will remove it from the config
 		else
-			this.map.getSource().put(key, null);
+			this.map.put(key, null);
 	}
 
 	/**
@@ -244,11 +237,8 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 	public void putIf(final String key, final Object value) {
 		if (value != null)
 			this.put(key, value);
-
-		// This value is undesirable to save if null, so if YamlConfig is used
-		// it will remove it from the config
 		else
-			this.map.getSource().put(key, null);
+			this.map.put(key, null);
 	}
 
 	/**
@@ -265,36 +255,6 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 	}
 
 	/**
-	 * Puts a new key-value pair in the map, failing if key is null
-	 * and replacing the old key if exist
-	 *
-	 * @param key
-	 * @param value
-	 */
-	public void override(final String key, final Object value) {
-		this.map.override(key, value);
-	}
-
-	/**
-	 * Overrides all map values
-	 *
-	 * @param map
-	 */
-	public void overrideAll(SerializedMap map) {
-		map.forEach(this::override);
-	}
-
-	/**
-	 * Remove the given key, returning null if not set
-	 *
-	 * @param key
-	 * @return
-	 */
-	public Object removeWeak(final String key) {
-		return this.map.removeWeak(key);
-	}
-
-	/**
 	 * Remove the given key, throwing error if not set
 	 *
 	 * @param key
@@ -308,9 +268,21 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 	 * Remove a given key by value
 	 *
 	 * @param value
+	 * @return the removed entries
 	 */
-	public void removeByValue(final Object value) {
-		this.map.removeByValue(value);
+	public List<Entry<String, Object>> removeByValue(final Object value) {
+		final List<Entry<String, Object>> removedObjects = new ArrayList<>();
+
+		for (final Iterator<Entry<String, Object>> it = this.map.entrySet().iterator(); it.hasNext();) {
+			final Entry<String, Object> entry = it.next();
+			if (entry.getValue().equals(value)) {
+				it.remove();
+
+				removedObjects.add(entry);
+			}
+		}
+
+		return removedObjects;
 	}
 
 	/**
@@ -599,7 +571,7 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 				list.add(null);
 
 			else {
-				final Tuple<K, V> tuple = Tuple.deserialize(of(object, this.mode), tupleKey, tupleValue);
+				final Tuple<K, V> tuple = Tuple.deserialize(of(object, this.language), tupleKey, tupleValue);
 
 				list.add(tuple);
 			}
@@ -640,7 +612,7 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 		if (!this.map.containsKey(key))
 			return list;
 
-		final Object rawList = this.removeOnGet ? this.map.removeWeak(key) : this.map.get(key);
+		final Object rawList = this.removeOnGet ? this.map.remove(key) : this.map.get(key);
 
 		// Forgive if string used instead of string list
 		if (type == String.class && rawList instanceof String)
@@ -648,12 +620,12 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 		else {
 			if (rawList instanceof Object[])
 				for (final Object object : (Object[]) rawList)
-					list.add(object == null ? null : SerializeUtilCore.deserialize(this.mode, type, object, parameters));
+					list.add(object == null ? null : SerializeUtilCore.deserialize(this.language, type, object, parameters));
 			else {
 				ValidCore.checkBoolean(rawList instanceof Collection<?>, "Key '" + key + "' expected to have a list, got " + rawList.getClass().getSimpleName() + " instead! Try putting '' quotes around the message: " + rawList);
 
 				for (final Object object : (Collection<Object>) rawList)
-					list.add(object == null ? null : SerializeUtilCore.deserialize(this.mode, type, object, parameters));
+					list.add(object == null ? null : SerializeUtilCore.deserialize(this.language, type, object, parameters));
 			}
 		}
 
@@ -669,7 +641,7 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 	public SerializedMap getMap(final String key) {
 		final Object raw = this.get(key, Object.class);
 
-		return raw != null ? of(raw, this.mode) : new SerializedMap();
+		return raw != null ? of(raw, this.language) : new SerializedMap();
 	}
 
 	/**
@@ -691,9 +663,9 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 		final Object raw = this.map.get(path);
 
 		if (raw != null)
-			for (final Entry<?, ?> entry : of(raw, this.mode).entrySet()) {
-				final Key key = SerializeUtilCore.deserialize(this.mode, keyType, entry.getKey());
-				final Value value = SerializeUtilCore.deserialize(this.mode, valueType, entry.getValue());
+			for (final Entry<?, ?> entry : of(raw, this.language).entrySet()) {
+				final Key key = SerializeUtilCore.deserialize(this.language, keyType, entry.getKey());
+				final Value value = SerializeUtilCore.deserialize(this.language, valueType, entry.getValue());
 
 				// Ensure the pair values are valid for the given paramenters
 				this.checkAssignable(path, key, keyType);
@@ -721,11 +693,11 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 		Object raw = this.map.get(path);
 
 		if (raw != null) {
-			raw = of(raw, this.mode);
+			raw = of(raw, this.language);
 
 			for (final Entry<String, Object> entry : ((SerializedMap) raw).entrySet()) {
-				final Key key = SerializeUtilCore.deserialize(this.mode, keyType, entry.getKey());
-				final List<Value> value = SerializeUtilCore.deserialize(this.mode, List.class, entry.getValue());
+				final Key key = SerializeUtilCore.deserialize(this.language, keyType, entry.getKey());
+				final List<Value> value = SerializeUtilCore.deserialize(this.language, List.class, entry.getValue());
 
 				// Ensure the pair values are valid for the given paramenters
 				this.checkAssignable(path, key, keyType);
@@ -793,7 +765,7 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 	 * @return
 	 */
 	public <T> T get(final String key, final Class<T> type, final T def, Object... deserializeParameters) {
-		Object raw = this.removeOnGet ? this.map.removeWeak(key) : this.map.get(key);
+		Object raw = this.removeOnGet ? this.map.remove(key) : this.map.get(key);
 
 		// Try to get the value by key with ignoring case
 		if (raw == null)
@@ -803,7 +775,7 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 		if ("".equals(raw) && Enum.class.isAssignableFrom(type))
 			return def;
 
-		return raw == null ? def : SerializeUtilCore.deserialize(this.mode, type, raw, deserializeParameters);
+		return raw == null ? def : SerializeUtilCore.deserialize(this.language, type, raw, deserializeParameters);
 
 	}
 
@@ -837,7 +809,7 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 	 * @return
 	 */
 	public Map.Entry<String, Object> firstEntry() {
-		return this.isEmpty() ? null : this.map.getSource().entrySet().iterator().next();
+		return this.isEmpty() ? null : this.map.entrySet().iterator().next();
 	}
 
 	/**
@@ -882,15 +854,7 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 	 * @return
 	 */
 	public Map<String, Object> asMap() {
-		return this.map.getSource();
-	}
-
-	/**
-	 * Convert this map into a serialized one (again, but iterating through each pair as well)
-	 */
-	@Override
-	public Object serialize() {
-		return this.map.serialize();
+		return this.map;
 	}
 
 	/**
@@ -901,20 +865,20 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 	public String toJson() {
 
 		try {
-			final JSONObject jsonMap = new JSONObject();
+			final Map<String, Object> serialized = new LinkedHashMap<>();
 
 			for (final Map.Entry<String, Object> entry : this.map.entrySet()) {
 				final Object key = SerializeUtilCore.serialize(Language.JSON, entry.getKey());
 				final Object value = SerializeUtilCore.serialize(Language.JSON, entry.getValue());
 
 				if (key != null && value != null)
-					jsonMap.put(key.toString(), value);
+					serialized.put(key.toString(), value);
 			}
 
-			return jsonMap.toString();
+			return RemainCore.GSON.toJson(serialized);
 
 		} catch (final Throwable t) {
-			CommonCore.error(t, "Failed to serialize to json, unparsed data: " + this.map);
+			CommonCore.error(t, "Failed to serialize to JSON, unparsed data: " + this.map);
 
 			return "{}";
 		}
@@ -939,32 +903,32 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 	 * @param to
 	 * @param converter
 	 */
-	public <O, N> void convert(final String path, final Class<O> from, final Class<N> to, final Function<O, N> converter) {
+	/*public <O, N> void convert(final String path, final Class<O> from, final Class<N> to, final Function<O, N> converter) {
 		final Object old = this.getObject(path);
-
+	
 		if (old != null)
 			// If the old is a collection check if the first value is old, assume the rest is old as well
 			if (old instanceof Collection) {
 				final Collection<?> collection = (Collection<?>) old;
-
+	
 				if (collection.isEmpty() || !from.isAssignableFrom(collection.iterator().next().getClass()))
 					return;
-
+	
 				final List<N> newCollection = new ArrayList<>();
-
+	
 				for (final O oldItem : (Collection<O>) collection)
 					newCollection.add(converter.apply(oldItem));
-
-				this.override(path, newCollection);
-
+	
+				this.map.put(path, newCollection);
+	
 				CommonCore.log("Converted '" + path + "' from " + from.getSimpleName() + "[] to " + to.getSimpleName() + "[]");
-
+	
 			} else if (from.isAssignableFrom(old.getClass())) {
-				this.override(path, converter.apply((O) old));
-
+				this.map.put(path, converter.apply((O) old));
+	
 				CommonCore.log("Converted '" + path + "' from '" + from.getSimpleName() + "' to '" + to.getSimpleName() + "'");
 			}
-	}
+	}*/
 
 	/**
 	 * Convert the key pairs into formatted string such as {
@@ -976,12 +940,11 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 	 * @return
 	 */
 	public String toStringFormatted() {
-		final Map<?, ?> map = (Map<?, ?>) this.serialize();
 		final List<String> lines = new ArrayList<>();
 
 		lines.add("{");
 
-		for (final Map.Entry<?, ?> entry : map.entrySet()) {
+		for (final Map.Entry<?, ?> entry : this.map.entrySet()) {
 			final Object value = entry.getValue();
 
 			if (value != null && !value.toString().equals("[]") && !value.toString().equals("{}") && !value.toString().isEmpty() && !value.toString().equals("0.0") && !value.toString().equals("false"))
@@ -991,6 +954,10 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 		lines.add("}");
 
 		return String.join("\n", lines);
+	}
+
+	public Map<String, Object> serialize() {
+		return (Map<String, Object>) SerializeUtilCore.serialize(this.language, this);
 	}
 
 	/**
@@ -1007,7 +974,7 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 
 	@Override
 	public String toString() {
-		return this.serialize().toString();
+		return this.map.toString();
 	}
 
 	@Override
@@ -1070,9 +1037,6 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 
 			if (firstArgument instanceof Map)
 				return SerializedMap.of(firstArgument);
-
-			if (firstArgument instanceof StrictMap)
-				return SerializedMap.of(((StrictMap<String, Object>) firstArgument).getSource());
 		}
 
 		final SerializedMap map = new SerializedMap();
@@ -1097,7 +1061,7 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 	private static SerializedMap of(@NonNull Object object, Language mode) {
 
 		if (object instanceof SerializedMap) {
-			((SerializedMap) object).mode = mode;
+			((SerializedMap) object).language = mode;
 
 			return (SerializedMap) object;
 		}
@@ -1159,23 +1123,68 @@ public final class SerializedMap extends StrictCollection implements Iterable<Ma
 	 * @return
 	 */
 	public static SerializedMap fromJson(@NonNull final String json) {
-
 		if (json.isEmpty() || "[]".equals(json) || "{}".equals(json))
 			return new SerializedMap(Language.JSON);
 
-		// Fallback to simple
 		try {
-			final Object parsed = JSONParser.deserialize(json);
+			final JsonObject parsed = RemainCore.GSON.fromJson(json, JsonObject.class);
+			final Map<String, Object> converted = toValueMap(parsed);
 
-			if (parsed instanceof JSONObject)
-				return of(parsed, Language.JSON);
+			return of(converted, Language.JSON);
 
-			throw new FoException("Expected JSONObject, got " + (parsed != null ? parsed.getClass() : "unknown class") + " from raw JSON input: " + json);
-
-		} catch (final Throwable secondThrowable) {
-			CommonCore.throwError(secondThrowable, "SerializedMap failed to parse JSON from " + json);
+		} catch (final Throwable t) {
+			CommonCore.throwError(t, "SerializedMap failed to parse JSON from " + json);
 
 			return null;
 		}
+	}
+
+	private static Map<String, Object> toValueMap(JsonObject json) {
+		final Map<String, Object> resultMap = new HashMap<>();
+
+		for (final Map.Entry<String, JsonElement> entry : json.entrySet())
+			resultMap.put(entry.getKey(), parseJsonElement(entry.getValue()));
+
+		return resultMap;
+	}
+
+	private static Object parseJsonElement(JsonElement element) {
+		if (element.isJsonObject())
+			return toValueMap(element.getAsJsonObject());
+
+		else if (element.isJsonArray())
+			return parseJsonArray(element.getAsJsonArray());
+
+		else if (element.isJsonPrimitive())
+			return parseJsonPrimitive(element.getAsJsonPrimitive());
+
+		else if (element.isJsonNull())
+			return null;
+
+		else
+			throw new IllegalStateException("Unexpected JSON element type: " + element);
+	}
+
+	private static List<Object> parseJsonArray(JsonArray jsonArray) {
+		final List<Object> resultList = new ArrayList<>();
+
+		for (final JsonElement element : jsonArray)
+			resultList.add(parseJsonElement(element));
+
+		return resultList;
+	}
+
+	private static Object parseJsonPrimitive(JsonPrimitive jsonPrimitive) {
+		if (jsonPrimitive.isBoolean())
+			return jsonPrimitive.getAsBoolean();
+
+		else if (jsonPrimitive.isNumber())
+			return jsonPrimitive.getAsNumber();
+
+		else if (jsonPrimitive.isString())
+			return jsonPrimitive.getAsString();
+
+		else
+			throw new IllegalStateException("Unexpected JSON primitive type: " + jsonPrimitive);
 	}
 }

@@ -13,6 +13,8 @@ import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 
 import org.mineacademy.fo.CommonCore;
+import org.mineacademy.fo.MinecraftVersion;
+import org.mineacademy.fo.MinecraftVersion.V;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.debug.Debugger;
@@ -31,7 +33,9 @@ import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEventSource;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
+import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.format.TextDecoration.State;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -266,6 +270,22 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	}
 
 	/**
+	 * Set the view permission for this component
+	 *
+	 * @param color
+	 * @return
+	 */
+	public SimpleComponent color(TextColor color) {
+
+		// No RGB support in older versions
+		if (color instanceof CompChatColor && MinecraftVersion.olderThan(V.v1_16))
+			color = NamedTextColor.nearestTo(color);
+
+		final TextColor finalColor = color;
+		return modifyLastComponentAndReturn(component -> component.color(finalColor));
+	}
+
+	/**
 	 * Quickly replaces an object in all parts of this component, adding
 	 * {} around it.
 	 *
@@ -419,7 +439,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	 * @return
 	 */
 	public SimpleComponent appendNewLine() {
-		return this.append(newLine());
+		return this.appendPlain("\n");
 	}
 
 	/**
@@ -662,16 +682,6 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	 */
 	public static SimpleComponent empty() {
 		return new SimpleComponent(CommonCore.newList(ConditionalComponent.fromComponent(Component.empty())));
-	}
-
-	/**
-	 * Create a new interactive chat component
-	 * You can then build upon your text to add interactive elements
-	 *
-	 * @return
-	 */
-	public static SimpleComponent newLine() {
-		return new SimpleComponent(CommonCore.newList(ConditionalComponent.fromPlain(" ")));
 	}
 
 	/**

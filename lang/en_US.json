@@ -74,6 +74,7 @@
 	"conversation-cancelled-inactive": "Your pending chat answer has been canceled because you were inactive.",
 	"conversation-error": "Oups! There was a problem in this conversation! Please contact the administrator to review the console for details.",
 	"conversation-not-conversing": "You can only use this command when you are asked to type something in the chat.",
+	"conversation-create-prompt": "Please type your {object} name to chat to create it. Use English only alphabet.",
 	"data-missing": "<red>{name} lacks database information! Please only create {type} in-game! Skipping..",
 	"disabled": "<dark_red>Disabled",
 	"enabled": "<dark_green>Enabled",

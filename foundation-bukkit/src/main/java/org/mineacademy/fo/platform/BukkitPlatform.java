@@ -42,6 +42,7 @@ import org.mineacademy.fo.ReflectionUtil;
 import org.mineacademy.fo.ReflectionUtilCore;
 import org.mineacademy.fo.ReflectionUtilCore.LegacyEnumNameTranslator;
 import org.mineacademy.fo.SerializeUtil;
+import org.mineacademy.fo.SerializeUtilCore;
 import org.mineacademy.fo.SerializeUtilCore.Language;
 import org.mineacademy.fo.SerializeUtilCore.Serializer;
 import org.mineacademy.fo.Valid;
@@ -50,8 +51,6 @@ import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.command.BukkitCommandImpl;
 import org.mineacademy.fo.command.SimpleCommandCore;
 import org.mineacademy.fo.exception.FoException;
-import org.mineacademy.fo.jsonsimple.JSONArray;
-import org.mineacademy.fo.jsonsimple.JSONParser;
 import org.mineacademy.fo.model.HookManager;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.SimpleSound;
@@ -68,6 +67,9 @@ import org.mineacademy.fo.remain.Remain;
 import org.mineacademy.fo.settings.BukkitYamlConstructor;
 import org.mineacademy.fo.settings.BukkitYamlRepresenter;
 import org.mineacademy.fo.settings.YamlConfig;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 
 import lombok.NonNull;
 import net.kyori.adventure.bossbar.BossBar;
@@ -172,6 +174,35 @@ public class BukkitPlatform extends FoundationPlatform {
 		SerializeUtil.addSerializer(new Serializer() {
 
 			@Override
+			public Object serializeYamlFast(Object object) {
+				if (object instanceof World)
+					return ((World) object).getName();
+
+				else if (object instanceof Location)
+					return SerializeUtil.serializeLoc((Location) object);
+
+				else if (object instanceof PotionEffectType)
+					return ((PotionEffectType) object).getName();
+
+				else if (object instanceof PotionEffect) {
+					final PotionEffect effect = (PotionEffect) object;
+
+					return effect.getType().getName() + " " + effect.getDuration() + " " + effect.getAmplifier();
+				}
+
+				else if (object instanceof Enchantment)
+					return ((Enchantment) object).getName();
+
+				else if (object instanceof SimpleSound)
+					return object.toString();
+
+				else if (object instanceof ConfigurationSerializable)
+					return object; // will pack in BukkitYamlRepresenter
+
+				return null;
+			}
+
+			@Override
 			public Object serialize(Language language, Object object) {
 				if (object instanceof World)
 					return ((World) object).getName();
@@ -203,12 +234,12 @@ public class BukkitPlatform extends FoundationPlatform {
 
 				else if (object instanceof ItemStack[]) {
 					if (language == SerializeUtil.Language.JSON) {
-						final JSONArray jsonList = new JSONArray();
+						final JsonArray jsonList = new JsonArray();
 
 						for (final ItemStack item : (ItemStack[]) object)
 							jsonList.add(item == null ? null : JsonItemStack.toJson(item));
 
-						return jsonList.toJson();
+						return jsonList;
 
 					} else
 						return SerializeUtil.serialize(language, Arrays.asList((ItemStack[]) object));
@@ -223,8 +254,12 @@ public class BukkitPlatform extends FoundationPlatform {
 			@Override
 			public <T> T deserialize(@NonNull Language language, @NonNull Class<T> classOf, @NonNull Object object, Object... parameters) {
 
-				if (classOf == Location.class)
+				if (classOf == Location.class) {
+					if (object instanceof Location)
+						return (T) object;
+
 					return (T) SerializeUtil.deserializeLocation((String) object);
+				}
 
 				else if (classOf == World.class) {
 					final World world = Bukkit.getWorld((String) object);
@@ -282,7 +317,7 @@ public class BukkitPlatform extends FoundationPlatform {
 								final Constructor<?> constructor = metaClass.getDeclaredConstructor(Map.class);
 								constructor.setAccessible(true);
 
-								final Object craftMeta = constructor.newInstance((Map<String, ?>) meta.serialize());
+								final Object craftMeta = constructor.newInstance((Map<String, ?>) SerializeUtilCore.serialize(Language.YAML, meta));
 
 								if (craftMeta instanceof ItemMeta)
 									item.setItemMeta((ItemMeta) craftMeta);
@@ -336,9 +371,9 @@ public class BukkitPlatform extends FoundationPlatform {
 					final List<ItemStack> list = new ArrayList<>();
 
 					if (language == SerializeUtil.Language.JSON) {
-						final JSONArray jsonList = JSONParser.deserialize(object.toString(), new JSONArray());
+						final JsonArray jsonList = Remain.GSON.fromJson(object.toString(), JsonArray.class);
 
-						for (final Object element : jsonList)
+						for (final JsonElement element : jsonList)
 							list.add(element == null ? null : JsonItemStack.fromJson(element.toString()));
 
 					} else {

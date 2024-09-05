@@ -26,7 +26,6 @@ import org.mineacademy.fo.SerializeUtilCore;
 import org.mineacademy.fo.SerializeUtilCore.Language;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.collection.SerializedMap;
-import org.mineacademy.fo.collection.StrictList;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.model.CaseNumberFormat;
 import org.mineacademy.fo.model.ConfigSerializable;
@@ -608,7 +607,7 @@ public abstract class FileConfiguration extends MemorySection {
 		return IsInList.fromList(this.getList(path, type));
 	}
 
-	public final StrictList<String> getCommandList(final String path) {
+	public final List<String> getCommandList(final String path) {
 		final List<String> list = this.getStringList(path);
 		ValidCore.checkBoolean(!list.isEmpty(), "Please set at least one command alias in '" + path + "' (" + this.getFile() + ") for this will be used as your main command!");
 
@@ -619,7 +618,7 @@ public abstract class FileConfiguration extends MemorySection {
 			list.set(i, command);
 		}
 
-		return new StrictList<>(list);
+		return list;
 	}
 
 	public final List<String> getStringList(String path) {

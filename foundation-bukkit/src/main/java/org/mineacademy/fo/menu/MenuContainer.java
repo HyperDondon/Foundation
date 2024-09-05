@@ -1,5 +1,8 @@
 package org.mineacademy.fo.menu;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.annotation.Nullable;
 
 import org.bukkit.entity.Player;
@@ -7,7 +10,6 @@ import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.mineacademy.fo.collection.StrictMap;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.menu.model.ItemCreator;
 import org.mineacademy.fo.menu.model.MenuClickLocation;
@@ -193,7 +195,7 @@ public abstract class MenuContainer extends Menu {
 	 */
 	@Override
 	protected final void onMenuClose(Player player, Inventory inventory) {
-		final StrictMap<Integer, ItemStack> items = new StrictMap<>();
+		final Map<Integer, ItemStack> items = new HashMap<>();
 
 		for (int slot = 0; slot < this.getSize() - 9; slot++)
 			if (this.canEditItem(slot)) {
@@ -211,7 +213,7 @@ public abstract class MenuContainer extends Menu {
 	 *
 	 * @param items
 	 */
-	protected abstract void onMenuClose(StrictMap<Integer, ItemStack> items);
+	protected abstract void onMenuClose(Map<Integer, ItemStack> items);
 
 	// ------------------------------------------------------------------------------------------------------------
 	// Decoration

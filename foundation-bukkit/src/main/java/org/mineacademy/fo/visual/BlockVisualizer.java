@@ -1,5 +1,8 @@
 package org.mineacademy.fo.visual;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.FallingBlock;
@@ -8,7 +11,6 @@ import org.bukkit.util.Vector;
 import org.mineacademy.fo.MinecraftVersion;
 import org.mineacademy.fo.MinecraftVersion.V;
 import org.mineacademy.fo.Valid;
-import org.mineacademy.fo.collection.StrictMap;
 import org.mineacademy.fo.remain.CompMaterial;
 import org.mineacademy.fo.remain.CompProperty;
 import org.mineacademy.fo.remain.Remain;
@@ -23,7 +25,7 @@ public final class BlockVisualizer {
 	/**
 	 * Stores a map of currently visualized blocks.
 	 */
-	private static final StrictMap<Location, Object /*Old Minecraft compatibility.*/> visualizedBlocks = new StrictMap<>();
+	private static final Map<Location, Object /*Old Minecraft compatibility.*/> visualizedBlocks = new HashMap<>();
 
 	/**
 	 * Starts visualizing the block at the given location.

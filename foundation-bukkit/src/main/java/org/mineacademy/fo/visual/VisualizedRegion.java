@@ -1,5 +1,6 @@
 package org.mineacademy.fo.visual;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -12,7 +13,6 @@ import org.mineacademy.fo.BlockUtil;
 import org.mineacademy.fo.Common;
 import org.mineacademy.fo.Valid;
 import org.mineacademy.fo.collection.SerializedMap;
-import org.mineacademy.fo.collection.StrictMap;
 import org.mineacademy.fo.model.SimpleRunnable;
 import org.mineacademy.fo.model.Task;
 import org.mineacademy.fo.region.Region;
@@ -29,7 +29,7 @@ public final class VisualizedRegion extends Region {
 	/**
 	 * A list of players who can see the particles, along with the particle color (requires {@link #particle} to be REDSTONE)
 	 */
-	private final StrictMap<Player, Color> viewers = new StrictMap<>();
+	private final Map<Player, Color> viewers = new HashMap<>();
 
 	/**
 	 * The task responsible for sending particles
@@ -143,7 +143,7 @@ public final class VisualizedRegion extends Region {
 	public void hideParticles(final Player player) {
 		Valid.checkBoolean(this.canSeeParticles(player), "Player " + player.getName() + " is not seeing region " + this);
 
-		this.viewers.removeWeak(player);
+		this.viewers.remove(player);
 
 		if (this.viewers.isEmpty() && this.task != null)
 			this.stopVisualizing();

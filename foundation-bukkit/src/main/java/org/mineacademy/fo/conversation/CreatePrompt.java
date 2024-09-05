@@ -10,6 +10,7 @@ import org.bukkit.conversations.Prompt;
 import org.bukkit.entity.Player;
 import org.mineacademy.fo.ChatUtil;
 import org.mineacademy.fo.Valid;
+import org.mineacademy.fo.settings.Lang;
 
 /**
  * Represents a simple prompt used in menus to create new objects.
@@ -90,7 +91,7 @@ public abstract class CreatePrompt<T> extends SimplePrompt {
 	 */
 	@Override
 	protected final String getPrompt(ConversationContext context) {
-		return "Please type your " + this.objectName + " name to chat to create it. Use English only alphabet.";
+		return Lang.legacyVars("conversation-create-prompt", "object", this.objectName);
 	}
 
 	/**

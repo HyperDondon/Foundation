@@ -3,9 +3,9 @@ package org.mineacademy.fo.model;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.inventory.ClickType;
-import org.mineacademy.fo.Messenger;
 import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.exception.EventHandledException;
+import org.mineacademy.fo.platform.Platform;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -109,8 +109,7 @@ public abstract class SimpleTrait extends Trait {
 			this.onClick(player, clickType);
 
 		} catch (final EventHandledException ex) {
-			if (ex.getComponent() != null)
-				Messenger.error(player, ex.getComponent());
+			ex.sendErrorMessage(Platform.toPlayer(player));
 
 			if (ex.isCancelled())
 				event.setCancelled(true);

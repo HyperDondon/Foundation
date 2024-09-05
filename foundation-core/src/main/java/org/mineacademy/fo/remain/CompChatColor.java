@@ -24,7 +24,7 @@ import net.kyori.adventure.text.format.TextDecoration;
  *
  * @author md_5, backported for comp. reasons by kangarko
  */
-public final class CompChatColor {
+public final class CompChatColor implements TextColor {
 
 	/**
 	 * The special character which prefixes all chat colour codes. Use this if
@@ -782,5 +782,14 @@ public final class CompChatColor {
 		MINI_TO_LEGACY.put("<bold>", "§l");
 		MINI_TO_LEGACY.put("<r>", "§r");
 		MINI_TO_LEGACY.put("<reset>", "§r");
+	}
+
+	/**
+	 * The color, as an RGB value packed into an int.
+	 *
+	 */
+	@Override
+	public int value() {
+		return this.color.getRGB();
 	}
 }

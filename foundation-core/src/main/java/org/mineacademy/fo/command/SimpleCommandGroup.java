@@ -11,7 +11,6 @@ import java.util.List;
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.ReflectionUtilCore;
 import org.mineacademy.fo.ValidCore;
-import org.mineacademy.fo.collection.StrictList;
 import org.mineacademy.fo.model.ChatPaginator;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.platform.FoundationPlayer;
@@ -32,7 +31,7 @@ public abstract class SimpleCommandGroup {
 	 * The list of sub-commands belonging to this command tree, for example
 	 * the /boss command has subcommands /boss region, /boss menu etc.
 	 */
-	private final StrictList<SimpleSubCommandCore> subcommands = new StrictList<>();
+	private final List<SimpleSubCommandCore> subcommands = new ArrayList<>();
 
 	/**
 	 * The registered main command, if any
@@ -62,26 +61,13 @@ public abstract class SimpleCommandGroup {
 	 * Create a new simple command group using {@link SimpleSettings#MAIN_COMMAND_ALIASES}
 	 */
 	protected SimpleCommandGroup() {
-		this(findMainCommandAliases());
-	}
-
-	/*
-	 * A helper method to aid developers implement this command properly.
-	 */
-	private static StrictList<String> findMainCommandAliases() {
-		final StrictList<String> aliases = SimpleSettings.MAIN_COMMAND_ALIASES;
+		final List<String> aliases = SimpleSettings.MAIN_COMMAND_ALIASES;
 
 		ValidCore.checkBoolean(!aliases.isEmpty(), "Your class extending SimpleCommandGroup had a no args constructor, which resorts to pulling SimpleSettings' MAIN_COMMAND_ALIASES field"
 				+ " WHICH WAS EMPTY. To fix this, make settings.yml file write 'Command_Aliases: [/yourmaincommand]' there.");
 
-		return aliases;
-	}
-
-	/**
-	 * Create a new simple command group with the given label and aliases bundled in a list
-	 */
-	protected SimpleCommandGroup(final StrictList<String> labelAndAliases) {
-		this(labelAndAliases.get(0), (labelAndAliases.size() > 1 ? labelAndAliases.range(1) : new StrictList<String>()).getSource());
+		this.label = aliases.get(0);
+		this.aliases = aliases.size() > 1 ? aliases.subList(1, aliases.size()) : new ArrayList<>();
 	}
 
 	/**
@@ -124,7 +110,7 @@ public abstract class SimpleCommandGroup {
 		this.registerSubcommands();
 
 		// Sort A-Z
-		Collections.sort(this.subcommands.getSource(), Comparator.comparing(SimpleSubCommandCore::getSublabel));
+		Collections.sort(this.subcommands, Comparator.comparing(SimpleSubCommandCore::getSublabel));
 
 		// Check for collision
 		this.checkSubCommandAliasesCollision();

@@ -1,6 +1,9 @@
 package org.mineacademy.fo.exception;
 
+import org.mineacademy.fo.MessengerCore;
 import org.mineacademy.fo.model.SimpleComponent;
+import org.mineacademy.fo.platform.FoundationPlayer;
+import org.mineacademy.fo.remain.CompChatColor;
 
 import lombok.Getter;
 
@@ -16,28 +19,37 @@ public class CommandException extends RuntimeException {
 	 * The messages to send to the command sender, null if not set
 	 */
 	@Getter
-	private final SimpleComponent component;
+	private final SimpleComponent[] components;
 
 	/**
 	 * Create a new command exception
 	 */
 	public CommandException() {
-		this(null);
+		this((SimpleComponent[]) null);
 	}
 
 	/**
 	 * Create a new command exception with message for the command sender
 	 *
-	 * @param component
+	 * @param components
 	 */
-	public CommandException(SimpleComponent component) {
+	public CommandException(SimpleComponent... components) {
 		super("");
 
-		this.component = component;
+		this.components = components;
+	}
+
+	public final void sendErrorMessage(FoundationPlayer player) {
+		if (this.components != null)
+			if (this.components.length == 1)
+				MessengerCore.error(player, this.components[0]);
+			else
+				for (final SimpleComponent component : this.components)
+					component.color(CompChatColor.RED).send(player);
 	}
 
 	@Override
 	public String getMessage() {
-		return this.component != null ? this.component.toLegacy() : "";
+		return this.components != null ? SimpleComponent.fromChildren(this.components).toLegacy() : "";
 	}
 }

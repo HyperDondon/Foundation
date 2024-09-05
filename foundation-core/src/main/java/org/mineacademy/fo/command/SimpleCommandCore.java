@@ -365,8 +365,7 @@ public abstract class SimpleCommandCore {
 					"help_command", SimpleComponent.fromPlain(this.getEffectiveCommand() + " ?").onHover("Click to execute.").onClickRunCmd(this.getEffectiveCommand() + " ?")));
 
 		} catch (final CommandException ex) {
-			if (ex.getComponent() != null)
-				this.tellError(ex.getComponent());
+			ex.sendErrorMessage(this.sender);
 
 		} catch (final Throwable t) {
 			this.tellError(Lang.component("command-error"));
@@ -589,7 +588,7 @@ public abstract class SimpleCommandCore {
 	 * @param enumType
 	 * @param enumValue
 	 * @param condition
-
+	
 	 * @return
 	 * @throws CommandException
 	 */
@@ -832,10 +831,17 @@ public abstract class SimpleCommandCore {
 	/**
 	 * Sends a message to the player without plugin's prefix.
 	 *
-	 * @param message
+	 * @param messages
 	 */
-	protected final void tellNoPrefix(final String message) {
-		this.tellNoPrefix(SimpleComponent.fromMini(message));
+	protected final void tellNoPrefix(String... messages) {
+		final SimpleComponent oldLocalPrefix = this.tellPrefix;
+
+		this.tellPrefix = SimpleComponent.empty();
+
+		for (final String message : messages)
+			this.tell(message);
+
+		this.tellPrefix = oldLocalPrefix;
 	}
 
 	/**
@@ -859,23 +865,23 @@ public abstract class SimpleCommandCore {
 	 * @param messages
 	 */
 	/*protected final void tell(String... messages) {
-
+	
 		if (messages == null)
 			return;
-
+	
 		final String oldTellPrefix = CommonCore.getTellPrefix();
-
+	
 		if (this.tellPrefix != null)
 			CommonCore.setTellPrefix(this.tellPrefix);
-
+	
 		try {
 			messages = this.replacePlaceholders(messages);
-
+	
 			if (messages.length > 2)
 				CommonCore.tellNoPrefix(this.sender, messages);
 			else
 				CommonCore.tell(this.sender, messages);
-
+	
 		} finally {
 			CommonCore.setTellPrefix(oldTellPrefix);
 		}
@@ -1022,18 +1028,12 @@ public abstract class SimpleCommandCore {
 	 * @throws CommandException
 	 */
 	public final void returnTell(final String... messages) throws CommandException {
-		SimpleComponent component = SimpleComponent.empty();
+		final List<SimpleComponent> components = new ArrayList<>();
 
-		for (int i = 0; i < messages.length; i++) {
-			final String message = messages[i];
+		for (final String message : messages)
+			components.add(this.replacePlaceholders(SimpleComponent.fromMini(message)));
 
-			component = component.append(SimpleComponent.fromMini(message));
-
-			if (i + 1 < messages.length)
-				component = component.appendNewLine();
-		}
-
-		this.returnTell(component);
+		throw new CommandException(components.toArray(new SimpleComponent[components.size()]));
 	}
 
 	/**
@@ -1079,10 +1079,10 @@ public abstract class SimpleCommandCore {
 	/*public final String[] replacePlaceholders(final String[] messages) {
 		for (int i = 0; i < messages.length; i++)
 			messages[i] = this.replacePlaceholders(messages[i]);
-
+	
 		return messages;
 	}
-
+	
 	protected String replacePlaceholders(String legacy) {
 		return RemainCore.convertAdventureToLegacy(replacePlaceholders(RemainCore.convertLegacyToAdventure(legacy)));
 	}*/
@@ -1134,7 +1134,7 @@ public abstract class SimpleCommandCore {
 	/*protected final void setArg(final int position, final String value) {
 		if (this.args.length <= position)
 			this.args = Arrays.copyOf(this.args, position + 1);
-
+	
 		this.args[position] = value;
 	}*/
 
@@ -1660,8 +1660,7 @@ public abstract class SimpleCommandCore {
 			runnable.run();
 
 		} catch (final CommandException ex) {
-			if (ex.getComponent() != null)
-				MessengerCore.error(this.sender, ex.getComponent());
+			ex.sendErrorMessage(this.sender);
 
 		} catch (final Throwable t) {
 			MessengerCore.error(this.sender, Lang.component("command-error"));

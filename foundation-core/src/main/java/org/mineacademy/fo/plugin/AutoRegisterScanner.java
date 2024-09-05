@@ -242,7 +242,7 @@ final class AutoRegisterScanner {
 		for (final SimpleCommandGroup group : registeredCommandGroups) {
 
 			// Register if main command or there is only one command group, then assume main
-			if (group.getLabel().equals(SimpleSettings.MAIN_COMMAND_ALIASES.first()) || registeredCommandGroups.size() == 1) {
+			if (!SimpleSettings.MAIN_COMMAND_ALIASES.isEmpty() && group.getLabel().equals(SimpleSettings.MAIN_COMMAND_ALIASES.get(0)) || registeredCommandGroups.size() == 1) {
 				ValidCore.checkBoolean(!mainCommandGroupFound, "Found 2 or more command groups that do not specify label in their constructor."
 						+ " We can only automatically register 1 command group using Command_Aliases from settings.yml but not more. Use the other constructor for your other groups.");
 

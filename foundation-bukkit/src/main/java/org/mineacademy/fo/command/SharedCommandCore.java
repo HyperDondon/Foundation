@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Consumer;
 import org.mineacademy.fo.Common;
@@ -233,6 +234,15 @@ public interface SharedCommandCore {
 	 */
 	default Player getPlayer() {
 		return this.isPlayer() ? ((BukkitPlayer) this.getSender()).getPlayer() : null;
+	}
+
+	/**
+	 * Return the command sender as Bukkit's CommandSender
+	 *
+	 * @return
+	 */
+	default CommandSender getCommandSender() {
+		return ((BukkitPlayer) this.getSender()).getSender();
 	}
 
 	FoundationPlayer getSender();

@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -15,15 +16,8 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 import org.mineacademy.fo.collection.SerializedMap;
-import org.mineacademy.fo.collection.StrictCollection;
-import org.mineacademy.fo.collection.StrictMap;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.exception.SerializeFailedException;
-import org.mineacademy.fo.jsonsimple.JSONArray;
-import org.mineacademy.fo.jsonsimple.JSONObject;
-import org.mineacademy.fo.jsonsimple.JSONParseException;
-import org.mineacademy.fo.jsonsimple.JSONParser;
-import org.mineacademy.fo.jsonsimple.Jsonable;
 import org.mineacademy.fo.model.ConfigSerializable;
 import org.mineacademy.fo.model.IsInList;
 import org.mineacademy.fo.model.RangedSimpleTime;
@@ -31,7 +25,13 @@ import org.mineacademy.fo.model.RangedValue;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.SimpleTime;
 import org.mineacademy.fo.remain.CompChatColor;
+import org.mineacademy.fo.remain.RemainCore;
 import org.mineacademy.fo.settings.MemorySection;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -72,11 +72,9 @@ public abstract class SerializeUtilCore {
 				return result;
 		}
 
-		if (object instanceof ConfigSerializable)
-			return serialize(language, ((ConfigSerializable) object).serialize().serialize());
-
-		else if (object instanceof StrictCollection)
-			return serialize(language, ((StrictCollection) object).serialize());
+		if (object instanceof ConfigSerializable) {
+			return serialize(language, ((ConfigSerializable) object).serialize());
+		}
 
 		else if (object instanceof CompChatColor)
 			return ((CompChatColor) object).toSaveableString();
@@ -127,132 +125,85 @@ public abstract class SerializeUtilCore {
 			return object;
 
 		} else if (object instanceof Iterable || object.getClass().isArray() || object instanceof IsInList) {
+			Iterable<Object> iterable = object instanceof Iterable ? (Iterable<Object>) object : object instanceof IsInList ? ((IsInList<Object>) object).getList() : null;
+
+			// Support Object[] as well as primitive arrays
+			if (object.getClass().isArray()) {
+				final int length = Array.getLength(object);
+				final Object[] iterableArray = new Object[length];
+
+				for (int i = 0; i < length; i++)
+					iterableArray[i] = Array.get(object, i);
+
+				iterable = Arrays.asList(iterableArray);
+			}
 
 			if (language == Language.JSON) {
-				final JSONArray jsonList = new JSONArray();
+				final JsonArray jsonList = new JsonArray();
 
-				if (object instanceof Iterable || object instanceof IsInList) {
-					for (Object element : object instanceof IsInList ? ((IsInList<?>) object).getList() : (Iterable<?>) object) {
-						if (element == null)
-							jsonList.add(null);
+				for (final Object element : iterable) {
+					if (element == null)
+						jsonList.add(JsonNull.INSTANCE);
 
-						if (element instanceof Jsonable)
-							jsonList.add(element);
+					if (element instanceof Boolean)
+						jsonList.add((Boolean) element);
 
-						else {
-							element = serialize(Language.JSON, element);
+					else if (element instanceof Character)
+						jsonList.add((Character) element);
 
-							// Assume the element is a JSON string
-							try {
-								jsonList.add(JSONParser.deserialize(element.toString()));
+					else if (element instanceof Number)
+						jsonList.add((Number) element);
 
-							} catch (final JSONParseException ex) {
-								final String message = ex.getMessage();
+					else if (element instanceof String)
+						jsonList.add((String) element);
 
-								// Apparently not a json string :/
-								if (message.contains("The unexpected character") && (message.contains("was found at position 0") || message.contains("was found at position 1")))
-									jsonList.add(element.toString());
-								else
-									CommonCore.error(ex, "Failed to deserialize JSON collection from string: " + element);
-							}
-						}
-					}
-
-				} else {
-					final Object[] array = (Object[]) object;
-
-					for (int i = 0; i < array.length; i++) {
-						Object element = array[i];
-
-						if (element != null) {
-							if (element instanceof Jsonable)
-								jsonList.add(element);
-
-							else {
-								element = serialize(Language.JSON, element);
-
-								// Assume the element is a JSON string
-								try {
-									jsonList.add(JSONParser.deserialize(element.toString()));
-
-								} catch (final JSONParseException ex) {
-									final String message = ex.getMessage();
-
-									// Apparently not a json string :/
-									if (message.contains("The unexpected character") && (message.contains("was found at position 0") || message.contains("was found at position 1")))
-										jsonList.add(element.toString());
-									else
-										CommonCore.error(ex, "Failed to deserialize JSON collection from string: " + element);
-								}
-							}
-						}
-
-						jsonList.add(null);
-					}
+					else
+						jsonList.add(RemainCore.GSON.toJsonTree(serialize(Language.JSON, element)));
 				}
 
 				return jsonList;
 			}
 
 			else {
-				if (object instanceof Iterable || object instanceof IsInList) {
-					final List<Object> serialized = new ArrayList<>();
+				final List<Object> serialized = new ArrayList<>();
 
-					for (final Object element : object instanceof IsInList ? ((IsInList<?>) object).getList() : (Iterable<?>) object) {
-						serialized.add(serialize(language, element));
-					}
+				for (final Object element : iterable)
+					serialized.add(serialize(language, element));
 
-					return serialized;
-
-				} else {
-					// Supports Object[] as well as primitive arrays
-					final int length = Array.getLength(object);
-					final Object[] serialized = new Object[length];
-
-					for (int i = 0; i < length; i++) {
-						final Object element = Array.get(object, i);
-
-						serialized[i] = serialize(language, element);
-					}
-
-					return serialized;
-				}
+				return serialized;
 			}
 
-		} else if (object instanceof Map || object instanceof StrictMap) {
-			final Map<Object, Object> oldMap = object instanceof StrictMap ? ((StrictMap<Object, Object>) object).getSource() : (Map<Object, Object>) object;
+		} else if (object instanceof Map || object instanceof SerializedMap) {
+			final Map<?, ?> oldMap = object instanceof Map ? (Map<?, ?>) object : ((SerializedMap) object).asMap();
 
 			if (language == Language.JSON) {
-				final JSONObject json = new JSONObject();
+				final JsonObject json = new JsonObject();
 
-				for (final Map.Entry<Object, Object> entry : oldMap.entrySet()) {
+				for (final Map.Entry<?, ?> entry : oldMap.entrySet()) {
+					ValidCore.checkNotNull(entry.getKey(), "Map key cannot be null: " + oldMap);
+
 					final Object key = serialize(language, entry.getKey());
 					final Object value = serialize(language, entry.getValue());
 
-					if (key != null)
-						ValidCore.checkBoolean(key instanceof String || key instanceof Number,
-								"JSON requires Map to be translated into keys that are String or Numbers, found " + key.getClass().getSimpleName() + " key: " + key + " with value '" + value + "'");
+					if (!(key instanceof String) && !(key instanceof Number))
+						throw new SerializeFailedException("JSON Map requires keys that are String or a number, found " + key.getClass().getSimpleName() + " key: " + key + " with value '" + value + "'");
 
-					if (value != null)
-						ValidCore.checkBoolean(value instanceof String || value instanceof Boolean || value instanceof Character || value instanceof Number || value instanceof List
-								|| value instanceof JSONObject || value instanceof JSONArray,
-								"JSON requires Map to be translated into values that are String or List only, found " + value.getClass().getSimpleName() + ": " + value + " for key " + key);
+					if (value instanceof Boolean)
+						json.addProperty(key.toString(), (Boolean) value);
 
-					if (value instanceof List) {
-						final JSONArray array = new JSONArray();
+					else if (value instanceof Character)
+						json.addProperty(key.toString(), (Character) value);
 
-						for (final Object listValue : (List<?>) value)
-							if (listValue == null || listValue instanceof Boolean || listValue instanceof Character || listValue instanceof String || listValue instanceof Number
-									|| listValue instanceof JSONArray || listValue instanceof JSONObject)
-								array.add(listValue);
+					else if (value instanceof Number)
+						json.addProperty(key.toString(), (Number) value);
 
-							else
-								throw new FoException("JSON requires List to only contain primitive types or strings, found " + listValue.getClass().getSimpleName() + ": " + listValue);
+					else if (value instanceof String)
+						json.addProperty(key.toString(), (String) value);
 
-						json.put(key == null ? null : key.toString(), array);
-
-					} else
-						json.put(key == null ? null : key.toString(), value == null ? null : value);
+					else if (value instanceof JsonElement)
+						json.add(key.toString(), (JsonElement) value);
+					else
+						throw new SerializeFailedException("JSON Map requires values that are String, primitive or JsonElement, found " + value.getClass().getSimpleName() + ": " + value + " for key " + key);
 				}
 
 				return json;
@@ -261,7 +212,7 @@ public abstract class SerializeUtilCore {
 			else {
 				final Map<Object, Object> newMap = new LinkedHashMap<>();
 
-				for (final Map.Entry<Object, Object> entry : oldMap.entrySet())
+				for (final Map.Entry<?, ?> entry : oldMap.entrySet())
 					newMap.put(serialize(language, entry.getKey()), serialize(language, entry.getValue()));
 
 				return newMap;
@@ -271,8 +222,7 @@ public abstract class SerializeUtilCore {
 		else if (object instanceof Pattern)
 			return ((Pattern) object).pattern();
 
-		else if (object instanceof Integer || object instanceof Double || object instanceof Float || object instanceof Long || object instanceof Short
-				|| object instanceof String || object instanceof Boolean || object instanceof Character)
+		else if (ValidCore.isPrimitiveWrapper(object))
 			return object;
 
 		else if (object instanceof BigDecimal) {
@@ -281,7 +231,83 @@ public abstract class SerializeUtilCore {
 			return big.toPlainString();
 		}
 
-		throw new SerializeFailedException("Does not know how to serialize " + object.getClass().getSimpleName() + "! Does it extends ConfigSerializable? Data: " + object);
+		throw new SerializeFailedException("Does not know how to serialize " + object.getClass() + "! Does it extends ConfigSerializable? Data: " + object);
+	}
+
+	/**
+	 * Converts the given object into something you can safely save in file as a string
+	 *
+	 * @param object
+	 * @return
+	 */
+	public static Object serializeYamlFast(Object object) {
+
+		if (object instanceof IsInList)
+			return serializeYamlFast(((IsInList<?>) object).getList());
+
+		if (object == null || object instanceof MemorySection || object instanceof Enum<?> || ValidCore.isPrimitiveWrapper(object) || object instanceof String || object instanceof Iterable || object instanceof Map || object.getClass().isArray())
+			return object;
+
+		for (final Serializer serializer : serializers) {
+			final Object result = serializer.serializeYamlFast(object);
+
+			if (result != null)
+				return result;
+		}
+
+		// Shortcuts for Java methods
+		if (object instanceof UUID)
+			return object.toString();
+
+		else if (object instanceof Color)
+			return "#" + ((Color) object).getRGB();
+
+		else if (object instanceof Pattern)
+			return ((Pattern) object).pattern();
+
+		else if (object instanceof BigDecimal) {
+			final BigDecimal big = (BigDecimal) object;
+
+			return big.toPlainString();
+		}
+
+		// Shortcut for our own classes
+		else if (object instanceof ConfigSerializable)
+			return ((ConfigSerializable) object).serialize().asMap();
+
+		else if (object instanceof SimpleTime)
+			return ((SimpleTime) object).getRaw();
+
+		else if (object instanceof RangedValue)
+			return ((RangedValue) object).toLine();
+
+		else if (object instanceof RangedSimpleTime)
+			return ((RangedSimpleTime) object).toLine();
+
+		// Shortcut for third party
+		else if (object instanceof Style) {
+			final Map<String, Object> map = new HashMap<>();
+			final Style style = (Style) object;
+
+			if (style.color() != null)
+				map.put("Color", style.color().asHexString());
+
+			final List<String> decorations = new ArrayList<>();
+
+			for (final Map.Entry<TextDecoration, State> entry : style.decorations().entrySet())
+				if (entry.getValue() == State.TRUE)
+					decorations.add(entry.getKey().name());
+
+			map.put("Decorations", decorations);
+
+			return map;
+		}
+
+		// Prevent serialization of these
+		else if (object instanceof SimpleComponent)
+			throw new FoException("Serializing SimpleComponent is ambigious, if you want to serialize it literally, call SimpleComponent#serialize().toJson(), otherwise call SimpleComponent#toAdventureJson()");
+
+		throw new SerializeFailedException("Does not know how to serialize " + object.getClass() + "! Does it extends ConfigSerializable? Data: " + object);
 	}
 
 	/**
@@ -503,6 +529,8 @@ public abstract class SerializeUtilCore {
 		 * @return
 		 */
 		Object serialize(Language language, Object object);
+
+		Object serializeYamlFast(Object object);
 
 		<T> T deserialize(@NonNull Language language, @NonNull final Class<T> classOf, @NonNull Object object, final Object... parameters);
 	}

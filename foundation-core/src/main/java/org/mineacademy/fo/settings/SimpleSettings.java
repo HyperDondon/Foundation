@@ -2,10 +2,11 @@ package org.mineacademy.fo.settings;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.ValidCore;
-import org.mineacademy.fo.collection.StrictList;
 import org.mineacademy.fo.debug.Debugger;
 import org.mineacademy.fo.debug.LagCatcher;
 import org.mineacademy.fo.model.SimpleComponent;
@@ -70,7 +71,7 @@ public class SimpleSettings extends YamlStaticConfig {
 	 * <p>
 	 * Typically this is left empty: Debug: []
 	 */
-	public static StrictList<String> DEBUG_SECTIONS = new StrictList<>();
+	public static List<String> DEBUG_SECTIONS = new ArrayList<>();
 
 	/**
 	 * The plugin prefix in front of chat/console messages.
@@ -106,7 +107,7 @@ public class SimpleSettings extends YamlStaticConfig {
 	 * Command_Aliases: [chatcontrol, chc, cc]
 	 * <p>
 	 */
-	public static StrictList<String> MAIN_COMMAND_ALIASES = new StrictList<>();
+	public static List<String> MAIN_COMMAND_ALIASES = new ArrayList<>();
 
 	/**
 	 * The localization prefix,
@@ -161,7 +162,7 @@ public class SimpleSettings extends YamlStaticConfig {
 		}
 
 		if (isSetDefault("Debug"))
-			DEBUG_SECTIONS = new StrictList<>(getStringList("Debug"));
+			DEBUG_SECTIONS = getStringList("Debug");
 
 		if (isSetDefault("Regex_Timeout_Milis"))
 			REGEX_TIMEOUT = getInteger("Regex_Timeout_Milis");

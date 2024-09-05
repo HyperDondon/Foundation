@@ -35,7 +35,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.mineacademy.fo.CommonCore;
-import org.mineacademy.fo.NetworkUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -59,6 +58,11 @@ import org.xml.sax.SAXException;
  * @see Library
  */
 public abstract class LibraryManager {
+
+	/**
+	 * Mask user agent to Chrome by default, to bypass some hosts blocking Java user agents.
+	 */
+	private final static String HTTP_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
 
 	/**
 	 * Directory where downloaded library jars are saved to
@@ -274,7 +278,7 @@ public abstract class LibraryManager {
 
 			connection.setConnectTimeout(5000);
 			connection.setReadTimeout(5000);
-			connection.setRequestProperty("User-Agent", NetworkUtil.HTTP_USER_AGENT);
+			connection.setRequestProperty("User-Agent", HTTP_USER_AGENT);
 
 			try (InputStream in = connection.getInputStream()) {
 				return this.getURLFromMetadata(in, library);
@@ -387,7 +391,7 @@ public abstract class LibraryManager {
 
 			connection.setConnectTimeout(5000);
 			connection.setReadTimeout(5000);
-			connection.setRequestProperty("User-Agent", NetworkUtil.HTTP_USER_AGENT);
+			connection.setRequestProperty("User-Agent", HTTP_USER_AGENT);
 
 			try (InputStream in = connection.getInputStream()) {
 				int len;

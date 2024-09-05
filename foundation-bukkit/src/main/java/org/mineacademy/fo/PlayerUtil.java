@@ -37,9 +37,6 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.util.Vector;
 import org.mineacademy.fo.MinecraftVersion.V;
 import org.mineacademy.fo.collection.SerializedMap;
-import org.mineacademy.fo.exception.FoException;
-import org.mineacademy.fo.jsonsimple.JSONObject;
-import org.mineacademy.fo.jsonsimple.JSONParser;
 import org.mineacademy.fo.menu.Menu;
 import org.mineacademy.fo.model.HookManager;
 import org.mineacademy.fo.model.Task;
@@ -49,6 +46,8 @@ import org.mineacademy.fo.remain.CompChatColor;
 import org.mineacademy.fo.remain.CompMaterial;
 import org.mineacademy.fo.remain.CompProperty;
 import org.mineacademy.fo.remain.Remain;
+
+import com.google.gson.JsonObject;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -295,44 +294,34 @@ public final class PlayerUtil {
 		}
 
 		// Otherwise read his stats file
-		return getStatisticFile(player, statistic, material, entityType);
+		return getStatisticFromFile(player, statistic, material, entityType);
 	}
 
-	// Read json file for the statistic
-	private static long getStatisticFile(final OfflinePlayer player, final Statistic statistic, final Material material, final EntityType entityType) {
+	private static long getStatisticFromFile(final OfflinePlayer player, final Statistic statistic, final Material material, final EntityType entityType) {
 		final File worldFolder = new File(Bukkit.getServer().getWorlds().get(0).getWorldFolder(), "stats");
 		final File statFile = new File(worldFolder, player.getUniqueId().toString() + ".json");
 
 		if (statFile.exists())
 			try {
-				final JSONObject json = (JSONObject) JSONParser.deserialize(new FileReader(statFile));
-				final String name = Remain.getNMSStatisticName(statistic, material, entityType);
+				final JsonObject json = Remain.GSON.fromJson(new FileReader(statFile), JsonObject.class);
+				final String statisticName = Remain.getNMSStatisticName(statistic, material, entityType);
 
-				JSONObject section = json.getObject("stats");
-				long result = 0;
+				if (json.has("stats")) {
+					final JsonObject stats = json.getAsJsonObject("stats");
 
-				for (String part : name.split("\\:")) {
-					part = part.replace(".", ":");
+					for (final String section : stats.keySet()) {
+						final JsonObject sectionMap = stats.getAsJsonObject(section);
 
-					if (section != null) {
-						final JSONObject nextSection = section.getObject(part);
-
-						if (nextSection == null) {
-							result = Long.parseLong(section.containsKey(part) ? section.get(part).toString() : "0");
-							break;
-						}
-
-						section = nextSection;
+						if (sectionMap != null && sectionMap.has(statisticName))
+							return sectionMap.get(statisticName).getAsLong();
 					}
 				}
 
-				return result;
-
 			} catch (final Throwable t) {
-				throw new FoException(t);
+				Common.error(t, "Failed to read statistic " + statistic + " for " + player.getName());
 			}
 
-		return 0;
+		return 0L;
 	}
 
 	// ------------------------------------------------------------------------------------------------------------

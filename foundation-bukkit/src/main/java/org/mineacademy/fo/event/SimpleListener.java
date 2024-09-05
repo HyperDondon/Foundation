@@ -14,12 +14,12 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerEvent;
 import org.bukkit.plugin.EventExecutor;
 import org.mineacademy.fo.Common;
-import org.mineacademy.fo.Messenger;
 import org.mineacademy.fo.ReflectionUtil;
 import org.mineacademy.fo.Valid;
 import org.mineacademy.fo.debug.LagCatcher;
 import org.mineacademy.fo.exception.EventHandledException;
 import org.mineacademy.fo.model.SimpleComponent;
+import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.plugin.SimplePlugin;
 import org.mineacademy.fo.settings.Lang;
 
@@ -105,8 +105,8 @@ public abstract class SimpleListener<T extends Event> implements Listener, Event
 		} catch (final EventHandledException ex) {
 			final boolean cancelled = ex.isCancelled();
 
-			if (ex.getComponent() != null && this.player != null)
-				Messenger.error(this.player, ex.getComponent());
+			if (this.player != null)
+				ex.sendErrorMessage(Platform.toPlayer(this.player));
 
 			if (cancelled && event instanceof Cancellable)
 				((Cancellable) event).setCancelled(true);

@@ -14,7 +14,6 @@ import java.util.Set;
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.collection.SerializedMap;
-import org.mineacademy.fo.collection.StrictList;
 import org.mineacademy.fo.model.CaseNumberFormat;
 import org.mineacademy.fo.model.IsInList;
 import org.mineacademy.fo.model.SimpleComponent;
@@ -62,8 +61,6 @@ public abstract class YamlStaticConfig {
 		try {
 			final YamlStaticConfig config = clazz.newInstance();
 
-			System.out.println("Making new insntance of YamlConfig's " + clazz);
-
 			TEMPORARY_INSTANCE = new YamlConfig();
 			TEMPORARY_INSTANCE.setUncommentedSections(config.getUncommentedSections());
 
@@ -102,7 +99,6 @@ public abstract class YamlStaticConfig {
 		ValidCore.checkNotNull(TEMPORARY_INSTANCE.hasDefaults(), "Default config cannot be null for " + getFileName());
 
 		try {
-
 			// Parent class if applicable.
 			if (YamlStaticConfig.class.isAssignableFrom(this.getClass().getSuperclass())) {
 				final Class<?> superClass = this.getClass().getSuperclass();
@@ -227,7 +223,7 @@ public abstract class YamlStaticConfig {
 	// Config manipulators
 	// -----------------------------------------------------------------------------------------------------
 
-	protected static final StrictList<String> getCommandList(final String path) {
+	protected static final List<String> getCommandList(final String path) {
 		return TEMPORARY_INSTANCE.getCommandList(path);
 	}
 

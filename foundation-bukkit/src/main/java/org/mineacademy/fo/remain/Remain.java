@@ -8,6 +8,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -77,7 +78,6 @@ import org.mineacademy.fo.ReflectionUtil;
 import org.mineacademy.fo.TimeUtil;
 import org.mineacademy.fo.Valid;
 import org.mineacademy.fo.ValidCore;
-import org.mineacademy.fo.collection.StrictMap;
 import org.mineacademy.fo.constants.FoConstants;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.model.CompToastStyle;
@@ -110,7 +110,7 @@ public final class Remain extends RemainCore {
 	/**
 	 * Stores player cooldowns for old MC versions
 	 */
-	private final static StrictMap<UUID /*Player*/, StrictMap<Material, Integer>> cooldowns = new StrictMap<>();
+	private final static Map<UUID /*Player*/, Map<Material, Integer>> cooldowns = new HashMap<>();
 
 	/**
 	 * Must manually unfreeze in your plugin, resolves https://github.com/kangarko/ChatControl-Red/issues/2662
@@ -558,10 +558,10 @@ public final class Remain extends RemainCore {
 			player.setCooldown(material, cooldownTicks);
 
 		} catch (final Throwable t) {
-			final StrictMap<Material, Integer> cooldown = getCooldown(player);
+			final Map<Material, Integer> cooldown = getCooldown(player);
 
-			cooldown.override(material, cooldownTicks);
-			cooldowns.override(player.getUniqueId(), cooldown);
+			cooldown.put(material, cooldownTicks);
+			cooldowns.put(player.getUniqueId(), cooldown);
 		}
 	}
 
@@ -580,7 +580,7 @@ public final class Remain extends RemainCore {
 			return player.hasCooldown(material);
 
 		} catch (final Throwable t) {
-			final StrictMap<Material, Integer> cooldown = getCooldown(player);
+			final Map<Material, Integer> cooldown = getCooldown(player);
 
 			return cooldown.containsKey(material);
 		}
@@ -601,15 +601,15 @@ public final class Remain extends RemainCore {
 			return player.getCooldown(material);
 
 		} catch (final Throwable t) {
-			final StrictMap<Material, Integer> cooldown = getCooldown(player);
+			final Map<Material, Integer> cooldown = getCooldown(player);
 
 			return cooldown.getOrDefault(material, 0);
 		}
 	}
 
 	// Internal method to get a players cooldown map
-	private static StrictMap<Material, Integer> getCooldown(final Player player) {
-		return cooldowns.getOrDefault(player.getUniqueId(), new StrictMap<>());
+	private static Map<Material, Integer> getCooldown(final Player player) {
+		return cooldowns.getOrDefault(player.getUniqueId(), new HashMap<>());
 	}
 
 	// ----------------------------------------------------------------------------------------------------

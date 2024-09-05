@@ -5,6 +5,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,7 +16,6 @@ import org.mineacademy.fo.ChatUtil;
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.FileUtil;
 import org.mineacademy.fo.ValidCore;
-import org.mineacademy.fo.collection.StrictMap;
 
 import lombok.NonNull;
 
@@ -32,7 +32,7 @@ public final class ConfigItems<T extends YamlConfig> {
 	/**
 	 * A list of all loaded items
 	 */
-	private final StrictMap<String, T> loadedItemsMap = new StrictMap<>();
+	private final Map<String, T> loadedItemsMap = new HashMap<>();
 
 	/**
 	 * The item type this class stores, such as "variable, "format", or "arena class"

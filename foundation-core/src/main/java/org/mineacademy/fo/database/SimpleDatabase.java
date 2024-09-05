@@ -15,6 +15,7 @@ import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -28,7 +29,6 @@ import org.mineacademy.fo.SerializeUtilCore;
 import org.mineacademy.fo.SerializeUtilCore.Language;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.collection.SerializedMap;
-import org.mineacademy.fo.collection.StrictMap;
 import org.mineacademy.fo.debug.Debugger;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.model.ConfigSerializable;
@@ -71,7 +71,7 @@ public class SimpleDatabase {
 	/**
 	 * Map of variables you can use with the {} syntax in SQL
 	 */
-	private final StrictMap<String, String> sqlVariables = new StrictMap<>();
+	private final Map<String, String> sqlVariables = new HashMap<>();
 
 	/**
 	 * The last credentials from the connect function, or null if never called

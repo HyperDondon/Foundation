@@ -2,15 +2,16 @@ package org.mineacademy.fo.model;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.TimeUtil;
 import org.mineacademy.fo.ValidCore;
-import org.mineacademy.fo.collection.StrictList;
 import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.settings.Lang;
@@ -61,7 +62,7 @@ public final class Variables {
 	 * all variables when called from there.
 	 */
 	@Getter
-	private static final StrictList<SimpleExpansion> expansions = new StrictList<>();
+	private static final Set<SimpleExpansion> expansions = new HashSet<>();
 
 	/**
 	 * Registers a new expansion if it was not already registered
@@ -69,7 +70,7 @@ public final class Variables {
 	 * @param expansion
 	 */
 	public static void addExpansion(SimpleExpansion expansion) {
-		expansions.addIfNotExist(expansion);
+		expansions.add(expansion);
 	}
 
 	/**

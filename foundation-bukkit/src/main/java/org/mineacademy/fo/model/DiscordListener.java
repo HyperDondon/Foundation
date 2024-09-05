@@ -2,6 +2,7 @@ package org.mineacademy.fo.model;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,7 +16,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.mineacademy.fo.Common;
-import org.mineacademy.fo.collection.StrictSet;
 import org.mineacademy.fo.debug.Debugger;
 import org.mineacademy.fo.plugin.SimplePlugin;
 import org.mineacademy.fo.remain.CompChatColor;
@@ -47,7 +47,7 @@ public abstract class DiscordListener implements Listener {
 	/**
 	 * Holds registered Discord listeners
 	 */
-	private static final StrictSet<DiscordListener> registeredListeners = new StrictSet<>();
+	private static final Set<DiscordListener> registeredListeners = new HashSet<>();
 
 	/**
 	 * Temporarily stores the latest received message

@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -18,13 +17,14 @@ import java.util.function.Function;
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.FileUtil;
 import org.mineacademy.fo.SerializeUtilCore;
-import org.mineacademy.fo.SerializeUtilCore.Language;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.model.ConfigSerializable;
+import org.mineacademy.fo.remain.CompChatColor;
 import org.snakeyaml.engine.v2.api.Dump;
 import org.snakeyaml.engine.v2.api.DumpSettings;
 import org.snakeyaml.engine.v2.api.LoadSettings;
+import org.snakeyaml.engine.v2.api.RepresentToNode;
 import org.snakeyaml.engine.v2.api.StreamDataWriter;
 import org.snakeyaml.engine.v2.api.lowlevel.Compose;
 import org.snakeyaml.engine.v2.comments.CommentLine;
@@ -603,13 +603,14 @@ public class YamlConfig extends FileConfiguration {
 
 			// We could just switch YamlConstructor to extend Constructor rather than SafeConstructor, however there is a very small risk of issues with plugins treating config as untrusted input
 			// So instead we will just allow future plugins to have their enums extend ConfigurationSerializable
-			this.parentClassRepresenters.remove(Enum.class);
+			//this.parentClassRepresenters.remove(Enum.class);
+			this.parentClassRepresenters.put(Enum.class, new RepresentEnum());
 		}
 
 		@Override
 		public Node represent(Object data) {
 
-			data = SerializeUtilCore.serialize(Language.YAML, data);
+			data = SerializeUtilCore.serializeYamlFast(data);
 
 			try {
 				return super.represent(data);
@@ -636,11 +637,33 @@ public class YamlConfig extends FileConfiguration {
 			@Override
 			public Node representData(Object data) {
 				final ConfigSerializable serializable = (ConfigSerializable) data;
-				final Map<String, Object> values = new LinkedHashMap<>();
+				//final Map<String, Object> values = new LinkedHashMap<>();
 
-				values.putAll(serializable.serialize().asMap());
+				//values.putAll(serializable.serialize());
 
-				return super.representData(values);
+				return super.representData(serializable.serialize());
+			}
+		}
+
+		public class RepresentEnum implements RepresentToNode {
+
+			@Override
+			public Node representData(Object data) {
+				final Class<?> clazz = data.getClass();
+				String value;
+
+				if (clazz == CompChatColor.class)
+					value = ((CompChatColor) data).toSaveableString();
+
+				else if (clazz.getSimpleName().equals("ChatColor"))
+					value = ((Enum<?>) data).name();
+
+				else
+					value = ((Enum<?>) data).toString();
+
+				final Tag tag = getTag(clazz, new Tag(clazz));
+
+				return representScalar(tag, value);
 			}
 		}
 	}

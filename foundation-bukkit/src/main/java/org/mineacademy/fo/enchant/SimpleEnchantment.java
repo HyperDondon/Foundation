@@ -3,6 +3,7 @@ package org.mineacademy.fo.enchant;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -38,7 +39,6 @@ import org.mineacademy.fo.MinecraftVersion;
 import org.mineacademy.fo.MinecraftVersion.V;
 import org.mineacademy.fo.ReflectionUtil;
 import org.mineacademy.fo.Valid;
-import org.mineacademy.fo.collection.StrictSet;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.remain.CompChatColor;
@@ -87,7 +87,7 @@ public abstract class SimpleEnchantment implements Listener {
 	/**
 	 * Registration of custom enchants by their namespaced key.
 	 */
-	private static final StrictSet<SimpleEnchantment> registeredEnchantments = new StrictSet<>();
+	private static final Set<SimpleEnchantment> registeredEnchantments = new HashSet<>();
 
 	/**
 	 * The class that will be instantiated to wrap custom enchants.

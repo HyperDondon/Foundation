@@ -1,5 +1,8 @@
 package org.mineacademy.fo.menu;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryAction;
@@ -8,7 +11,6 @@ import org.bukkit.inventory.ItemStack;
 import org.mineacademy.fo.Common;
 import org.mineacademy.fo.MathUtilCore;
 import org.mineacademy.fo.Valid;
-import org.mineacademy.fo.collection.StrictMap;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.menu.button.Button;
 import org.mineacademy.fo.menu.model.ItemCreator;
@@ -44,7 +46,7 @@ public abstract class MenuContainerChances extends Menu implements MenuQuantitab
 	/**
 	 * Temporary store of the edited drop chances here
 	 */
-	private final StrictMap<Integer, Double> editedDropChances = new StrictMap<>();
+	private final Map<Integer, Double> editedDropChances = new HashMap<>();
 
 	/**
 	 * The button to switch between menu modes.
@@ -288,7 +290,7 @@ public abstract class MenuContainerChances extends Menu implements MenuQuantitab
 			final double newChance = MathUtilCore.range(chance + next, 0.D, 1.D);
 
 			// Save drop chance
-			this.editedDropChances.override(slot, newChance);
+			this.editedDropChances.put(slot, newChance);
 
 			// Update item
 			this.setItem(slot, this.getItemAt(slot));
@@ -312,7 +314,7 @@ public abstract class MenuContainerChances extends Menu implements MenuQuantitab
 	 */
 	@Override
 	protected final void onMenuClose(Player player, Inventory inventory) {
-		final StrictMap<Integer, Tuple<ItemStack, Double>> items = new StrictMap<>();
+		final Map<Integer, Tuple<ItemStack, Double>> items = new HashMap<>();
 
 		for (int slot = 0; slot < this.getSize() - 9; slot++) {
 			boolean placed = false;
@@ -342,7 +344,7 @@ public abstract class MenuContainerChances extends Menu implements MenuQuantitab
 	 *
 	 * @param items
 	 */
-	protected abstract void onMenuClose(StrictMap<Integer, Tuple<ItemStack, Double>> items);
+	protected abstract void onMenuClose(Map<Integer, Tuple<ItemStack, Double>> items);
 
 	// ------------------------------------------------------------------------------------------------------------
 	// Decoration

@@ -1,11 +1,13 @@
 package org.mineacademy.fo.model;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.mineacademy.fo.CommonCore;
-import org.mineacademy.fo.collection.StrictSet;
 
 import lombok.Getter;
 
@@ -25,7 +27,7 @@ public final class IsInList<T> implements Iterable<T> {
 	 * The internal set for matching
 	 */
 	@Getter
-	private final StrictSet<T> list;
+	private final Set<T> list;
 
 	/**
 	 * Is everything matched?
@@ -38,8 +40,8 @@ public final class IsInList<T> implements Iterable<T> {
 	 * @param list
 	 * @param matchAll
 	 */
-	private IsInList(final Iterable<T> list, boolean matchAll) {
-		this.list = new StrictSet<>(list);
+	private IsInList(final Collection<T> list, boolean matchAll) {
+		this.list = new HashSet<>(list);
 		this.matchAll = matchAll;
 	}
 
@@ -145,7 +147,7 @@ public final class IsInList<T> implements Iterable<T> {
 	 * @param list
 	 * @return
 	 */
-	public static <T> IsInList<T> fromList(Iterable<T> list) {
+	public static <T> IsInList<T> fromList(Collection<T> list) {
 		boolean matchAll = false;
 
 		for (final T t : list)
