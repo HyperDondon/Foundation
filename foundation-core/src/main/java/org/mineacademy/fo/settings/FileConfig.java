@@ -324,7 +324,11 @@ public abstract class FileConfig extends ConfigSection {
 		return this.get(path, Object.class);
 	}
 
-	public final <T> T get(String path, Class<T> clazz, Object... deserializeParams) {
+	public final <T> T get(String path, Class<T> clazz) {
+		return this.getWithParams(path, clazz);
+	}
+
+	public final <T> T getWithParams(String path, Class<T> clazz, Object... deserializeParams) {
 		path = this.buildPathPrefix(path);
 
 		final Object object = this.retrieve(path);
@@ -333,7 +337,7 @@ public abstract class FileConfig extends ConfigSection {
 
 			// Copy over from defaults if set
 			if (this.hasDefaults()) {
-				final T defValue = this.defaults.get(path, clazz, deserializeParams);
+				final T defValue = this.defaults.getWithParams(path, clazz, deserializeParams);
 
 				this.store(path, defValue);
 				return defValue;
@@ -360,7 +364,7 @@ public abstract class FileConfig extends ConfigSection {
 
 	/*public final MemorySection getConfigurationSection(String path) {
 		path = this.buildPathPrefix(path);
-
+	
 		return this.retrieveMemorySection(path);
 	}*/
 
@@ -562,7 +566,9 @@ public abstract class FileConfig extends ConfigSection {
 	 * @return
 	 */
 	public final SimpleTime getTime(final String path, final SimpleTime def) {
-		return this.get(path, SimpleTime.class, def);
+		final SimpleTime time = this.get(path, SimpleTime.class);
+
+		return time != null ? time : def;
 	}
 
 	/**

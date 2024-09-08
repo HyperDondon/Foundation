@@ -20,8 +20,6 @@ import org.mineacademy.fo.SerializeUtilCore;
 import org.mineacademy.fo.SerializeUtilCore.Language;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.exception.FoException;
-import org.mineacademy.fo.model.ConfigSerializable;
-import org.mineacademy.fo.model.SimpleTime;
 import org.snakeyaml.engine.v2.api.Dump;
 import org.snakeyaml.engine.v2.api.DumpSettings;
 import org.snakeyaml.engine.v2.api.LoadSettings;
@@ -89,7 +87,7 @@ public class YamlConfig extends FileConfig {
 				.setSplitLines(false)
 				.build();
 
-		this.representer = new StandardRepresenter(dumpSettings); // customRepresenter.apply(dumpSettings);
+		this.representer = customRepresenter.apply(dumpSettings);
 		this.dumper = new Dump(dumpSettings, this.representer);
 	}
 
@@ -212,27 +210,27 @@ public class YamlConfig extends FileConfig {
 
 	/*private MappingNode toNodeTree(MemorySection section) {
 		final List<NodeTuple> nodeTuples = new ArrayList<>();
-
+	
 		for (final Map.Entry<String, Object> entry : section.getValues(false).entrySet()) {
 			final Node key = this.representer.represent(entry.getKey());
-
+	
 			Node value;
-
+	
 			if (entry.getValue() instanceof MemorySection)
 				value = this.toNodeTree((MemorySection) entry.getValue());
 			else
 				value = this.representer.represent(entry.getValue());
-
+	
 			key.setBlockComments(this.getCommentLines(section.getComments(entry.getKey()), CommentType.BLOCK));
-
+	
 			if (value instanceof MappingNode || value instanceof SequenceNode)
 				key.setInLineComments(this.getCommentLines(section.getInlineComments(entry.getKey()), CommentType.IN_LINE));
 			else
 				value.setInLineComments(this.getCommentLines(section.getInlineComments(entry.getKey()), CommentType.IN_LINE));
-
+	
 			nodeTuples.add(new NodeTuple(key, value));
 		}
-
+	
 		return new MappingNode(Tag.MAP, nodeTuples, FlowStyle.BLOCK);
 	}*/
 
@@ -550,17 +548,17 @@ public class YamlConfig extends FileConfig {
 	 */
 	/*public static YamlConfiguration loadConfiguration(@NonNull Reader reader) {
 		final YamlConfiguration config = new YamlConfiguration();
-
+	
 		try {
 			config.load(reader);
 	
 		} catch (final IOException ex) {
 			CommonCore.error(ex, "Cannot load configuration from stream");
-
+	
 		} catch (final InvalidConfigurationException ex) {
 			CommonCore.error(ex, "Invalid configuration from stream");
 		}
-
+	
 		return config;
 	}*/
 
@@ -597,39 +595,31 @@ public class YamlConfig extends FileConfig {
 		public YamlRepresenter(DumpSettings settings) {
 			super(settings);
 
-			this.parentClassRepresenters.put(ConfigSerializable.class, new ConfigSerializableRepresenter());
+			//this.parentClassRepresenters.put(ConfigSerializable.class, new ConfigSerializableRepresenter());
 
 			// We use our own custom enum serializer
 			this.parentClassRepresenters.remove(Enum.class);
 		}
 
-		class SimpleTimeRepresenter extends RepresentString {
-
-			@Override
-			public Node representData(Object data) {
-				return super.representData(((SimpleTime) data).toString());
-			}
-		}
-
-		class ConfigSerializableRepresenter extends RepresentMap {
-
+		/*class ConfigSerializableRepresenter extends RepresentMap {
+		
 			@Override
 			public Node representData(Object data) {
 				return super.representData(((ConfigSerializable) data).serialize().asMap());
 			}
-		}
+		}*/
 
 		/*@Override
 		public Node represent(Object data) {
 			try {
 				data = SerializeUtilCore.serialize(Language.YAML, data);
-
+		
 				return super.represent(data);
-
+		
 			} catch (final YamlEngineException ex) {
 				if (ex.getMessage().startsWith("Representer is not defined for"))
 					throw new YamlEngineException("Does not know how to serialize " + data.getClass() + ", make it implement ConfigSerializable!");
-
+		
 				throw ex;
 			}
 		}*/

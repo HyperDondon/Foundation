@@ -66,11 +66,8 @@ public abstract class SerializeUtilCore {
 		for (final Serializer serializer : serializers) {
 			final Object result = serializer.serialize(language, object);
 
-			if (result != null) {
-				System.out.println("#custom " + object.getClass() + " -  " + object);
-
+			if (result != null)
 				return result;
-			}
 		}
 
 		if (object instanceof Map || object instanceof SerializedMap) {
@@ -114,8 +111,6 @@ public abstract class SerializeUtilCore {
 
 				for (final Map.Entry<?, ?> entry : oldMap.entrySet())
 					newMap.put(serialize(language, entry.getKey()), serialize(language, entry.getValue()));
-
-				System.out.println("#map " + object.getClass() + " - " + object);
 
 				return newMap;
 			}
@@ -217,7 +212,7 @@ public abstract class SerializeUtilCore {
 		}
 
 		// Adjust enum serialization at the end
-		else if (object.getClass().isEnum())
+		else if (object instanceof Enum)
 			return object.getClass().getSimpleName().equals("ChatColor") ? ((Enum<?>) object).name() : object.toString();
 
 		// Prevent serialization of these
@@ -396,8 +391,11 @@ public abstract class SerializeUtilCore {
 				// Build parameters
 				argumentClasses.add(String.class);
 
-				for (final Object param : parameters)
+				for (final Object param : parameters) {
+					ValidCore.checkNotNull(param, "Deserialize param cannot be null in " + classOf.getSimpleName() + ".fromString(). Got params: " + Arrays.toString(parameters));
+
 					argumentClasses.add(param.getClass());
+				}
 
 				// Build parameter instances
 				arguments.add(object.toString());

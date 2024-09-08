@@ -317,6 +317,10 @@ public final class PlayerUtil {
 					}
 				}
 
+				// Legacy storing design
+				else if (json.has(statisticName))
+					return json.get(statisticName).getAsLong();
+
 			} catch (final Throwable t) {
 				Common.error(t, "Failed to read statistic " + statistic + " for " + player.getName());
 			}
