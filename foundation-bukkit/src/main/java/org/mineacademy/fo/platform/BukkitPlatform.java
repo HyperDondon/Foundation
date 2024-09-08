@@ -132,6 +132,10 @@ public class BukkitPlatform extends FoundationPlatform {
 						else if (rawName.equals("ZOMBIE_VILLAGER"))
 							name = "ZOMBIE";
 
+					if ((MinecraftVersion.equals(V.v1_20) && MinecraftVersion.getSubversion() >= 5) || MinecraftVersion.newerThan(V.v1_20))
+						if (rawName.equals("SNOWMAN"))
+							name = "SNOW_GOLEM";
+
 				} else if (enumType == DamageCause.class) {
 					if (MinecraftVersion.olderThan(V.v1_13))
 						if (rawName.equals("DRYOUT"))
