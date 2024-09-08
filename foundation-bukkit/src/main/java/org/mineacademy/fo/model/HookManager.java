@@ -2270,14 +2270,6 @@ class ProtocolLibHook {
 		}
 	}
 
-	final void removePacketListeners(final Plugin plugin) {
-		if (this.manager != null) {
-			this.manager.removePacketListeners(plugin);
-
-			this.registeredListeners.clear();
-		}
-	}
-
 	final void sendPacket(final PacketContainer packet) {
 		for (final Player player : Remain.getOnlinePlayers())
 			this.sendPacket(player, packet);
