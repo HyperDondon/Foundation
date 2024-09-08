@@ -1,7 +1,5 @@
 package org.mineacademy.fo.settings;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,18 +50,6 @@ public class SimpleSettings extends YamlStaticConfig {
 	// Settings we offer by default for your main config file
 	// Specify those you need to modify
 	// --------------------------------------------------------------------
-
-	/**
-	 * The {timestamp} and {date}, {date_short} and {date_month} formats.
-	 */
-	public static DateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
-	public static DateFormat DATE_FORMAT_SHORT = new SimpleDateFormat("dd.MM.yyyy HH:mm");
-	public static DateFormat DATE_FORMAT_MONTH = new SimpleDateFormat("dd.MM HH:mm");
-
-	/**
-	 * The {location} format.
-	 */
-	public static String LOCATION_FORMAT = "{world} [{x}, {y}, {z}]";
 
 	/**
 	 * What debug sections should we enable in {@link Debugger} ? When you call {@link Debugger#debug(String, String...)}
@@ -122,33 +108,6 @@ public class SimpleSettings extends YamlStaticConfig {
 	private static void init() {
 		ValidCore.checkBoolean(!settingsClassCalled, "Settings class already loaded!");
 		setPathPrefix(null);
-
-		if (isSetDefault("Date_Format"))
-			try {
-				DATE_FORMAT = new SimpleDateFormat(getString("Date_Format"));
-
-			} catch (final IllegalArgumentException ex) {
-				CommonCore.throwError(ex, "Wrong 'Date_Format '" + getString("Date_Format") + "', see https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html for examples'");
-			}
-
-		if (isSetDefault("Date_Format_Short"))
-			try {
-				DATE_FORMAT_SHORT = new SimpleDateFormat(getString("Date_Format_Short"));
-
-			} catch (final IllegalArgumentException ex) {
-				CommonCore.throwError(ex, "Wrong 'Date_Format_Short '" + getString("Date_Format_Short") + "', see https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html for examples'");
-			}
-
-		if (isSetDefault("Date_Format_Month"))
-			try {
-				DATE_FORMAT_MONTH = new SimpleDateFormat(getString("Date_Format_Month"));
-
-			} catch (final IllegalArgumentException ex) {
-				CommonCore.throwError(ex, "Wrong 'Date_Format_Month '" + getString("Date_Format_Month") + "', see https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html for examples'");
-			}
-
-		if (isSetDefault("Location_Format"))
-			LOCATION_FORMAT = getString("Location_Format");
 
 		if (isSetDefault("Prefix"))
 			PLUGIN_PREFIX = getComponent("Prefix");

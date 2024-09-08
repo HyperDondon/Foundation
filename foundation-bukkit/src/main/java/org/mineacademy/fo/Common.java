@@ -13,14 +13,12 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.util.Vector;
 import org.mineacademy.fo.model.HookManager;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.Task;
 import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
 import org.mineacademy.fo.remain.Remain;
-import org.mineacademy.fo.settings.SimpleSettings;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -30,16 +28,63 @@ import lombok.NonNull;
 public final class Common extends CommonCore {
 
 	/**
+	 * Sends a message to the sender with a given delay, colors & are supported
+	 *
+	 * @param sender
+	 * @param delayTicks
+	 * @param message
+	 */
+	public static void tellLater(final int delayTicks, final CommandSender sender, final String message) {
+		Common.tellLater(delayTicks, Platform.toPlayer(sender), message);
+	}
+
+	/**
+	 * Sends a message to the sender with a given delay, colors & are supported
+	 *
+	 * @param sender
+	 * @param delayTicks
+	 * @param message
+	 */
+	public static void tellLater(final int delayTicks, final CommandSender sender, final SimpleComponent message) {
+		Common.tellLater(delayTicks, Platform.toPlayer(sender), message);
+	}
+
+	/**
+	* Sends a message to the player and saves the time when it was sent.
+	* The delay in seconds is the delay between which we won't send player the
+	* same message, in case you call this method again.
+	*
+	* @param delaySeconds
+	* @param sender
+	* @param message
+	*/
+	public static void tellTimed(final int delaySeconds, final CommandSender sender, final String message) {
+		CommonCore.tellTimed(delaySeconds, Platform.toPlayer(sender), message);
+	}
+
+	/**
+	* Sends a message to the player and saves the time when it was sent.
+	* The delay in seconds is the delay between which we won't send player the
+	* same message, in case you call this method again.
+	*
+	* @param delaySeconds
+	* @param sender
+	* @param message
+	*/
+	public static void tellTimed(final int delaySeconds, final CommandSender sender, final SimpleComponent message) {
+		CommonCore.tellTimed(delaySeconds, Platform.toPlayer(sender), message);
+	}
+
+	/**
 	 * Sends a message to the player
 	 *
-	 * @param player
+	 * @param sender
 	 * @param messages
 	 */
-	public static void tell(@NonNull Player player, String... messages) {
-		final FoundationPlayer sender = Platform.toPlayer(player);
+	public static void tell(@NonNull CommandSender sender, String... messages) {
+		final FoundationPlayer audience = Platform.toPlayer(sender);
 
-		for (final String message : messages)
-			SimpleComponent.fromMini(message).send(sender);
+		CommonCore.tell(audience, messages);
 	}
 
 	/**
@@ -64,7 +109,7 @@ public final class Common extends CommonCore {
 	 */
 	/*public static void tell(@NonNull final CommandSender sender, String... messages) {
 		final FoundationPlayer foundationSender = Platform.toPlayer(sender);
-
+	
 		for (final String message : messages)
 			foundationSender.sendMessage(message);
 	}*/
@@ -79,7 +124,7 @@ public final class Common extends CommonCore {
 	 */
 	/*public static void tellNoPrefix(@NonNull final CommandSender sender, String... messages) {
 		final FoundationPlayer audience = Platform.toPlayer(sender);
-
+	
 		for (final String message : messages)
 			CommonCore.tellNoPrefix(audience, message);
 	}*/
@@ -104,7 +149,7 @@ public final class Common extends CommonCore {
 			return ((World) arg).getName();
 
 		else if (arg instanceof Location)
-			return shortLocation((Location) arg);
+			return SerializeUtil.serializeLoc((Location) arg);
 
 		else if (arg instanceof ChatColor)
 			return ((ChatColor) arg).name().toLowerCase();
@@ -113,44 +158,6 @@ public final class Common extends CommonCore {
 			return ((net.md_5.bungee.api.ChatColor) arg).name().toLowerCase();
 
 		return CommonCore.simplify(arg);
-	}
-
-	/**
-	 * Formats the vector location to one digit decimal points
-	 *
-	 * DO NOT USE FOR SAVING, ONLY INTENDED FOR DEBUGGING
-	 * Use SerializeUtil to save a vector
-	 *
-	 * @param vec
-	 * @return
-	 */
-	public static String shortLocation(final Vector vec) {
-		return " [" + MathUtilCore.formatOneDigit(vec.getX()) + ", " + MathUtilCore.formatOneDigit(vec.getY()) + ", " + MathUtilCore.formatOneDigit(vec.getZ()) + "]";
-	}
-
-	/**
-	 * Formats the given location to block points without decimals
-	 *
-	 * DO NOT USE FOR SAVING, ONLY INTENDED FOR DEBUGGING
-	 * Use SerializeUtil to save a location
-	 *
-	 * @param location
-	 * @return
-	 */
-	public static String shortLocation(final Location location) {
-		if (location == null)
-			return "Location(null)";
-
-		if (location.equals(new Location(null, 0, 0, 0)))
-			return "Location(null, 0, 0, 0)";
-
-		Valid.checkNotNull(location.getWorld(), "Cannot shorten a location with null world!");
-
-		return SimpleSettings.LOCATION_FORMAT
-				.replace("{world}", location.getWorld().getName())
-				.replace("{x}", String.valueOf(location.getBlockX()))
-				.replace("{y}", String.valueOf(location.getBlockY()))
-				.replace("{z}", String.valueOf(location.getBlockZ()));
 	}
 
 	/**
@@ -286,22 +293,22 @@ public final class Common extends CommonCore {
 	 */
 	/*public static Map<String, Object> getMapFromSection(@NonNull Object mapOrSection) {
 		mapOrSection = Remain.getRootOfSectionPathData(mapOrSection);
-
+	
 		final Map<String, Object> map = mapOrSection instanceof ConfigSection ? ((ConfigSection) mapOrSection).getValues(false)
 				: mapOrSection instanceof Map ? (Map<String, Object>) mapOrSection
 						: mapOrSection instanceof MemorySection ? ReflectionUtil.getFieldContent(mapOrSection, "map") : null;
-
+	
 		Valid.checkNotNull(map, "Unexpected " + mapOrSection.getClass().getSimpleName() + " '" + mapOrSection + "'. Must be Map or MemorySection! (Do not just send config name here, but the actual section with get('section'))");
-
+	
 		final Map<String, Object> copy = new LinkedHashMap<>();
-
+	
 		for (final Map.Entry<String, Object> entry : map.entrySet()) {
 			final String key = entry.getKey();
 			final Object value = entry.getValue();
-
+	
 			copy.put(key, Remain.getRootOfSectionPathData(value));
 		}
-
+	
 		return copy;
 	}*/
 

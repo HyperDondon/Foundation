@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.ReflectionUtilCore;
+import org.mineacademy.fo.SerializeUtilCore.Language;
 import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.proxy.ProxyListener;
@@ -99,7 +100,7 @@ public final class IncomingMessage extends Message {
 	public SimpleComponent readSimpleComponent() {
 		this.moveHead(SimpleComponent.class);
 
-		return SimpleComponent.deserialize(SerializedMap.fromJson(this.readCompressedString()));
+		return SimpleComponent.deserialize(SerializedMap.of(Language.JSON, this.readCompressedString()));
 	}
 
 	/**
@@ -110,7 +111,7 @@ public final class IncomingMessage extends Message {
 	public SerializedMap readMap() {
 		this.moveHead(SerializedMap.class);
 
-		return SerializedMap.fromJson(this.readCompressedString());
+		return SerializedMap.of(Language.JSON, this.readCompressedString());
 	}
 
 	/**

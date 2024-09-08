@@ -3,6 +3,7 @@ package org.mineacademy.fo.model;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.inventory.ClickType;
+import org.mineacademy.fo.SerializeUtilCore.Language;
 import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.exception.EventHandledException;
 import org.mineacademy.fo.platform.Platform;
@@ -40,7 +41,7 @@ public abstract class SimpleTrait extends Trait {
 	 */
 	@Override
 	public final void load(DataKey key) {
-		final SerializedMap map = SerializedMap.fromJson(key.getString("Data"));
+		final SerializedMap map = SerializedMap.of(Language.JSON, key.getString("Data"));
 
 		this.load(map);
 	}

@@ -203,9 +203,9 @@ public abstract class YamlStaticConfig {
 		return TEMPORARY_INSTANCE.isSetDefault(path);
 	}
 
-	/*protected static final void move(final String fromRelative, final String toAbsolute) {
+	protected static final void move(final String fromRelative, final String toAbsolute) {
 		TEMPORARY_INSTANCE.move(fromRelative, toAbsolute);
-	}*/
+	}
 
 	protected static final void setPathPrefix(final String pathPrefix) {
 		TEMPORARY_INSTANCE.setPathPrefix(pathPrefix);

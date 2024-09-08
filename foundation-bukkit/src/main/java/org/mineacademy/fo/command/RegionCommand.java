@@ -9,10 +9,10 @@ import javax.annotation.Nullable;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.mineacademy.fo.ChatUtil;
-import org.mineacademy.fo.Common;
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.MessengerCore;
 import org.mineacademy.fo.RandomUtilCore;
+import org.mineacademy.fo.SerializeUtil;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.menu.RegionMenu;
 import org.mineacademy.fo.menu.SelectRegionMenu;
@@ -79,7 +79,7 @@ public class RegionCommand extends SimpleSubCommand {
 
 			for (final DiskRegion otherRegion : DiskRegion.getRegions()) {
 
-				final String longestText = "&7Secondary: &2" + Common.shortLocation(otherRegion.getSecondary());
+				final String longestText = "&7Secondary: &2" + SerializeUtil.serializeLoc(otherRegion.getSecondary());
 
 				components.add(SimpleComponent
 						.fromPlain(" ")
@@ -104,7 +104,7 @@ public class RegionCommand extends SimpleSubCommand {
 
 						.appendMini("&7" + otherRegion.getName())
 						.onHover(ChatUtil.center("&fRegion Information", longestText.length() * 2 + longestText.length() / 3),
-								"&7Primary: &2" + Common.shortLocation(otherRegion.getPrimary()),
+								"&7Primary: &2" + SerializeUtil.serializeLoc(otherRegion.getPrimary()),
 								longestText,
 								"&7Size: &2" + otherRegion.getBlocks().size() + " blocks"));
 			}
@@ -112,7 +112,7 @@ public class RegionCommand extends SimpleSubCommand {
 			new ChatPaginator()
 					.setFoundationHeader("Listing " + CommonCore.plural(regions.size(), "Region"))
 					.setPages(components)
-					.send(this.sender);
+					.send(this.audience);
 
 			return;
 		}
@@ -222,7 +222,7 @@ public class RegionCommand extends SimpleSubCommand {
 		if (this.isPlayer() && this.args.length > 2 && "-list".equals(this.args[2]))
 			this.getPlayer().performCommand(this.getLabel() + " " + this.getSublabel() + " " + Param.LIST);
 
-		MessengerCore.info(this.sender, SimpleComponent.fromMini(message)
+		MessengerCore.info(this.audience, SimpleComponent.fromMini(message)
 				.appendPlain(" Click here to open its menu.")
 				.onHover("&7Click to open region menu.")
 				.onClickRunCmd("/" + SimpleSettings.MAIN_COMMAND_ALIASES.get(0) + " region menu " + region.getName()));

@@ -7,11 +7,14 @@ import java.util.Collection;
 import java.util.Map;
 
 import org.mineacademy.fo.FileUtil;
+import org.mineacademy.fo.SerializeUtilCore;
+import org.mineacademy.fo.SerializeUtilCore.Language;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.model.CaseNumberFormat;
+import org.mineacademy.fo.model.ConfigStringSerializable;
 import org.mineacademy.fo.model.SimpleComponent;
+import org.mineacademy.fo.settings.ConfigSection;
 import org.mineacademy.fo.settings.Lang;
-import org.mineacademy.fo.settings.MemorySection;
 import org.mineacademy.fo.settings.YamlConfig;
 import org.mineacademy.fo.settings.YamlStaticConfig;
 
@@ -41,12 +44,26 @@ public final class SettingsMapper {
 		Runtime.getRuntime().halt(-1);
 	}
 
-	public static JsonObject mapLocaleYaml(String internalPath) {
+	public static void mapLocaleYamlAndHalt(String internalPath) {
+		try {
+			final JsonObject json = mapLocaleYaml(internalPath);
+
+			FileUtil.write("exported-lang.json", json.toString());
+
+		} catch (final Throwable t) {
+			t.printStackTrace();
+		}
+
+		Runtime.getRuntime().halt(-1);
+	}
+
+	private static JsonObject mapLocaleYaml(String internalPath) {
 		final JsonObject dictionary = new JsonObject();
 		final YamlConfig config = YamlConfig.fromInternalPath(internalPath);
 
 		for (final Map.Entry<String, Object> entry : config.getValues(true).entrySet()) {
 			final String key = entry.getKey()
+					.replace("Channels", "channel")
 					.replace("Commands", "command")
 					.replace("Placeholders", "placeholder")
 					.replace("Skill", "skill")
@@ -55,7 +72,7 @@ public final class SettingsMapper {
 
 			final Object value = entry.getValue();
 
-			if (value instanceof MemorySection)
+			if (value instanceof ConfigSection)
 				continue;
 
 			fill(key, value, dictionary);
@@ -98,13 +115,13 @@ public final class SettingsMapper {
 		if (subclassPath.length == 1)
 			prefix = "";
 		else
-			prefix = subclassPath[1].toLowerCase().trim();
+			prefix = clazz.toString().replace(subclassPath[0] + "$", "").trim().replace("$", ".").toLowerCase().trim();
 
 		for (final Field field : clazz.getDeclaredFields()) {
 			field.setAccessible(true);
 
 			if (!Modifier.isPublic(field.getModifiers()))
-				continue;
+				throw new IllegalArgumentException("Field " + field + " must be public in " + clazz);
 
 			final String key = (prefix.isEmpty() ? "" : prefix + "-") + field.getName();
 			final Object value = field.get(null);
@@ -115,7 +132,10 @@ public final class SettingsMapper {
 	}
 
 	private static void fill(String path, Object value, JsonObject dictionary) {
+
 		path = path.replace(".", "-").replace("_", "-").toLowerCase();
+
+		path = path.replace("commands", "command").replace("cases", "case").replace("parts", "part").replace("upgrades", "upgrade");
 
 		if (path.equals("conversation-error") || path.equals("menu-tooltip-info") || path.equals("version") || path.equals("server-prefix") || Lang.exists(path)) {
 			System.out.println("Skipping " + path);
@@ -137,10 +157,21 @@ public final class SettingsMapper {
 			System.out.println("Adding " + path + " as array " + array);
 			dictionary.add(path, array);
 
-		} else if (value instanceof String || ValidCore.isPrimitiveWrapper(value) || value instanceof SimpleComponent || value instanceof CaseNumberFormat) {
+		} else if (value instanceof String || ValidCore.isPrimitiveWrapper(value) || value instanceof SimpleComponent) {
 
 			System.out.println("Adding " + path + " as object " + value);
 			dictionary.addProperty(path, value.toString());
+
+		} else if (value instanceof Enum) {
+			value = SerializeUtilCore.serialize(Language.YAML, value);
+
+			System.out.println("Adding " + path + " as enum " + value);
+			dictionary.addProperty(path, value.toString());
+
+		} else if (value instanceof ConfigStringSerializable) {
+
+			System.out.println("Adding " + path + " as config string serializable " + value);
+			dictionary.addProperty(path, ((ConfigStringSerializable) value).serialize());
 
 		} else
 			throw new IllegalArgumentException("Unsupported object " + (value == null ? null : value.getClass()) + " at " + path);

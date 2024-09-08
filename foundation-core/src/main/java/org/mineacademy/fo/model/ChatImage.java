@@ -152,7 +152,7 @@ public final class ChatImage {
 	 */
 	public void send(FoundationPlayer sender) {
 		for (final String line : this.lines)
-			sender.sendMessage(Variables.replace(line, sender));
+			sender.sendMessage(SimpleComponent.fromSection(Variables.replace(line, sender)));
 	}
 
 	/* ------------------------------------------------------------------------------- */

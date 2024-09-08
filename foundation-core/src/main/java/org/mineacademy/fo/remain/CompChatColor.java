@@ -10,6 +10,7 @@ import java.util.Objects;
 
 import org.mineacademy.fo.ItemUtilCore;
 import org.mineacademy.fo.ValidCore;
+import org.mineacademy.fo.model.ConfigStringSerializable;
 import org.mineacademy.fo.platform.Platform;
 
 import lombok.Getter;
@@ -24,7 +25,7 @@ import net.kyori.adventure.text.format.TextDecoration;
  *
  * @author md_5, backported for comp. reasons by kangarko
  */
-public final class CompChatColor implements TextColor {
+public final class CompChatColor implements TextColor, ConfigStringSerializable {
 
 	/**
 	 * The special character which prefixes all chat colour codes. Use this if
@@ -398,6 +399,11 @@ public final class CompChatColor implements TextColor {
 		return this.toString;
 	}
 
+	@Override
+	public String serialize() {
+		return this.toSaveableString();
+	}
+
 	/**
 	 * Get the color represented by the specified code.
 	 *
@@ -414,8 +420,8 @@ public final class CompChatColor implements TextColor {
 	 * @param color
 	 * @return
 	 */
-	public static CompChatColor of(Color color) {
-		return of("#" + Integer.toHexString(color.getRGB()).substring(2));
+	public static CompChatColor fromColor(Color color) {
+		return fromString("#" + Integer.toHexString(color.getRGB()).substring(2));
 	}
 
 	/**
@@ -424,7 +430,7 @@ public final class CompChatColor implements TextColor {
 	 * @param string
 	 * @return
 	 */
-	public static CompChatColor of(@NonNull String string) {
+	public static CompChatColor fromString(@NonNull String string) {
 		if (string.startsWith("#") && string.length() == 7) {
 			if (!Platform.hasHexColorSupport()) {
 				final Color color = getColorFromHex(string);
@@ -511,7 +517,7 @@ public final class CompChatColor implements TextColor {
 			return CompChatColor.getColors().get(index);
 		}
 
-		return CompChatColor.of(color);
+		return CompChatColor.fromColor(color);
 	}
 
 	/*

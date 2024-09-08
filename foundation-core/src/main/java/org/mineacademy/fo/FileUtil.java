@@ -203,7 +203,7 @@ public final class FileUtil {
 		try {
 
 			// Append time to prevent caching
-			return readLinesFromUrl(new URL(url + "?t=" + System.currentTimeMillis()));
+			return readLinesFromUrl(new URL(url + "?token=" + System.currentTimeMillis()));
 
 		} catch (final IOException ex) {
 			throw new FoException(ex, "Could not read lines from " + url);

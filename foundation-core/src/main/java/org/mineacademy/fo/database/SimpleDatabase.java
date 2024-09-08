@@ -483,7 +483,7 @@ public class SimpleDatabase {
 	 * A helper method to insert compatible value to db
 	 */
 	private final String parseValue(final Object value) {
-		final Object serialized = SerializeUtilCore.serialize(this.getTableMode(), value);
+		final Object serialized = SerializeUtilCore.serialize(Language.JSON, value);
 
 		return value == null || value.equals("NULL") ? "NULL" : "'" + serialized.toString() + "'";
 	}
@@ -659,7 +659,7 @@ public class SimpleDatabase {
 	protected final int count(final String table, final SerializedMap conditions) {
 		synchronized (this.connection) {
 			// Convert conditions into SQL syntax
-			final Set<String> conditionsList = CommonCore.convertSet(conditions.entrySet(), entry -> entry.getKey() + " = '" + SerializeUtilCore.serialize(this.getTableMode(), entry.getValue()) + "'");
+			final Set<String> conditionsList = CommonCore.convertSet(conditions.entrySet(), entry -> entry.getKey() + " = '" + SerializeUtilCore.serialize(Language.JSON, entry.getValue()) + "'");
 
 			// Run the query
 			final String sql = "SELECT * FROM " + table + (conditionsList.isEmpty() ? "" : " WHERE " + String.join(" AND ", conditionsList)) + ";";
@@ -950,15 +950,6 @@ public class SimpleDatabase {
 	}
 
 	/**
-	 * Get the default serialize mode
-	 *
-	 * @return
-	 */
-	protected Language getTableMode() {
-		return SerializeUtilCore.Language.YAML;
-	}
-
-	/**
 	 * Return if the database is SQLite
 	 *
 	 * @return
@@ -1117,7 +1108,7 @@ public class SimpleDatabase {
 		void accept(SimpleResultSet set) throws SQLException;
 	}
 
-	private static class InvalidRowException extends RuntimeException {
+	public static class InvalidRowException extends RuntimeException {
 		private static final long serialVersionUID = 1L;
 	}
 

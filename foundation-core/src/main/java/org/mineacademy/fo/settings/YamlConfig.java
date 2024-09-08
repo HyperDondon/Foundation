@@ -17,14 +17,14 @@ import java.util.function.Function;
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.FileUtil;
 import org.mineacademy.fo.SerializeUtilCore;
+import org.mineacademy.fo.SerializeUtilCore.Language;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.model.ConfigSerializable;
-import org.mineacademy.fo.remain.CompChatColor;
+import org.mineacademy.fo.model.SimpleTime;
 import org.snakeyaml.engine.v2.api.Dump;
 import org.snakeyaml.engine.v2.api.DumpSettings;
 import org.snakeyaml.engine.v2.api.LoadSettings;
-import org.snakeyaml.engine.v2.api.RepresentToNode;
 import org.snakeyaml.engine.v2.api.StreamDataWriter;
 import org.snakeyaml.engine.v2.api.lowlevel.Compose;
 import org.snakeyaml.engine.v2.comments.CommentLine;
@@ -32,7 +32,6 @@ import org.snakeyaml.engine.v2.comments.CommentType;
 import org.snakeyaml.engine.v2.common.FlowStyle;
 import org.snakeyaml.engine.v2.constructor.ConstructScalar;
 import org.snakeyaml.engine.v2.constructor.StandardConstructor;
-import org.snakeyaml.engine.v2.exceptions.YamlEngineException;
 import org.snakeyaml.engine.v2.nodes.AnchorNode;
 import org.snakeyaml.engine.v2.nodes.MappingNode;
 import org.snakeyaml.engine.v2.nodes.Node;
@@ -49,7 +48,7 @@ import lombok.Setter;
  * An implementation of configuration which saves all files in Yaml.
  * Note that this implementation is not synchronized.
  */
-public class YamlConfig extends FileConfiguration {
+public class YamlConfig extends FileConfig {
 
 	/**
 	 * The custom constructor to convert strings to values in the config
@@ -67,7 +66,7 @@ public class YamlConfig extends FileConfiguration {
 	private final Compose composer;
 
 	private final YamlConstructor constructor;
-	private final YamlRepresenter representer;
+	private final StandardRepresenter representer;
 
 	private List<String> header = Collections.emptyList();
 	private List<String> footer = Collections.emptyList();
@@ -90,7 +89,7 @@ public class YamlConfig extends FileConfiguration {
 				.setSplitLines(false)
 				.build();
 
-		this.representer = customRepresenter.apply(dumpSettings);
+		this.representer = new StandardRepresenter(dumpSettings); // customRepresenter.apply(dumpSettings);
 		this.dumper = new Dump(dumpSettings, this.representer);
 	}
 
@@ -168,7 +167,7 @@ public class YamlConfig extends FileConfiguration {
 		}
 	}
 
-	private void fromNodeTree(MappingNode input, MemorySection section) {
+	private void fromNodeTree(MappingNode input, ConfigSection section) {
 		this.constructor.flattenMapping(input);
 
 		for (final NodeTuple nodeTuple : input.getValue()) {
@@ -213,31 +212,31 @@ public class YamlConfig extends FileConfiguration {
 
 	/*private MappingNode toNodeTree(MemorySection section) {
 		final List<NodeTuple> nodeTuples = new ArrayList<>();
-	
+
 		for (final Map.Entry<String, Object> entry : section.getValues(false).entrySet()) {
 			final Node key = this.representer.represent(entry.getKey());
-	
+
 			Node value;
-	
+
 			if (entry.getValue() instanceof MemorySection)
 				value = this.toNodeTree((MemorySection) entry.getValue());
 			else
 				value = this.representer.represent(entry.getValue());
-	
+
 			key.setBlockComments(this.getCommentLines(section.getComments(entry.getKey()), CommentType.BLOCK));
-	
+
 			if (value instanceof MappingNode || value instanceof SequenceNode)
 				key.setInLineComments(this.getCommentLines(section.getInlineComments(entry.getKey()), CommentType.IN_LINE));
 			else
 				value.setInLineComments(this.getCommentLines(section.getInlineComments(entry.getKey()), CommentType.IN_LINE));
-	
+
 			nodeTuples.add(new NodeTuple(key, value));
 		}
-	
+
 		return new MappingNode(Tag.MAP, nodeTuples, FlowStyle.BLOCK);
 	}*/
 
-	private MappingNode toNodeTreeWithDefaults(MemorySection section, MemorySection defaults) {
+	private MappingNode toNodeTreeWithDefaults(ConfigSection section, ConfigSection defaults) {
 
 		// Move settings which are NOT in the default file to the unused folder.
 		// You can configure which sections are allowed to stay using uncommentedSections field above.
@@ -286,7 +285,7 @@ public class YamlConfig extends FileConfiguration {
 	// 2. Prefer default comments
 	// 3. If ignored section, use disk comment, if any
 
-	private MappingNode toNodeTreeWithDefaults0(MemorySection section, MemorySection defaults, boolean pullFromDefaults) {
+	private MappingNode toNodeTreeWithDefaults0(ConfigSection section, ConfigSection defaults, boolean pullFromDefaults) {
 		final List<NodeTuple> nodeTuples = new ArrayList<>();
 
 		for (final Map.Entry<String, Object> entry : (pullFromDefaults && defaults != null ? defaults : section).getValues(false).entrySet()) {
@@ -299,8 +298,8 @@ public class YamlConfig extends FileConfiguration {
 			boolean isUncommentedSection = !pullFromDefaults;
 			String deepPath = entry.getKey();
 
-			if (entry.getValue() instanceof MemorySection) {
-				final MemorySection innerSection = (MemorySection) entry.getValue();
+			if (entry.getValue() instanceof ConfigSection) {
+				final ConfigSection innerSection = (ConfigSection) entry.getValue();
 
 				deepPath = innerSection.getFullPath();
 
@@ -313,12 +312,12 @@ public class YamlConfig extends FileConfiguration {
 				}
 
 				if (hasDiskValue)
-					ValidCore.checkBoolean(diskValue instanceof MemorySection, "Expected " + entry.getKey() + " in " + this.getFile() + " to be a Map, got " + diskValue.getClass().getSimpleName());
+					ValidCore.checkBoolean(diskValue instanceof ConfigSection, "Expected " + entry.getKey() + " in " + this.getFile() + " to be a Map, got " + diskValue.getClass().getSimpleName());
 
-				value = this.toNodeTreeWithDefaults0((MemorySection) (hasDiskValue ? diskValue : entry.getValue()), defaults != null ? defaults.retrieveMemorySection(entry.getKey()) : null, !isUncommentedSection);
+				value = this.toNodeTreeWithDefaults0((ConfigSection) (hasDiskValue ? diskValue : entry.getValue()), defaults != null ? defaults.retrieveMemorySection(entry.getKey()) : null, !isUncommentedSection);
 
 			} else
-				value = this.representer.represent(hasDiskValue ? diskValue : entry.getValue());
+				value = this.representer.represent(SerializeUtilCore.serialize(Language.YAML, hasDiskValue ? diskValue : entry.getValue()));
 
 			key.setBlockComments(this.getCommentLines((pullFromDefaults && defaults != null ? defaults : section).getComments(entry.getKey()), CommentType.BLOCK));
 
@@ -407,7 +406,7 @@ public class YamlConfig extends FileConfiguration {
 	 * Gets the header that will be applied to the top of the saved output.
 	 * <p>
 	 * This header will be commented out and applied directly at the top of
-	 * the generated output of the {@link FileConfiguration}. It is not
+	 * the generated output of the {@link FileConfig}. It is not
 	 * required to include a newline at the end of the header as it will
 	 * automatically be applied, but you may include one if you wish for extra
 	 * spacing.
@@ -426,7 +425,7 @@ public class YamlConfig extends FileConfiguration {
 	 * Sets the header that will be applied to the top of the saved output.
 	 * <p>
 	 * This header will be commented out and applied directly at the top of
-	 * the generated output of the {@link FileConfiguration}. It is not
+	 * the generated output of the {@link FileConfig}. It is not
 	 * required to include a newline at the end of the header as it will
 	 * automatically be applied, but you may include one if you wish for extra
 	 * spacing.
@@ -445,7 +444,7 @@ public class YamlConfig extends FileConfiguration {
 	 * Sets the header that will be applied to the top of the saved output.
 	 * <p>
 	 * This header will be commented out and applied directly at the top of
-	 * the generated output of the {@link FileConfiguration}. It is not
+	 * the generated output of the {@link FileConfig}. It is not
 	 * required to include a newline at the end of the header as it will
 	 * automatically be applied, but you may include one if you wish for extra
 	 * spacing.
@@ -470,7 +469,7 @@ public class YamlConfig extends FileConfiguration {
 	 * Gets the footer that will be applied to the bottom of the saved output.
 	 * <p>
 	 * This footer will be commented out and applied directly at the bottom of
-	 * the generated output of the {@link FileConfiguration}. It is not required
+	 * the generated output of the {@link FileConfig}. It is not required
 	 * to include a newline at the beginning of the footer as it will
 	 * automatically be applied, but you may include one if you wish for extra
 	 * spacing.
@@ -489,7 +488,7 @@ public class YamlConfig extends FileConfiguration {
 	 * Sets the footer that will be applied to the bottom of the saved output.
 	 * <p>
 	 * This footer will be commented out and applied directly at the bottom of
-	 * the generated output of the {@link FileConfiguration}. It is not required
+	 * the generated output of the {@link FileConfig}. It is not required
 	 * to include a newline at the beginning of the footer as it will
 	 * automatically be applied, but you may include one if you wish for extra
 	 * spacing.
@@ -551,17 +550,17 @@ public class YamlConfig extends FileConfiguration {
 	 */
 	/*public static YamlConfiguration loadConfiguration(@NonNull Reader reader) {
 		final YamlConfiguration config = new YamlConfiguration();
-	
+
 		try {
 			config.load(reader);
-
+	
 		} catch (final IOException ex) {
 			CommonCore.error(ex, "Cannot load configuration from stream");
-	
+
 		} catch (final InvalidConfigurationException ex) {
 			CommonCore.error(ex, "Invalid configuration from stream");
 		}
-	
+
 		return config;
 	}*/
 
@@ -598,21 +597,33 @@ public class YamlConfig extends FileConfiguration {
 		public YamlRepresenter(DumpSettings settings) {
 			super(settings);
 
-			this.parentClassRepresenters.put(MemorySection.class, new RepresentMemorySection());
-			this.parentClassRepresenters.put(ConfigSerializable.class, new RepresentConfigSerializable());
+			this.parentClassRepresenters.put(ConfigSerializable.class, new ConfigSerializableRepresenter());
 
-			// We could just switch YamlConstructor to extend Constructor rather than SafeConstructor, however there is a very small risk of issues with plugins treating config as untrusted input
-			// So instead we will just allow future plugins to have their enums extend ConfigurationSerializable
-			//this.parentClassRepresenters.remove(Enum.class);
-			this.parentClassRepresenters.put(Enum.class, new RepresentEnum());
+			// We use our own custom enum serializer
+			this.parentClassRepresenters.remove(Enum.class);
 		}
 
-		@Override
+		class SimpleTimeRepresenter extends RepresentString {
+
+			@Override
+			public Node representData(Object data) {
+				return super.representData(((SimpleTime) data).toString());
+			}
+		}
+
+		class ConfigSerializableRepresenter extends RepresentMap {
+
+			@Override
+			public Node representData(Object data) {
+				return super.representData(((ConfigSerializable) data).serialize().asMap());
+			}
+		}
+
+		/*@Override
 		public Node represent(Object data) {
-
-			data = SerializeUtilCore.serializeYamlFast(data);
-
 			try {
+				data = SerializeUtilCore.serialize(Language.YAML, data);
+
 				return super.represent(data);
 
 			} catch (final YamlEngineException ex) {
@@ -621,51 +632,7 @@ public class YamlConfig extends FileConfiguration {
 
 				throw ex;
 			}
-		}
-
-		// Used by configuration sections that are nested within lists or maps.
-		private class RepresentMemorySection extends RepresentMap {
-
-			@Override
-			public Node representData(Object data) {
-				return super.representData(((MemorySection) data).getValues(false));
-			}
-		}
-
-		private class RepresentConfigSerializable extends RepresentMap {
-
-			@Override
-			public Node representData(Object data) {
-				final ConfigSerializable serializable = (ConfigSerializable) data;
-				//final Map<String, Object> values = new LinkedHashMap<>();
-
-				//values.putAll(serializable.serialize());
-
-				return super.representData(serializable.serialize());
-			}
-		}
-
-		public class RepresentEnum implements RepresentToNode {
-
-			@Override
-			public Node representData(Object data) {
-				final Class<?> clazz = data.getClass();
-				String value;
-
-				if (clazz == CompChatColor.class)
-					value = ((CompChatColor) data).toSaveableString();
-
-				else if (clazz.getSimpleName().equals("ChatColor"))
-					value = ((Enum<?>) data).name();
-
-				else
-					value = ((Enum<?>) data).toString();
-
-				final Tag tag = getTag(clazz, new Tag(clazz));
-
-				return representScalar(tag, value);
-			}
-		}
+		}*/
 	}
 
 	/*

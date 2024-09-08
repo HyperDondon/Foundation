@@ -105,6 +105,16 @@ public abstract class CommonCore {
 	/**
 	 * Broadcast the message to everyone and logs it
 	 *
+	 * @param messages
+	 */
+	public static void broadcast(final String... messages) {
+		for (final String message : messages)
+			broadcast(SimpleComponent.fromMini(message));
+	}
+
+	/**
+	 * Broadcast the message to everyone and logs it
+	 *
 	 * @param message
 	 */
 	public static void broadcast(final SimpleComponent message) {
@@ -133,6 +143,17 @@ public abstract class CommonCore {
 	 * @param message
 	 * @param log
 	 */
+	public static void broadcastWithPerm(final String showPermission, @NonNull final String message, final boolean log) {
+		broadcastWithPerm(showPermission, SimpleComponent.fromMini(message), log);
+	}
+
+	/**
+	 * Broadcast the text component message to everyone with permission
+	 *
+	 * @param showPermission
+	 * @param message
+	 * @param log
+	 */
 	public static void broadcastWithPerm(final String showPermission, @NonNull final SimpleComponent message, final boolean log) {
 		if (!message.isEmpty()) {
 			for (final FoundationPlayer online : Platform.getOnlinePlayers())
@@ -144,9 +165,33 @@ public abstract class CommonCore {
 		}
 	}
 
+	/**
+	 * Sends a message to the player
+	 *
+	 * @param audience
+	 * @param messages
+	 */
+	public static void tell(@NonNull FoundationPlayer audience, String... messages) {
+		for (final String message : messages)
+			SimpleComponent.fromMini(message).send(audience);
+	}
+
 	// ------------------------------------------------------------------------------------------------------------
 	// Messaging
 	// ------------------------------------------------------------------------------------------------------------
+
+	/**
+	* Sends a message to the player and saves the time when it was sent.
+	* The delay in seconds is the delay between which we won't send player the
+	* same message, in case you call this method again.
+	*
+	* @param delaySeconds
+	* @param sender
+	* @param message
+	*/
+	public static void tellTimed(final int delaySeconds, final FoundationPlayer sender, final String message) {
+		tellTimed(delaySeconds, sender, SimpleComponent.fromMini(message));
+	}
 
 	/**
 	* Sends a message to the player and saves the time when it was sent.
@@ -184,7 +229,7 @@ public abstract class CommonCore {
 	public static void tellLater(final int delayTicks, final FoundationPlayer sender, final String message) {
 		Platform.runTask(delayTicks, () -> {
 			if (sender.isOnline())
-				sender.sendMessage(message);
+				sender.sendMessage(SimpleComponent.fromMini(message));
 		});
 	}
 
@@ -1262,6 +1307,25 @@ public abstract class CommonCore {
 		oldMap.entrySet().forEach(e -> newMap.put(converter.convertKey(e.getKey()), converter.convertValue(e.getValue())));
 
 		return newMap;
+	}
+
+	/**
+	 * Attempts to convert the gfiven map into a list
+	 *
+	 * @param <LIST_KEY>
+	 * @param <OLD_KEY>
+	 * @param <OLD_VALUE>
+	 * @param map
+	 * @param converter
+	 * @return
+	 */
+	public static <LIST_KEY, OLD_KEY, OLD_VALUE> List<LIST_KEY> convertToList(final Map<OLD_KEY, OLD_VALUE> map, final MapToListConverter<LIST_KEY, OLD_KEY, OLD_VALUE> converter) {
+		final List<LIST_KEY> list = new ArrayList<>();
+
+		for (final Map.Entry<OLD_KEY, OLD_VALUE> e : map.entrySet())
+			list.add(converter.convert(e.getKey(), e.getValue()));
+
+		return list;
 	}
 
 	/**

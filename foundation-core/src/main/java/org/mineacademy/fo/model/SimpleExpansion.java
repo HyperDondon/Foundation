@@ -44,12 +44,12 @@ public abstract class SimpleExpansion {
 	 * Return what variable we should replace for the given audience and
 	 * identifier.
 	 *
-	 * @param sender
+	 * @param audience
 	 * @param identifier everything after your plugin name such as if user types {corearena_player_health},
 	 * 		  we return only "player_health". You can also use {@link #args} here.
 	 * @return
 	 */
-	protected abstract SimpleComponent onReplace(@NonNull FoundationPlayer sender, String identifier);
+	protected abstract SimpleComponent onReplace(@NonNull FoundationPlayer audience, String identifier);
 
 	/**
 	 * Automatically joins the {@link #args} from the given index

@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 import org.mineacademy.fo.ChatUtil;
 import org.mineacademy.fo.Common;
 import org.mineacademy.fo.MathUtilCore;
+import org.mineacademy.fo.SerializeUtilCore.Language;
 import org.mineacademy.fo.Valid;
 import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.debug.Debugger;
@@ -157,7 +158,7 @@ public abstract class SimpleFlatDatabase<T> extends SimpleDatabase {
 				Common.runLater(() -> {
 
 					try {
-						final SerializedMap data = SerializedMap.fromJson(dataRaw);
+						final SerializedMap data = SerializedMap.of(Language.JSON, dataRaw);
 						Debugger.debug("mysql", "Deserialized data: " + data);
 
 						// Call the user specified load method

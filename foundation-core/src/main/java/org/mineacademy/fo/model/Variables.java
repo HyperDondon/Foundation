@@ -90,12 +90,28 @@ public final class Variables {
 	// Replacing
 	// ------------------------------------------------------------------------------------------------------------
 
-	public static List<String> replaceArray(List<String> list, FoundationPlayer sender, Object... replacements) {
-		String joined = String.join("%FLPV%", list);
+	public static List<String> replaceListArray(List<String> list, FoundationPlayer sender, Object... replacements) {
+		return Arrays.asList(replaceArray(String.join("%FLPV%", list), sender, replacements).split("%FLPV%"));
+	}
 
-		joined = replace(joined, sender, CommonCore.newHashMap(replacements));
+	public static String[] replaceListArray(String[] list, FoundationPlayer sender, Object... replacements) {
+		return replaceArray(String.join("%FLPV%", list), sender, replacements).split("%FLPV%");
+	}
 
-		return Arrays.asList(joined.split("%FLPV%"));
+	public static List<String> replaceListArray(List<String> list, Object... replacements) {
+		return Arrays.asList(replaceArray(String.join("%FLPV%", list), null, replacements).split("%FLPV%"));
+	}
+
+	public static String[] replaceListArray(String[] list, Object... replacements) {
+		return replaceArray(String.join("%FLPV%", list), null, replacements).split("%FLPV%");
+	}
+
+	public static String replaceArray(String list, Object... replacements) {
+		return replace(list, null, CommonCore.newHashMap(replacements));
+	}
+
+	public static String replaceArray(String list, FoundationPlayer sender, Object... replacements) {
+		return replace(list, sender, CommonCore.newHashMap(replacements));
 	}
 
 	public static String replace(String message, FoundationPlayer sender) {

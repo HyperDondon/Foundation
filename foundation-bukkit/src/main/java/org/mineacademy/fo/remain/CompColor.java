@@ -164,7 +164,7 @@ public final class CompColor {
 	private CompColor(final String name, final DyeColor dye, final CompChatColor chatColor, final String legacyName) {
 		this.name = name;
 		this.dye = dye;
-		this.chatColor = chatColor == null ? name != null ? CompChatColor.of(name) : CompChatColor.WHITE : chatColor;
+		this.chatColor = chatColor == null ? name != null ? CompChatColor.fromString(name) : CompChatColor.WHITE : chatColor;
 		this.legacyName = Common.getOrEmpty(legacyName);
 
 		values.add(this);

@@ -155,7 +155,7 @@ public abstract class SimplePrompt extends ValidatingPrompt {
 	 * @param message
 	 */
 	protected final void tell(final Conversable conversable, String message) {
-		Platform.toPlayer(conversable).sendMessage(this.getCustomPrefix() != null ? this.getCustomPrefix() + message : message);
+		Platform.toPlayer(conversable).sendMessage(SimpleComponent.fromMini(this.getCustomPrefix() != null ? this.getCustomPrefix() + message : message));
 	}
 
 	/**

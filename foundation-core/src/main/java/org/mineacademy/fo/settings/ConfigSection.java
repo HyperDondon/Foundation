@@ -16,13 +16,13 @@ import lombok.Setter;
 /**
  * A type of configuration that is stored in memory.
  */
-public class MemorySection {
+public class ConfigSection {
 
 	private static final char PATH_SEPARATOR = '.';
 
 	protected final Map<String, SectionPathData> map = new LinkedHashMap<>();
-	private final FileConfiguration root;
-	private final MemorySection parent;
+	private final FileConfig root;
+	private final ConfigSection parent;
 	private final String path;
 	private final String fullPath;
 
@@ -36,14 +36,14 @@ public class MemorySection {
 	 * @throws IllegalStateException Thrown if this is not a {@link
 	 *     Configuration} root.
 	 */
-	protected MemorySection() {
-		if (!(this instanceof FileConfiguration))
+	protected ConfigSection() {
+		if (!(this instanceof FileConfig))
 			throw new IllegalStateException("Cannot use MemorySection without being a FileConfiguration");
 
 		this.path = "";
 		this.fullPath = "";
 		this.parent = null;
-		this.root = (FileConfiguration) this;
+		this.root = (FileConfig) this;
 	}
 
 	/**
@@ -55,7 +55,7 @@ public class MemorySection {
 	 * @throws IllegalArgumentException Thrown is parent or path is null, or
 	 *     if parent contains no root Configuration.
 	 */
-	protected MemorySection(@NonNull MemorySection parent, @NonNull String path) {
+	protected ConfigSection(@NonNull ConfigSection parent, @NonNull String path) {
 		this.path = path;
 		this.parent = parent;
 		this.root = parent.root;
@@ -76,15 +76,15 @@ public class MemorySection {
 		return result;
 	}
 
-	private void mapChildrenKeys(Set<String> output, MemorySection section, boolean deep) {
-		if (section instanceof MemorySection) {
-			final MemorySection sec = section;
+	private void mapChildrenKeys(Set<String> output, ConfigSection section, boolean deep) {
+		if (section instanceof ConfigSection) {
+			final ConfigSection sec = section;
 
 			for (final Map.Entry<String, SectionPathData> entry : sec.map.entrySet()) {
 				output.add(createPath(section, entry.getKey(), this));
 
-				if ((deep) && (entry.getValue().getData() instanceof MemorySection)) {
-					final MemorySection subsection = (MemorySection) entry.getValue().getData();
+				if ((deep) && (entry.getValue().getData() instanceof ConfigSection)) {
+					final ConfigSection subsection = (ConfigSection) entry.getValue().getData();
 					this.mapChildrenKeys(output, subsection, deep);
 				}
 			}
@@ -109,9 +109,9 @@ public class MemorySection {
 		return result;
 	}
 
-	private void mapChildrenValues(Map<String, Object> output, MemorySection section, boolean deep) {
-		if (section instanceof MemorySection) {
-			final MemorySection sec = section;
+	private void mapChildrenValues(Map<String, Object> output, ConfigSection section, boolean deep) {
+		if (section instanceof ConfigSection) {
+			final ConfigSection sec = section;
 
 			for (final Map.Entry<String, SectionPathData> entry : sec.map.entrySet()) {
 
@@ -121,9 +121,9 @@ public class MemorySection {
 				output.remove(childPath);
 				output.put(childPath, entry.getValue().getData());
 
-				if (entry.getValue().getData() instanceof MemorySection)
+				if (entry.getValue().getData() instanceof ConfigSection)
 					if (deep)
-						this.mapChildrenValues(output, (MemorySection) entry.getValue().getData(), deep);
+						this.mapChildrenValues(output, (ConfigSection) entry.getValue().getData(), deep);
 			}
 		} else {
 			final Map<String, Object> values = section.getValues(deep);
@@ -140,32 +140,32 @@ public class MemorySection {
 	final boolean isMemorySection(String path) {
 		final Object val = this.retrieve(path);
 
-		return val instanceof MemorySection;
+		return val instanceof ConfigSection;
 	}
 
-	final MemorySection retrieveMemorySection(String path) {
+	final ConfigSection retrieveMemorySection(String path) {
 		Object val = this.retrieve(path);
 
 		if (val != null)
-			return val instanceof MemorySection ? (MemorySection) val : null;
+			return val instanceof ConfigSection ? (ConfigSection) val : null;
 
 		val = this.retrieve(path);
 
-		return val instanceof MemorySection ? this.createSection(path) : null;
+		return val instanceof ConfigSection ? this.createSection(path) : null;
 	}
 
 	public final Object retrieve(@NonNull String fullPath) {
 		if (fullPath.length() == 0)
 			return this;
 
-		final MemorySection root = this.root;
+		final ConfigSection root = this.root;
 		if (root == null)
 			throw new IllegalStateException("Cannot access section without a root");
 
 		// i1 is the leading (higher) index
 		// i2 is the trailing (lower) index
 		int i1 = -1, i2;
-		MemorySection section = this;
+		ConfigSection section = this;
 
 		while ((i1 = fullPath.indexOf(PATH_SEPARATOR, i2 = i1 + 1)) != -1) {
 			final String currentPath = fullPath.substring(i2, i1);
@@ -201,18 +201,18 @@ public class MemorySection {
 	final void store(String fullPath, Object value) {
 		ValidCore.checkNotEmpty(fullPath, "Cannot set to an empty path");
 
-		final MemorySection root = this.root;
+		final ConfigSection root = this.root;
 		if (root == null)
 			throw new IllegalStateException("Cannot use section without a root");
 
 		// i1 is the leading (higher) index
 		// i2 is the trailing (lower) index
 		int i1 = -1, i2;
-		MemorySection section = this;
+		ConfigSection section = this;
 
 		while ((i1 = fullPath.indexOf(PATH_SEPARATOR, i2 = i1 + 1)) != -1) {
 			final String node = fullPath.substring(i2, i1);
-			final MemorySection subSection = section.retrieveMemorySection(node);
+			final ConfigSection subSection = section.retrieveMemorySection(node);
 
 			if (subSection == null) {
 				if (value == null)
@@ -273,7 +273,7 @@ public class MemorySection {
 	}
 
 	private final SectionPathData getSectionPathData(@NonNull String fullPath) {
-		final MemorySection root = this.root;
+		final ConfigSection root = this.root;
 
 		if (root == null)
 			throw new IllegalStateException("Cannot access section without a root");
@@ -281,7 +281,7 @@ public class MemorySection {
 		// i1 is the leading (higher) index
 		// i2 is the trailing (lower) index
 		int i1 = -1, i2;
-		MemorySection section = this;
+		ConfigSection section = this;
 
 		while ((i1 = fullPath.indexOf(PATH_SEPARATOR, i2 = i1 + 1)) != -1) {
 			section = section.retrieveMemorySection(fullPath.substring(i2, i1));
@@ -298,7 +298,7 @@ public class MemorySection {
 			if (entry != null)
 				return entry;
 
-		} else if (section instanceof MemorySection)
+		} else if (section instanceof ConfigSection)
 			return section.getSectionPathData(key);
 
 		return null;
@@ -308,21 +308,21 @@ public class MemorySection {
 	// Helpers
 	// ------------------------------------------------------------------------------------------------------------
 
-	final MemorySection createSection(String fullPath) {
+	final ConfigSection createSection(String fullPath) {
 		ValidCore.checkNotEmpty(fullPath, "Cannot create section at empty path");
 
-		final MemorySection root = this.root;
+		final ConfigSection root = this.root;
 		if (root == null)
 			throw new IllegalStateException("Cannot create section without a root");
 
 		// i1 is the leading (higher) index
 		// i2 is the trailing (lower) index
 		int i1 = -1, i2;
-		MemorySection section = this;
+		ConfigSection section = this;
 
 		while ((i1 = fullPath.indexOf(PATH_SEPARATOR, i2 = i1 + 1)) != -1) {
 			final String node = fullPath.substring(i2, i1);
-			final MemorySection subSection = section.retrieveMemorySection(node);
+			final ConfigSection subSection = section.retrieveMemorySection(node);
 
 			if (subSection == null)
 				section = section.createSection(node);
@@ -333,7 +333,7 @@ public class MemorySection {
 		final String key = fullPath.substring(i2);
 
 		if (section == this) {
-			final MemorySection result = new MemorySection(this, key);
+			final ConfigSection result = new ConfigSection(this, key);
 			this.map.put(key, new SectionPathData(result));
 
 			return result;
@@ -342,8 +342,8 @@ public class MemorySection {
 		return section.createSection(key);
 	}
 
-	final MemorySection createSection(String fullPath, Map<?, ?> map) {
-		final MemorySection section = this.createSection(fullPath);
+	final ConfigSection createSection(String fullPath, Map<?, ?> map) {
+		final ConfigSection section = this.createSection(fullPath);
 
 		for (final Map.Entry<?, ?> entry : map.entrySet())
 			if (entry.getValue() instanceof Map)
@@ -358,7 +358,7 @@ public class MemorySection {
 		return fullPath;
 	}
 
-	MemorySection getParent() {
+	ConfigSection getParent() {
 		return this.parent;
 	}
 
@@ -384,7 +384,7 @@ public class MemorySection {
 	 *
 	 * You may use this method for any given memory section.
 	 */
-	private static String createPath(MemorySection section, String key) {
+	private static String createPath(ConfigSection section, String key) {
 		return createPath(section, key, (section == null) ? null : section.root);
 	}
 
@@ -394,15 +394,15 @@ public class MemorySection {
 	 *
 	 * You may use this method for any given memory section.
 	 */
-	private static String createPath(@NonNull MemorySection section, String key, MemorySection relativeTo) {
-		final MemorySection root = section.root;
+	private static String createPath(@NonNull ConfigSection section, String key, ConfigSection relativeTo) {
+		final ConfigSection root = section.root;
 
 		if (root == null)
 			throw new IllegalStateException("Cannot create path without a root");
 
 		final StringBuilder builder = new StringBuilder();
 
-		for (MemorySection parent = section; (parent != null) && (parent != relativeTo); parent = parent.getParent()) {
+		for (ConfigSection parent = section; (parent != null) && (parent != relativeTo); parent = parent.getParent()) {
 			if (builder.length() > 0)
 				builder.insert(0, PATH_SEPARATOR);
 

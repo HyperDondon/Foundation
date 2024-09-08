@@ -156,7 +156,7 @@ public class BukkitPlayer extends FoundationPlayer {
 	}
 
 	@Override
-	public void sendMessage(String message) {
+	protected void sendMessage(String message) {
 
 		// Ugly hack since most conversations prevent players from receiving messages through other API calls
 		if (this.isConversing())

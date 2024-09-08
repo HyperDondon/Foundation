@@ -1,9 +1,16 @@
 package org.mineacademy.fo;
 
+import java.sql.SQLException;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.inventory.ItemStack;
+import org.mineacademy.fo.database.SimpleDatabase.InvalidRowException;
+import org.mineacademy.fo.database.SimpleDatabase.SimpleResultSet;
+import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.exception.InvalidWorldException;
+import org.mineacademy.fo.plugin.SimplePlugin;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -18,19 +25,14 @@ public final class SerializeUtil extends SerializeUtilCore {
 	 * @return
 	 */
 	public static String serializeLoc(final Location loc) {
+		if (loc == null)
+			return "";
+
+		if (loc.equals(new Location(null, 0, 0, 0)))
+			throw new FoException("Cannot serialize location with null world: " + loc);
+
 		return loc.getWorld().getName() + " " + loc.getBlockX() + " " + loc.getBlockY() + " " + loc.getBlockZ() + (loc.getPitch() != 0F || loc.getYaw() != 0F ? " " + Math.round(loc.getYaw()) + " " + Math.round(loc.getPitch()) : "");
 	}
-
-	/**
-	 * Converts a {@link Location} into "world x y z yaw pitch" string with decimal support
-	 * Unused, you have to call this in your save() method otherwise we remove decimals and use the above method
-	 *
-	 * @param loc
-	 * @return
-	 */
-	/*private static String serializeLocD(final Location loc) {
-		return loc.getWorld().getName() + " " + loc.getX() + " " + loc.getY() + " " + loc.getZ() + (loc.getPitch() != 0F || loc.getYaw() != 0F ? " " + loc.getYaw() + " " + loc.getPitch() : "");
-	}*/
 
 	/**
 	 * Converts a string into location
@@ -58,34 +60,52 @@ public final class SerializeUtil extends SerializeUtilCore {
 		return new Location(bukkitWorld, x, y, z, yaw, pitch);
 	}
 
-	/**
-	 * Converts a string into a location with decimal support
-	 * Unused but you can use this for your own parser storing exact decimals
-	 *
-	 * @param raw
-	 * @return
-	 */
-	/*private static Location deserializeLocationD(Object raw) {
-		if (raw == null)
+	public static ItemStack deserializeItem(SimpleResultSet resultSet, String columnLabel) throws SQLException {
+		final String value = resultSet.getString(columnLabel);
+
+		if (value == null || "".equals(value))
 			return null;
 
-		if (raw instanceof Location)
-			return (Location) raw;
+		try {
+			return deserialize(Language.JSON, ItemStack.class, value);
 
-		raw = raw.toString().replace("\"", "");
+		} catch (final Throwable ex) {
+			Common.warning(SimplePlugin.getInstance().getName() + " found invalid row with invalid item value '" + value + "' in column '" + columnLabel + "' in table " + resultSet.getTableName() + " ignoring.");
 
-		final String[] parts = raw.toString().contains(", ") ? raw.toString().split(", ") : raw.toString().split(" ");
-		ValidCore.checkBoolean(parts.length == 4 || parts.length == 6, "Expected location (String) but got " + raw.getClass().getSimpleName() + ": " + raw);
+			throw new InvalidRowException();
+		}
+	}
 
-		final String world = parts[0];
-		final World bukkitWorld = Bukkit.getWorld(world);
+	public static ItemStack deserializeItemStrict(SimpleResultSet resultSet, String columnLabel) throws SQLException {
+		final String value = resultSet.getStringStrict(columnLabel);
 
-		if (bukkitWorld == null)
-			throw new InvalidWorldException("Location with invalid world '" + world + "': " + raw + " (Doesn't exist)", world);
+		try {
+			return deserialize(Language.JSON, ItemStack.class, value);
 
-		final double x = Double.parseDouble(parts[1]), y = Double.parseDouble(parts[2]), z = Double.parseDouble(parts[3]);
-		final float yaw = Float.parseFloat(parts.length == 6 ? parts[4] : "0"), pitch = Float.parseFloat(parts.length == 6 ? parts[5] : "0");
+		} catch (final Throwable ex) {
+			Common.warning(SimplePlugin.getInstance().getName() + " found invalid row with invalid item value '" + value + "' in column '" + columnLabel + "' in table " + resultSet.getTableName() + " ignoring.");
+			throw new InvalidRowException();
+		}
+	}
 
-		return new Location(bukkitWorld, x, y, z, yaw, pitch);
-	}*/
+	public static ItemStack[] deserializeItemArray(SimpleResultSet resultSet, String columnLabel) throws SQLException {
+		final String value = resultSet.getString(columnLabel);
+
+		if (value == null || "".equals(value))
+			return new ItemStack[0];
+
+		return deserializeItemArrayStrict(resultSet, columnLabel);
+	}
+
+	public static ItemStack[] deserializeItemArrayStrict(SimpleResultSet resultSet, String columnLabel) throws SQLException {
+		final String value = resultSet.getString(columnLabel);
+
+		if (value == null || "".equals(value)) {
+			Common.warning(SimplePlugin.getInstance().getName() + " found invalid row with null/empty column '" + columnLabel + "' in table " + resultSet.getTableName() + " ignoring.");
+
+			throw new InvalidRowException();
+		}
+
+		return SerializeUtil.deserialize(Language.JSON, ItemStack[].class, value);
+	}
 }

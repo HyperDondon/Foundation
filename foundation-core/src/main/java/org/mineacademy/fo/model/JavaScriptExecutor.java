@@ -264,7 +264,7 @@ public final class JavaScriptExecutor {
 					final Object sender = replacements.get("player");
 
 					if (errorMessageSplit.length == 2 && sender instanceof FoundationPlayer)
-						((FoundationPlayer) sender).sendMessage(errorMessageSplit[1]);
+						((FoundationPlayer) sender).sendMessage(SimpleComponent.fromPlain(errorMessageSplit[1]));
 
 					throw new EventHandledException(true);
 				}

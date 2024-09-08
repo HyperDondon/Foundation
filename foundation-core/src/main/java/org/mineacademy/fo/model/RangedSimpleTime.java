@@ -10,7 +10,7 @@ import lombok.Getter;
  * extract a random time from.
  */
 @Getter
-public final class RangedSimpleTime {
+public final class RangedSimpleTime implements ConfigStringSerializable {
 
 	/**
 	 * The minimum time
@@ -92,6 +92,11 @@ public final class RangedSimpleTime {
 		return (this.min.getRaw() + (this.min.equals(this.max) ? "" : " - " + this.max.getRaw())).replace("  ", " ");
 	}
 
+	@Override
+	public String serialize() {
+		return this.toLine();
+	}
+
 	/**
 	 * @see java.lang.Object#toString()
 	 */
@@ -106,13 +111,13 @@ public final class RangedSimpleTime {
 	 * @param line
 	 * @return
 	 */
-	public static RangedSimpleTime parse(final String line) {
+	public static RangedSimpleTime fromString(final String line) {
 		final String[] parts = line.split("\\-");
 		ValidCore.checkBoolean(parts.length == 1 || parts.length == 2, "Malformed RangedSimpleTime " + line);
 
 		final String min = parts[0].trim();
 		final String max = (parts.length == 2 ? parts[1] : min).trim();
 
-		return new RangedSimpleTime(SimpleTime.from(min), SimpleTime.from(max));
+		return new RangedSimpleTime(SimpleTime.fromString(min), SimpleTime.fromString(max));
 	}
 }

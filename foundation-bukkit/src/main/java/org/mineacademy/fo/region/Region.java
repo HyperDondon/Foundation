@@ -15,7 +15,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.mineacademy.fo.BlockUtil;
-import org.mineacademy.fo.Common;
+import org.mineacademy.fo.SerializeUtil;
 import org.mineacademy.fo.Valid;
 import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.exception.FoException;
@@ -489,7 +489,7 @@ public class Region implements ConfigSerializable {
 
 	@Override
 	public final String toString() {
-		return this.getClass().getSimpleName() + "{name=" + this.name + ",location=" + Common.shortLocation(this.primary) + " - " + Common.shortLocation(this.secondary) + "}";
+		return this.getClass().getSimpleName() + "{name=" + this.name + ",location=" + SerializeUtil.serializeLoc(this.primary) + " - " + SerializeUtil.serializeLoc(this.secondary) + "}";
 	}
 
 	@Override

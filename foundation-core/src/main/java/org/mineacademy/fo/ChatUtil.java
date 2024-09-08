@@ -532,7 +532,7 @@ public final class ChatUtil {
 	 * @return
 	 */
 	public static String generateGradient(String message, String fromColor, String toColor) {
-		return generateGradient(message, CompChatColor.of(fromColor), CompChatColor.of(toColor));
+		return generateGradient(message, CompChatColor.fromString(fromColor), CompChatColor.fromString(toColor));
 	}
 
 	/**
@@ -598,10 +598,20 @@ public final class ChatUtil {
 
 			final Color stepColor = new Color(red, green, blue);
 
-			gradient += CompChatColor.of(stepColor) + String.join("", decorations) + letters[i];
+			gradient += CompChatColor.fromColor(stepColor) + String.join("", decorations) + letters[i];
 		}
 
 		return gradient;
+	}
+
+	/**
+	 * Return if the message starts with \<actionbar\>, \<toast\>, \<title\> or \<bossbar\>
+	 *
+	 * @param message
+	 * @return
+	 */
+	public static boolean isInteractive(String message) {
+		return message.startsWith("<actionbar>") || message.startsWith("<toast>") || message.startsWith("<title>") || message.startsWith("<bossbar>");
 	}
 
 	// --------------------------------------------------------------------------------

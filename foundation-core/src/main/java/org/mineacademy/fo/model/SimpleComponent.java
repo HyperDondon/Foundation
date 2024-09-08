@@ -12,12 +12,15 @@ import java.util.function.Function;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 
+import org.mineacademy.fo.ChatUtil;
 import org.mineacademy.fo.CommonCore;
 import org.mineacademy.fo.MinecraftVersion;
 import org.mineacademy.fo.MinecraftVersion.V;
+import org.mineacademy.fo.SerializeUtilCore.Language;
 import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.debug.Debugger;
+import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.exception.FoScriptException;
 import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.remain.CompChatColor;
@@ -492,11 +495,11 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 
 		if (this.lastStyle != null) {
 			if (this.lastStyle.color() != null)
-				suffix = CompChatColor.of(this.lastStyle.color().asHexString()).toString();
+				suffix = CompChatColor.fromString(this.lastStyle.color().asHexString()).toString();
 
 			for (final Map.Entry<TextDecoration, State> entry : this.lastStyle.decorations().entrySet())
 				if (entry.getValue() == State.TRUE)
-					suffix += CompChatColor.of(entry.getKey().name()).toString();
+					suffix += CompChatColor.fromString(entry.getKey().name()).toString();
 		}
 
 		return RemainCore.convertAdventureToLegacy(this) + suffix;
@@ -667,7 +670,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	 */
 	@Override
 	public String toString() {
-		return this.toMini();
+		throw new FoException("SimpleComponent#toString() is unsupported, use toMini(), toLegacy() or toPlain() as needed");
 	}
 
 	// --------------------------------------------------------------------
@@ -694,6 +697,9 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	public static SimpleComponent fromMini(String message) {
 		if (message == null || message.trim().isEmpty())
 			return SimpleComponent.empty();
+
+		if (message.startsWith("<center>"))
+			message = ChatUtil.center(message.replace("<center>", "").trim());
 
 		// First, replace legacy & color codes
 		final StringBuilder result = new StringBuilder();
@@ -812,7 +818,7 @@ public final class SimpleComponent implements ConfigSerializable, ComponentLike 
 	 * @return
 	 */
 	public static SimpleComponent fromJson(String json) {
-		return deserialize(SerializedMap.fromJson(json));
+		return deserialize(SerializedMap.of(Language.JSON, json));
 	}
 
 	/**

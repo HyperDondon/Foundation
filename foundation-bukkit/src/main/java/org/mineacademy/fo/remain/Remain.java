@@ -87,6 +87,8 @@ import org.mineacademy.fo.model.SimpleRunnable;
 import org.mineacademy.fo.model.SimpleTask;
 import org.mineacademy.fo.model.Task;
 import org.mineacademy.fo.model.UUIDToNameConverter;
+import org.mineacademy.fo.platform.BukkitPlayer;
+import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.plugin.SimplePlugin;
 import org.mineacademy.fo.remain.nbt.NBTEntity;
 
@@ -742,22 +744,12 @@ public final class Remain extends RemainCore {
 	}
 
 	/**
-	 * Serializes the component into plain text
-	 *
-	 * @param component
-	 * @return
-	 */
-	/*public static Object convertAdventureToIChatBase(ComponentLike component) {
-		return convertJsonToIChatBase(SimpleComponent.fromAdventure(component.asComponent()).toAdventureJson());
-	}*/
-
-	/**
 	 * Return IChatBaseComponent from the given JSON
 	 *
 	 * @param legacy
 	 * @return
 	 */
-	private static Object convertLegacyToIChatBase(String legacy) {
+	public static Object convertLegacyToIChatBase(String legacy) {
 		Valid.checkBoolean(MinecraftVersion.atLeast(V.v1_7), "Serializing chat components requires Minecraft 1.7.10 and greater");
 
 		final Class<?> chatSerializer = ReflectionUtil.getNMSClass((MinecraftVersion.equals(V.v1_7) ? "" : "IChatBaseComponent$") + "ChatSerializer", "net.minecraft.network.chat.IChatBaseComponent$ChatSerializer");
@@ -794,7 +786,7 @@ public final class Remain extends RemainCore {
 	 */
 	/*public static Object convertLegacyToIChatBase(String legacyText) {
 		final String json = SimpleComponent.fromMini(legacyText).toAdventureJson();
-
+	
 		return convertJsonToIChatBase(json);
 	}*/
 
@@ -1761,6 +1753,48 @@ public final class Remain extends RemainCore {
 
 				if (!colorized.isEmpty())
 					receiver.sendMessage(colorized);
+			}
+
+	}
+
+	/**
+	 * Send a "toast" notification to the given receivers. This is an advancement notification that cannot
+	 * be modified that much. It imposes a slight performance penalty the more players to send to.
+	 *
+	 * Each player sending is delayed by 0.1s
+	 *
+	 * @param receivers
+	 * @param message you can replace player-specific variables in the message here
+	 * @param icon
+	 * @param style
+	 */
+	public static void sendToastToAudience(final List<FoundationPlayer> receivers, final Function<FoundationPlayer, String> message, final CompMaterial icon, final CompToastStyle style) {
+
+		if (hasAdvancements)
+			Common.runAsync(() -> {
+				for (final FoundationPlayer receiver : receivers) {
+
+					// Sleep to mitigate sending not working at once
+					Common.sleep(100);
+
+					Common.runLater(() -> {
+						final String colorized = CompChatColor.translateColorCodes(message.apply(receiver));
+
+						if (!colorized.isEmpty()) {
+							final AdvancementAccessor accessor = new AdvancementAccessor(colorized, icon.toString().toLowerCase(), style);
+
+							if (receiver.isOnline())
+								accessor.show(((BukkitPlayer) receiver).getPlayer());
+						}
+					});
+				}
+			});
+		else
+			for (final FoundationPlayer receiver : receivers) {
+				final String colorized = CompChatColor.translateColorCodes(message.apply(receiver));
+
+				if (!colorized.isEmpty())
+					receiver.sendMessage(SimpleComponent.fromSection(colorized));
 			}
 
 	}

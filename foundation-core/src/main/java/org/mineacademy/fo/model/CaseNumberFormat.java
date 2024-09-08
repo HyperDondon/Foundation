@@ -15,14 +15,14 @@ import org.mineacademy.fo.exception.FoException;
  * This helper is used to automatically determine and get the right case. We
  * save all three values on a single line split by a comma.
  */
-public final class CaseNumberFormat {
+public final class CaseNumberFormat implements ConfigStringSerializable {
 
 	private final String raw;
 	private final String accusativeSingural; // 1 second (Slovak case - sekundu)
 	private final String accusativePlural; // 2-4 seconds (Slovak case - sekundy, not in English)
 	private final String genitivePlural; // 0 or 5+ seconds (Slovak case - sekund)
 
-	public CaseNumberFormat(final String raw) {
+	private CaseNumberFormat(final String raw) {
 		this.raw = raw;
 
 		final String[] values = raw.split(", ");
@@ -63,7 +63,16 @@ public final class CaseNumberFormat {
 
 	@Override
 	public String toString() {
+		return this.serialize();
+	}
+
+	@Override
+	public String serialize() {
 		return this.raw;
+	}
+
+	public static CaseNumberFormat fromString(String line) {
+		return new CaseNumberFormat(line);
 	}
 
 	public static CaseNumberFormat of(String singular, String plural) {

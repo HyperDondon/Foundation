@@ -75,12 +75,11 @@ public class ButtonRemove extends Button {
 				.of(CompMaterial.LAVA_BUCKET)
 				.name(title.replace("{name}", this.toRemoveName))
 
-				.lore(Variables.replaceArray(lore,
-						null, // sender
+				.lore(Variables.replaceListArray(lore,
 						"name", this.toRemoveName,
 						"type", this.toRemoveType))
 
-				.flag(CompItemFlag.HIDE_ATTRIBUTES)
+				.flags(CompItemFlag.HIDE_ATTRIBUTES)
 				.make();
 	}
 
@@ -101,7 +100,7 @@ public class ButtonRemove extends Button {
 						"&7be removed permanently.",
 						"&cCannot be undone."))
 
-				.flag(CompItemFlag.HIDE_ATTRIBUTES)
+				.flags(CompItemFlag.HIDE_ATTRIBUTES)
 				.make();
 	}
 

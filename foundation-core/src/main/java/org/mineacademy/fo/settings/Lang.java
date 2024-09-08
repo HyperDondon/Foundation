@@ -1,5 +1,7 @@
 package org.mineacademy.fo.settings;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,6 +29,11 @@ public final class Lang {
 	 * The instance of this class
 	 */
 	private static final Lang instance = new Lang();
+
+	/**
+	 * List of URLs to overlay the default localization
+	 */
+	private static List<String> overlayUrls = new ArrayList<>();
 
 	private final JsonObject dictionary;
 
@@ -107,8 +114,8 @@ public final class Lang {
 	 * @param path
 	 * @return
 	 */
-	public static String ofCase(long amount, String path) {
-		return amount + " " + ofCaseNoAmount(amount, path);
+	public static String numberFormat(String path, long amount) {
+		return CaseNumberFormat.fromString(plain(path)).formatWithCount(amount);
 	}
 
 	/**
@@ -119,17 +126,8 @@ public final class Lang {
 	 * @param path
 	 * @return
 	 */
-	public static String ofCaseNoAmount(long amount, String path) {
-		final String key = legacy(path);
-		final String[] split = key.split(", ");
-
-		ValidCore.checkBoolean(split.length == 1 || split.length == 2, "Invalid syntax of key at '" + path + "', this key is a special one and "
-				+ "it needs singular and plural form separated with , such as: second, seconds");
-
-		final String singular = split[0];
-		final String plural = split[split.length == 2 ? 1 : 0];
-
-		return amount == 0 || amount > 1 ? plural : singular;
+	public static String numberFormatNoAmount(String path, long amount) {
+		return CaseNumberFormat.fromString(plain(path)).formatWithoutCount(amount);
 	}
 
 	/**
@@ -143,18 +141,6 @@ public final class Lang {
 		final String value = legacy(path);
 
 		return Variables.replace(value, null, CommonCore.newHashMap(replacements));
-	}
-
-	/**
-	 * Return a key from the localization file
-	 *
-	 * @param path
-	 * @parm count
-	 *
-	 * @return
-	 */
-	public static String formattedNumber(String path, long count) {
-		return new CaseNumberFormat(legacy(path)).formatWithCount(count);
 	}
 
 	/**
@@ -196,12 +182,12 @@ public final class Lang {
 	 */
 	/*public static SimpleComponent ofNumericVars(String path, Object... replacements) {
 		final List<Object> replacementsList = new ArrayList<>();
-
+	
 		for (int i = 0; i < replacements.length; i++) {
 			replacementsList.add(String.valueOf(i));
 			replacementsList.add(replacements[i]);
 		}
-
+	
 		return ofVars(path, replacementsList.toArray());
 	}*/
 
@@ -268,5 +254,78 @@ public final class Lang {
 			lines.add(Variables.replace(listElement.getAsString(), null, CommonCore.newHashMap(replacements)));
 
 		return CommonCore.toArray(lines);
+	}
+
+	public static void addOverlayUrl(String url) {
+		overlayUrls.add(url);
+	}
+
+	/**
+	 * The default keys from the main overlay.
+	 */
+	public static final class Default {
+
+		/**
+		 * The {timestamp} and {date}, {date_short} and {date_month} formats.
+		 */
+		private static DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+		private static DateFormat dateFormatShort = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+		private static DateFormat dateFormatMonth = new SimpleDateFormat("dd.MM HH:mm");
+		private static String locationFormat = "{world} [{x}, {y}, {z}]";
+
+		public static DateFormat getDateFormat() {
+			if (dateFormat == null)
+				dateFormat = makeFormat("format-date");
+
+			return dateFormat;
+		}
+
+		public static DateFormat getDateFormatShort() {
+			if (dateFormatShort == null)
+				dateFormatShort = makeFormat("format-date-short");
+
+			return dateFormatShort;
+		}
+
+		/**
+		 * The format used in the {timestamp} placeholder.
+		 *
+		 * @return
+		 */
+		public static DateFormat getDateFormatMonth() {
+			if (dateFormatMonth == null)
+				dateFormatMonth = makeFormat("format-date-month");
+
+			return dateFormatMonth;
+		}
+
+		/*
+		 * A helper method to create a date format from the given plain lang key.
+		 */
+		private static DateFormat makeFormat(String key) {
+			final String raw = plain(key);
+
+			try {
+				return new SimpleDateFormat(raw);
+
+			} catch (final IllegalArgumentException ex) {
+				CommonCore.throwError(ex, "Date format at '" + key + "' is invalid: '" + raw + "'! See https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html for syntax'");
+
+				return null;
+			}
+		}
+
+		/**
+		 * The format used in the {location} placeholder.
+		 * Supprots {world}, {x}, {y}, {z} placeholders inside of it.
+		 *
+		 * @return
+		 */
+		public static String getLocationFormat() {
+			if (locationFormat == null)
+				locationFormat = plain("format-location");
+
+			return locationFormat;
+		}
 	}
 }

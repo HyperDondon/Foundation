@@ -63,6 +63,21 @@ public interface SharedCommandCore {
 	 * @return
 	 * @throws CommandException
 	 */
+	default CompMaterial findMaterial(final String name, final String falseMessage) throws CommandException {
+		return this.findMaterial(name, SimpleComponent.fromMini(falseMessage));
+	}
+
+	/**
+	 * Attempts to parse the given name into a CompMaterial, will work for both modern
+	 * and legacy materials: MONSTER_EGG and SHEEP_SPAWN_EGG
+	 * <p>
+	 * You can use the {enum} or {item} variable to replace with the given name
+	 *
+	 * @param name
+	 * @param falseMessage
+	 * @return
+	 * @throws CommandException
+	 */
 	default CompMaterial findMaterial(final String name, final SimpleComponent falseMessage) throws CommandException {
 		final CompMaterial found = CompMaterial.fromString(name);
 
@@ -233,7 +248,7 @@ public interface SharedCommandCore {
 	 * @return
 	 */
 	default Player getPlayer() {
-		return this.isPlayer() ? ((BukkitPlayer) this.getSender()).getPlayer() : null;
+		return this.isPlayer() ? ((BukkitPlayer) this.getAudience()).getPlayer() : null;
 	}
 
 	/**
@@ -242,10 +257,10 @@ public interface SharedCommandCore {
 	 * @return
 	 */
 	default CommandSender getCommandSender() {
-		return ((BukkitPlayer) this.getSender()).getSender();
+		return ((BukkitPlayer) this.getAudience()).getSender();
 	}
 
-	FoundationPlayer getSender();
+	FoundationPlayer getAudience();
 
 	/**
 	 * Return whether the sender is a living player
@@ -253,7 +268,7 @@ public interface SharedCommandCore {
 	 * @return
 	 */
 	default boolean isPlayer() {
-		return this.getSender().isPlayer();
+		return this.getAudience().isPlayer();
 	}
 
 	void returnTell(SimpleComponent message);

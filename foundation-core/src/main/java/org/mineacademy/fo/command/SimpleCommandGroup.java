@@ -61,13 +61,17 @@ public abstract class SimpleCommandGroup {
 	 * Create a new simple command group using {@link SimpleSettings#MAIN_COMMAND_ALIASES}
 	 */
 	protected SimpleCommandGroup() {
-		final List<String> aliases = SimpleSettings.MAIN_COMMAND_ALIASES;
+		this(SimpleSettings.MAIN_COMMAND_ALIASES);
+	}
 
-		ValidCore.checkBoolean(!aliases.isEmpty(), "Your class extending SimpleCommandGroup had a no args constructor, which resorts to pulling SimpleSettings' MAIN_COMMAND_ALIASES field"
-				+ " WHICH WAS EMPTY. To fix this, make settings.yml file write 'Command_Aliases: [/yourmaincommand]' there.");
+	/**
+	 * Create a new simple command group with the given label and aliases
+	 */
+	protected SimpleCommandGroup(final List<String> labelAndAliases) {
+		ValidCore.checkBoolean(!labelAndAliases.isEmpty(), "No label and aliases given for " + this);
 
-		this.label = aliases.get(0);
-		this.aliases = aliases.size() > 1 ? aliases.subList(1, aliases.size()) : new ArrayList<>();
+		this.label = labelAndAliases.get(0);
+		this.aliases = labelAndAliases.size() > 1 ? labelAndAliases.subList(1, labelAndAliases.size()) : new ArrayList<>();
 	}
 
 	/**
@@ -213,10 +217,19 @@ public abstract class SimpleCommandGroup {
 			messages.add("  " + Lang.plain("command-label-authors") + " &f" + authors + (foundedYear != -1 ? " &7\u00A9 " + foundedYear + (currentYear != foundedYear ? " - " + currentYear : "") : ""));
 		}
 
-		messages.add("  " + Lang.plain("command-label-credits"));
+		messages.add("  " + this.getCredits());
 		messages.add("&8" + CommonCore.chatLineSmooth());
 
 		return messages;
+	}
+
+	/**
+	 * The credits message pointing to mineacademy most users want to change.
+	 *
+	 * @return
+	 */
+	protected String getCredits() {
+		return Lang.plain("command-label-credits");
 	}
 
 	/**
@@ -298,7 +311,7 @@ public abstract class SimpleCommandGroup {
 			// Print a special message on no arguments
 			if (this.args.length == 0) {
 				for (final String component : SimpleCommandGroup.this.getNoParamsHeader())
-					SimpleComponent.fromMini(component).send(this.sender);
+					SimpleComponent.fromMini(component).send(this.audience);
 
 				return;
 			}
@@ -307,7 +320,7 @@ public abstract class SimpleCommandGroup {
 			final SimpleSubCommandCore subcommand = this.findSubcommand(argument);
 
 			if (subcommand != null)
-				subcommand.delegateExecute(this.sender, this.getLabel(), this.compileSubcommandArgs());
+				subcommand.delegateExecute(this.audience, this.getLabel(), this.compileSubcommandArgs());
 
 			else if (!SimpleCommandGroup.this.getHelpArguments().isEmpty() && ValidCore.isInList(argument, SimpleCommandGroup.this.getHelpArguments()))
 				this.tellSubcommandsHelp();
@@ -333,7 +346,7 @@ public abstract class SimpleCommandGroup {
 					continue;
 
 				// Simulate the sender to enable permission checks in getMultilineHelp for ex.
-				subcommand.sender = this.sender;
+				subcommand.audience = this.audience;
 				subcommand.args = this.compileSubcommandArgs();
 
 				final List<SimpleComponent> hover = new ArrayList<>();
@@ -383,7 +396,7 @@ public abstract class SimpleCommandGroup {
 				// Allow "? <page>" page parameter
 				final int page = (this.args.length > 1 && ValidCore.isInteger(this.args[1]) ? Integer.parseInt(this.args[1]) : 1);
 
-				pages.send(this.sender, page);
+				pages.send(this.audience, page);
 
 			} else
 				this.tellError(Lang.component("command-header-no-subcommands-permission"));
@@ -393,7 +406,7 @@ public abstract class SimpleCommandGroup {
 		 * Split the line if sender is a player
 		 */
 		private String[] splitLine(String message) {
-			return CommonCore.split(message, this.sender.isPlayer() ? 60 : Integer.MAX_VALUE);
+			return CommonCore.split(message, this.audience.isPlayer() ? 60 : Integer.MAX_VALUE);
 		}
 
 		/*
@@ -424,13 +437,13 @@ public abstract class SimpleCommandGroup {
 		@Override
 		public List<String> tabComplete() {
 			if (this.args.length == 1)
-				return this.tabCompleteSubcommands(this.sender, this.args[0]);
+				return this.tabCompleteSubcommands(this.audience, this.args[0]);
 
 			if (this.args.length > 1) {
 				final SimpleSubCommandCore cmd = this.findSubcommand(this.args[0]);
 
 				if (cmd != null)
-					return cmd.delegateTabComplete(this.sender, this.getLabel(), Arrays.copyOfRange(this.args, 1, this.args.length));
+					return cmd.delegateTabComplete(this.audience, this.getLabel(), Arrays.copyOfRange(this.args, 1, this.args.length));
 			}
 
 			return NO_COMPLETE;

@@ -9,7 +9,7 @@ import lombok.Getter;
  * A class holding a minimum and a maximum
  */
 @Getter
-public final class RangedValue {
+public final class RangedValue implements ConfigStringSerializable {
 
 	/**
 	 * The minimum
@@ -122,6 +122,11 @@ public final class RangedValue {
 		return this.min.longValue() + " - " + this.max.longValue();
 	}
 
+	@Override
+	public String serialize() {
+		return this.toLine();
+	}
+
 	/**
 	 * Create a new ranged value
 	 *
@@ -154,7 +159,7 @@ public final class RangedValue {
 	 * @param line
 	 * @return
 	 */
-	public static RangedValue parse(String line) {
+	public static RangedValue fromString(String line) {
 
 		line = line.replace(" ", "").trim();
 

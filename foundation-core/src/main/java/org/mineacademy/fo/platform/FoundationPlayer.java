@@ -37,6 +37,8 @@ public abstract class FoundationPlayer {
 		return this.isConsole() ? Lang.legacy("console-name") : this.getSenderName0();
 	}
 
+	public abstract <T> T getPlayer();
+
 	protected abstract String getSenderName0();
 
 	/**
@@ -160,7 +162,7 @@ public abstract class FoundationPlayer {
 
 	public abstract void sendRawMessage(Component component);
 
-	public abstract void sendMessage(String message);
+	protected abstract void sendMessage(String message);
 
 	/**
 	 * Sends a JSON component message to the player

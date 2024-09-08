@@ -3,7 +3,6 @@ package org.mineacademy.fo.platform;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +34,9 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.Vector;
 import org.mineacademy.fo.Common;
+import org.mineacademy.fo.MathUtilCore;
 import org.mineacademy.fo.MinecraftVersion;
 import org.mineacademy.fo.MinecraftVersion.V;
 import org.mineacademy.fo.ReflectionUtil;
@@ -53,7 +54,6 @@ import org.mineacademy.fo.command.SimpleCommandCore;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.model.HookManager;
 import org.mineacademy.fo.model.SimpleComponent;
-import org.mineacademy.fo.model.SimpleSound;
 import org.mineacademy.fo.model.Task;
 import org.mineacademy.fo.model.Tuple;
 import org.mineacademy.fo.model.Variables;
@@ -174,35 +174,6 @@ public class BukkitPlatform extends FoundationPlatform {
 		SerializeUtil.addSerializer(new Serializer() {
 
 			@Override
-			public Object serializeYamlFast(Object object) {
-				if (object instanceof World)
-					return ((World) object).getName();
-
-				else if (object instanceof Location)
-					return SerializeUtil.serializeLoc((Location) object);
-
-				else if (object instanceof PotionEffectType)
-					return ((PotionEffectType) object).getName();
-
-				else if (object instanceof PotionEffect) {
-					final PotionEffect effect = (PotionEffect) object;
-
-					return effect.getType().getName() + " " + effect.getDuration() + " " + effect.getAmplifier();
-				}
-
-				else if (object instanceof Enchantment)
-					return ((Enchantment) object).getName();
-
-				else if (object instanceof SimpleSound)
-					return object.toString();
-
-				else if (object instanceof ConfigurationSerializable)
-					return object; // will pack in BukkitYamlRepresenter
-
-				return null;
-			}
-
-			@Override
 			public Object serialize(Language language, Object object) {
 				if (object instanceof World)
 					return ((World) object).getName();
@@ -222,27 +193,24 @@ public class BukkitPlatform extends FoundationPlatform {
 				else if (object instanceof Enchantment)
 					return ((Enchantment) object).getName();
 
-				else if (object instanceof SimpleSound)
-					return object.toString();
-
-				else if (object instanceof ItemStack) {
-					if (language == Language.JSON)
+				else if (language == Language.JSON && (object instanceof ItemStack || object instanceof ItemStack[])) {
+					if (object instanceof ItemStack)
 						return JsonItemStack.toJson((ItemStack) object);
-					else
-						return object;
-				}
 
-				else if (object instanceof ItemStack[]) {
-					if (language == SerializeUtil.Language.JSON) {
+					else {
 						final JsonArray jsonList = new JsonArray();
 
 						for (final ItemStack item : (ItemStack[]) object)
 							jsonList.add(item == null ? null : JsonItemStack.toJson(item));
 
 						return jsonList;
+					}
+				}
 
-					} else
-						return SerializeUtil.serialize(language, Arrays.asList((ItemStack[]) object));
+				else if (object instanceof Vector) {
+					final Vector vec = (Vector) object;
+
+					return MathUtilCore.formatOneDigit(vec.getX()) + " " + MathUtilCore.formatOneDigit(vec.getY()) + " " + MathUtilCore.formatOneDigit(vec.getZ());
 				}
 
 				else if (object instanceof ConfigurationSerializable)
@@ -294,9 +262,6 @@ public class BukkitPlatform extends FoundationPlatform {
 
 					return (T) enchant;
 				}
-
-				else if (classOf == SimpleSound.class)
-					return (T) new SimpleSound((String) object);
 
 				else if (classOf == ItemStack.class) {
 					if (object instanceof ItemStack)
@@ -385,6 +350,12 @@ public class BukkitPlatform extends FoundationPlatform {
 					}
 
 					return (T) list.toArray(new ItemStack[list.size()]);
+				}
+
+				else if (classOf == Vector.class) {
+					final String[] parts = object.toString().split(" ");
+
+					return (T) new Vector(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]), Double.parseDouble(parts[2]));
 				}
 
 				else if (ConfigurationSerializable.class.isAssignableFrom(classOf))
@@ -624,6 +595,9 @@ public class BukkitPlatform extends FoundationPlatform {
 
 	@Override
 	public FoundationPlayer toPlayer(Object sender) {
+		if (sender instanceof FoundationPlayer)
+			return (FoundationPlayer) sender;
+
 		if (sender == null)
 			throw new FoException("Cannot convert null sender to FoundationPlayer!");
 

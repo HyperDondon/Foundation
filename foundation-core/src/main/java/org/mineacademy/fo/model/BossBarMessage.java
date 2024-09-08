@@ -1,7 +1,5 @@
 package org.mineacademy.fo.model;
 
-import java.util.function.Function;
-
 import org.mineacademy.fo.ReflectionUtilCore;
 import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.platform.FoundationPlayer;
@@ -13,6 +11,7 @@ import net.kyori.adventure.bossbar.BossBar;
 /**
  * Represents a simple boss bar message
  */
+@Getter
 @RequiredArgsConstructor
 public final class BossBarMessage implements ConfigSerializable {
 
@@ -39,26 +38,15 @@ public final class BossBarMessage implements ConfigSerializable {
 	/**
 	 * The message to show
 	 */
-	@Getter
 	private final SimpleComponent message;
 
 	/**
 	 * Displays this boss bar to the given player
 	 *
-	 * @param audience
-	 */
-	public void displayTo(FoundationPlayer audience) {
-		this.displayTo(audience, Function.identity());
-	}
-
-	/**
-	 * Displays this boss bar to the given player
-	 *
 	 * @param sender
-	 * @param editBeforeDisplay
 	 */
-	public void displayTo(FoundationPlayer sender, Function<SimpleComponent, SimpleComponent> editBeforeDisplay) {
-		sender.sendBossbarTimed(editBeforeDisplay.apply(this.message), this.seconds, this.progress, this.color, this.overlay);
+	public void displayTo(FoundationPlayer sender) {
+		sender.sendBossbarTimed(this.message, this.seconds, this.progress, this.color, this.overlay);
 	}
 
 	/**

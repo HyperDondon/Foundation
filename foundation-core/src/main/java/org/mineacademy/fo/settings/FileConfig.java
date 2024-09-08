@@ -39,7 +39,7 @@ import lombok.NonNull;
 /**
  * This is a base class for all File based configurations.
  */
-public abstract class FileConfiguration extends MemorySection {
+public abstract class FileConfig extends ConfigSection {
 
 	/**
 	 * A null, used for convenience in {@link #loadConfiguration(String, String)} where the "to" is null.
@@ -49,7 +49,7 @@ public abstract class FileConfiguration extends MemorySection {
 	/**
 	 * The default configuration.
 	 */
-	private FileConfiguration defaults;
+	private FileConfig defaults;
 
 	/**
 	 * The file this configuration is stored in.
@@ -62,9 +62,9 @@ public abstract class FileConfiguration extends MemorySection {
 	private String pathPrefix;
 
 	/**
-	 * Creates an empty {@link FileConfiguration} with no default values.
+	 * Creates an empty {@link FileConfig} with no default values.
 	 */
-	public FileConfiguration() {
+	public FileConfig() {
 		super();
 	}
 
@@ -93,7 +93,7 @@ public abstract class FileConfiguration extends MemorySection {
 	}
 
 	/**
-	 * Loads this {@link FileConfiguration} from the specified location.
+	 * Loads this {@link FileConfig} from the specified location.
 	 * <p>
 	 * All the values contained within this configuration will be removed,
 	 * leaving only settings and defaults, and the new values will be loaded
@@ -143,17 +143,10 @@ public abstract class FileConfiguration extends MemorySection {
 		}
 
 		this.loadFromString(builder.toString());
-
-		try {
-			this.onLoad();
-
-		} catch (final Throwable t) {
-			CommonCore.error(t, "Failed to call onLoad in configuration " + this.file);
-		}
 	}
 
 	/**
-	 * Loads this {@link FileConfiguration} from the specified string, as
+	 * Loads this {@link FileConfig} from the specified string, as
 	 * opposed to from file.
 	 * <p>
 	 * All the values contained within this configuration will be removed,
@@ -188,7 +181,7 @@ public abstract class FileConfiguration extends MemorySection {
 	// ------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Saves this {@link FileConfiguration} to the specified location.
+	 * Saves this {@link FileConfig} to the specified location.
 	 * <p>
 	 * If the file does not exist, it will be created. If already exists, it
 	 * will be overwritten. If it cannot be overwritten or created, an
@@ -203,6 +196,8 @@ public abstract class FileConfiguration extends MemorySection {
 		ValidCore.checkNotNull(this.file, "Cannot save to a null file, call load() or setFile() first in " + this);
 
 		try {
+			this.onPreSave();
+
 			if (!this.canSave())
 				return;
 
@@ -211,7 +206,12 @@ public abstract class FileConfiguration extends MemorySection {
 			if (parent != null)
 				parent.mkdirs();
 
+			// Call the main save method
 			this.onSave();
+
+			// Manually save map keys
+			for (final Map.Entry<String, Object> entry : this.saveToMap().entrySet())
+				this.set(entry.getKey(), entry.getValue());
 
 			final String data = this.saveToString();
 			final Writer writer = new OutputStreamWriter(new FileOutputStream(this.file), StandardCharsets.UTF_8);
@@ -229,6 +229,12 @@ public abstract class FileConfiguration extends MemorySection {
 	}
 
 	/**
+	 * Called before the configuration is saved before canSave() is checked
+	 */
+	protected void onPreSave() {
+	}
+
+	/**
 	 * Override this to prevent saving the configuration
 	 *
 	 * @return
@@ -238,13 +244,22 @@ public abstract class FileConfiguration extends MemorySection {
 	}
 
 	/**
-	 * Called before the configuration is saved
+	 * Called before the configuration is saved after canSave() is checked
 	 */
 	protected void onSave() {
 	}
 
 	/**
-	 * Saves this {@link FileConfiguration} to a string, and returns it.
+	 * If you prefer not using onSave(), you can return a map of keys to be saved here
+	 *
+	 * @return
+	 */
+	protected SerializedMap saveToMap() {
+		return new SerializedMap();
+	}
+
+	/**
+	 * Saves this {@link FileConfig} to a string, and returns it.
 	 *
 	 * @return String containing this configuration.
 	 */
@@ -263,6 +278,24 @@ public abstract class FileConfiguration extends MemorySection {
 	public final void save(String path, Object value) {
 		this.set(path, value);
 		this.save();
+	}
+
+	/**
+	 * Shortcut for moving a value
+	 *
+	 * @param fromRel from relative path, path prefix is added
+	 * @param toAbs to absolute path, path prefix is not added
+	 */
+	public final void move(String fromRel, String toAbs) {
+
+		// Get the old value
+		final Object oldValue = this.getObject(fromRel);
+
+		// Set the new key
+		this.set(toAbs, oldValue);
+
+		// Remove old key
+		this.set(fromRel, null);
 	}
 
 	public final void set(String path, Object value) {
@@ -321,13 +354,13 @@ public abstract class FileConfiguration extends MemorySection {
 
 	/*public final boolean isConfigurationSection(String path) {
 		path = this.buildPathPrefix(path);
-
+	
 		return this.isMemorySection(path);
 	}*/
 
 	/*public final MemorySection getConfigurationSection(String path) {
 		path = this.buildPathPrefix(path);
-	
+
 		return this.retrieveMemorySection(path);
 	}*/
 
@@ -446,9 +479,9 @@ public abstract class FileConfiguration extends MemorySection {
 	 * @return
 	 */
 	public final <K, V> Tuple<K, V> getTuple(final String key, final Tuple<K, V> def, Class<K> keyType, Class<V> valueType) {
-		final SerializedMap map = this.getMap(key);
+		final Object object = this.getObject(key);
 
-		return map != null ? Tuple.deserialize(map, keyType, valueType) : def;
+		return object != null ? Tuple.deserialize(SerializedMap.of(object), keyType, valueType) : def;
 	}
 
 	/**
@@ -469,7 +502,7 @@ public abstract class FileConfiguration extends MemorySection {
 	public final CaseNumberFormat getCaseNumberFormat(String path, String def) {
 		final String raw = this.getString(path, def);
 
-		return raw == null ? null : new CaseNumberFormat(raw);
+		return raw == null ? null : CaseNumberFormat.fromString(raw);
 	}
 
 	public final ZoneId getTimezone(String path) {
@@ -853,12 +886,12 @@ public abstract class FileConfiguration extends MemorySection {
 	 * Gets the source configuration for this configuration.
 	 * <p>
 	 * If no configuration source was set, but default values were added, then
-	 * a {@link MemorySection} will be returned. If no source was set
+	 * a {@link ConfigSection} will be returned. If no source was set
 	 * and no defaults were set, then this method will return null.
 	 *
 	 * @return Configuration source for default values, or null if none exist.
 	 */
-	public final FileConfiguration getDefaults() {
+	public final FileConfig getDefaults() {
 		return this.defaults;
 	}
 
@@ -871,7 +904,7 @@ public abstract class FileConfiguration extends MemorySection {
 	 * @param defaults New source of default values for this configuration.
 	 * @throws IllegalArgumentException Thrown if defaults is null or this.
 	 */
-	public final void setDefaults(@NonNull FileConfiguration defaults) {
+	public final void setDefaults(@NonNull FileConfig defaults) {
 		this.defaults = defaults;
 	}
 
@@ -897,7 +930,7 @@ public abstract class FileConfiguration extends MemorySection {
 	 *
 	 * @return
 	 */
-	public final String getName() {
+	public String getName() {
 		final String fileName = this.getFile().getName();
 
 		if (fileName != null) {
@@ -911,7 +944,7 @@ public abstract class FileConfiguration extends MemorySection {
 	}
 
 	@Override
-	final MemorySection getParent() {
+	final ConfigSection getParent() {
 		return null;
 	}
 
@@ -927,7 +960,7 @@ public abstract class FileConfiguration extends MemorySection {
 		if (!type.isAssignableFrom(object.getClass()) && !type.getSimpleName().equals(object.getClass().getSimpleName())) {
 
 			// Exceptions
-			if (ConfigSerializable.class.isAssignableFrom(type) && object instanceof MemorySection)
+			if (ConfigSerializable.class.isAssignableFrom(type) && object instanceof ConfigSection)
 				return;
 
 			throw new FoException("Malformed configuration! Key '" + path + "' in " + this.getFile() + " must be " + type.getSimpleName() + " but got " + object.getClass().getSimpleName() + ": '" + object + "'");
@@ -936,8 +969,8 @@ public abstract class FileConfiguration extends MemorySection {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj instanceof FileConfiguration) {
-			final FileConfiguration other = (FileConfiguration) obj;
+		if (obj instanceof FileConfig) {
+			final FileConfig other = (FileConfig) obj;
 
 			if (other.file == null && this.file == null)
 				return super.equals(obj);

@@ -9,7 +9,7 @@ import lombok.NonNull;
  * A simple class holding time values in human readable form such as 1 second or 5 minutes
  */
 @Getter
-public final class SimpleTime {
+public final class SimpleTime implements ConfigStringSerializable {
 
 	private final String raw;
 	private final long timeTicks;
@@ -108,6 +108,11 @@ public final class SimpleTime {
 
 	@Override
 	public String toString() {
+		return this.serialize();
+	}
+
+	@Override
+	public String serialize() {
 		return this.getRaw();
 	}
 
@@ -118,7 +123,7 @@ public final class SimpleTime {
 	 * @return
 	 */
 	public static SimpleTime fromSeconds(final int seconds) {
-		return from(seconds + " seconds");
+		return fromString(seconds + " seconds");
 	}
 
 	/**
@@ -128,7 +133,7 @@ public final class SimpleTime {
 	 * @param time
 	 * @return
 	 */
-	public static SimpleTime from(final String time) {
+	public static SimpleTime fromString(final String time) {
 		return new SimpleTime(time);
 	}
 }

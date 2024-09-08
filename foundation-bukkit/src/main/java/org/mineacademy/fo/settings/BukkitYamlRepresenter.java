@@ -28,6 +28,8 @@ public class BukkitYamlRepresenter extends YamlConfig.YamlRepresenter {
 
 	private class RepresentConfigurationSerializable extends RepresentMap {
 
+		// TODO noit using anymore
+
 		@Override
 		public Node representData(Object data) {
 			final ConfigurationSerializable serializable = (ConfigurationSerializable) data;

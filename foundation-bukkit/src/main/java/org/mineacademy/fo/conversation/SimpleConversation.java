@@ -275,6 +275,17 @@ public abstract class SimpleConversation implements ConversationAbandonedListene
 	}
 
 	/**
+	 * Send a message to the conversable player later
+	 *
+	 * @param delayTicks
+	 * @param conversable
+	 * @param message
+	 */
+	protected static final void tellLater(final int delayTicks, final Conversable conversable, SimpleComponent message) {
+		Platform.runTask(delayTicks, () -> tell(conversable, message));
+	}
+
+	/**
 	 * Shortcut method for direct message send to the player
 	 *
 	 * @param conversable
@@ -406,8 +417,6 @@ public abstract class SimpleConversation implements ConversationAbandonedListene
 
 						if (!CompChatColor.stripColorCodes(question).contains(Lang.component("prefix-question").toPlain())) {
 							final String prefix = this.prefix.getPrefix(this.context);
-
-							System.out.println("Prefix: " + Lang.plain("prefix-question"));
 
 							question = (!prefix.isEmpty() ? prefix : Lang.legacy("prefix-question")) + " " + question;
 						}

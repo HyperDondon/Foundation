@@ -4,11 +4,11 @@ import java.util.Arrays;
 import java.util.Map;
 
 import org.bukkit.entity.Player;
-import org.mineacademy.fo.Common;
 import org.mineacademy.fo.GeoAPI;
 import org.mineacademy.fo.GeoAPI.GeoResponse;
 import org.mineacademy.fo.MinecraftVersion;
 import org.mineacademy.fo.PlayerUtil;
+import org.mineacademy.fo.SerializeUtil;
 import org.mineacademy.fo.model.HookManager;
 import org.mineacademy.fo.model.Variables;
 import org.mineacademy.fo.platform.BukkitPlayer;
@@ -58,7 +58,7 @@ public final class BukkitVariableCollector implements Variables.Collector {
 		replacements.put("faction", player == null ? "" : HookManager.getFaction(player));
 		replacements.put("world", player == null ? "" : HookManager.getWorldAlias(player.getWorld()));
 		replacements.put("health", player == null ? "" : formatHealth(player));
-		replacements.put("location", player == null ? "" : Common.shortLocation(player.getLocation()));
+		replacements.put("location", player == null ? "" : SerializeUtil.serializeLoc(player.getLocation()));
 		replacements.put("x", player == null ? "" : String.valueOf(player.getLocation().getBlockX()));
 		replacements.put("y", player == null ? "" : String.valueOf(player.getLocation().getBlockY()));
 		replacements.put("z", player == null ? "" : String.valueOf(player.getLocation().getBlockZ()));

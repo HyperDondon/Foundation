@@ -354,7 +354,7 @@ public final class ItemCreator {
 	 * @param flags
 	 * @return
 	 */
-	public ItemCreator flag(CompItemFlag... flags) {
+	public ItemCreator flags(CompItemFlag... flags) {
 		this.flags.addAll(Arrays.asList(flags));
 
 		return this;

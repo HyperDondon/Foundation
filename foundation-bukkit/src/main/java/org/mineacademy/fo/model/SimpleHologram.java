@@ -12,6 +12,7 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.mineacademy.fo.Common;
+import org.mineacademy.fo.SerializeUtil;
 import org.mineacademy.fo.Valid;
 import org.mineacademy.fo.remain.CompMaterial;
 import org.mineacademy.fo.remain.CompParticle;
@@ -301,7 +302,7 @@ public abstract class SimpleHologram {
 	 */
 	@Override
 	public String toString() {
-		return "ArmorStandItem{spawnLocation=" + Common.shortLocation(this.lastTeleportLocation) + ", spawned=" + this.isSpawned() + "}";
+		return "ArmorStandItem{spawnLocation=" + SerializeUtil.serializeLoc(this.lastTeleportLocation) + ", spawned=" + this.isSpawned() + "}";
 	}
 
 	/**

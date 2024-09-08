@@ -16,6 +16,7 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.mineacademy.fo.Common;
+import org.mineacademy.fo.SerializeUtil;
 import org.mineacademy.fo.Valid;
 import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.exception.InvalidWorldException;
@@ -250,7 +251,7 @@ public final class DiskRegion extends YamlConfig {
 
 	@Override
 	public String toString() {
-		return "DiskRegion{name=" + getName() + ", primary=" + Common.shortLocation(getPrimary()) + ", secondary=" + Common.shortLocation(getSecondary()) + "}";
+		return "DiskRegion{name=" + getName() + ", primary=" + SerializeUtil.serializeLoc(getPrimary()) + ", secondary=" + SerializeUtil.serializeLoc(getSecondary()) + "}";
 	}
 
 	/* ------------------------------------------------------------------------------- */

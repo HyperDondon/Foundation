@@ -22,7 +22,7 @@ import org.mineacademy.fo.model.IsInList;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.model.Tuple;
 import org.mineacademy.fo.remain.RemainCore;
-import org.mineacademy.fo.settings.MemorySection;
+import org.mineacademy.fo.settings.ConfigSection;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -571,7 +571,7 @@ public final class SerializedMap implements Iterable<Map.Entry<String, Object>> 
 				list.add(null);
 
 			else {
-				final Tuple<K, V> tuple = Tuple.deserialize(of(object, this.language), tupleKey, tupleValue);
+				final Tuple<K, V> tuple = Tuple.deserialize(of(this.language, object), tupleKey, tupleValue);
 
 				list.add(tuple);
 			}
@@ -641,7 +641,7 @@ public final class SerializedMap implements Iterable<Map.Entry<String, Object>> 
 	public SerializedMap getMap(final String key) {
 		final Object raw = this.get(key, Object.class);
 
-		return raw != null ? of(raw, this.language) : new SerializedMap();
+		return raw != null ? of(this.language, raw) : new SerializedMap();
 	}
 
 	/**
@@ -663,7 +663,7 @@ public final class SerializedMap implements Iterable<Map.Entry<String, Object>> 
 		final Object raw = this.map.get(path);
 
 		if (raw != null)
-			for (final Entry<?, ?> entry : of(raw, this.language).entrySet()) {
+			for (final Entry<?, ?> entry : of(this.language, raw).entrySet()) {
 				final Key key = SerializeUtilCore.deserialize(this.language, keyType, entry.getKey());
 				final Value value = SerializeUtilCore.deserialize(this.language, valueType, entry.getValue());
 
@@ -693,7 +693,7 @@ public final class SerializedMap implements Iterable<Map.Entry<String, Object>> 
 		Object raw = this.map.get(path);
 
 		if (raw != null) {
-			raw = of(raw, this.language);
+			raw = of(this.language, raw);
 
 			for (final Entry<String, Object> entry : ((SerializedMap) raw).entrySet()) {
 				final Key key = SerializeUtilCore.deserialize(this.language, keyType, entry.getKey());
@@ -905,27 +905,27 @@ public final class SerializedMap implements Iterable<Map.Entry<String, Object>> 
 	 */
 	/*public <O, N> void convert(final String path, final Class<O> from, final Class<N> to, final Function<O, N> converter) {
 		final Object old = this.getObject(path);
-	
+
 		if (old != null)
 			// If the old is a collection check if the first value is old, assume the rest is old as well
 			if (old instanceof Collection) {
 				final Collection<?> collection = (Collection<?>) old;
-	
+
 				if (collection.isEmpty() || !from.isAssignableFrom(collection.iterator().next().getClass()))
 					return;
-	
+
 				final List<N> newCollection = new ArrayList<>();
-	
+
 				for (final O oldItem : (Collection<O>) collection)
 					newCollection.add(converter.apply(oldItem));
-	
+
 				this.map.put(path, newCollection);
-	
+
 				CommonCore.log("Converted '" + path + "' from " + from.getSimpleName() + "[] to " + to.getSimpleName() + "[]");
-	
+
 			} else if (from.isAssignableFrom(old.getClass())) {
 				this.map.put(path, converter.apply((O) old));
-	
+
 				CommonCore.log("Converted '" + path + "' from '" + from.getSimpleName() + "' to '" + to.getSimpleName() + "'");
 			}
 	}*/
@@ -1036,7 +1036,7 @@ public final class SerializedMap implements Iterable<Map.Entry<String, Object>> 
 				return (SerializedMap) firstArgument;
 
 			if (firstArgument instanceof Map)
-				return SerializedMap.of(firstArgument);
+				return SerializedMap.of(Language.YAML, firstArgument);
 		}
 
 		final SerializedMap map = new SerializedMap();
@@ -1046,31 +1046,63 @@ public final class SerializedMap implements Iterable<Map.Entry<String, Object>> 
 	}
 
 	/**
-	 * Parses the given object into Serialized map
+	 * Parses the given object into Serialized map in YAML
 	 *
 	 * @param object
 	 * @return the serialized map, or an empty map if object could not be parsed
 	 */
 	public static SerializedMap of(@NonNull Object object) {
-		return of(object, Language.YAML);
+		return of(Language.YAML, object);
+	}
+
+	/**
+	 * Parses the given object into Serialized map in the given language
+	 *
+	 * @param language
+	 * @param object
+	 * @return
+	 */
+	public static SerializedMap of(Language language, @NonNull final Object object) {
+
+		if (language == Language.JSON) {
+			ValidCore.checkBoolean(object instanceof String, "Can only create SerializedMap from JSON String, got " + object.getClass().getSimpleName() + " instead: " + object);
+			final String json = (String) object;
+
+			if (json.isEmpty() || "[]".equals(json) || "{}".equals(json))
+				return new SerializedMap(Language.JSON);
+
+			try {
+				final JsonObject parsed = RemainCore.GSON.fromJson(json, JsonObject.class);
+				final Map<String, Object> converted = toValueMap(parsed);
+
+				return of(Language.JSON, converted);
+
+			} catch (final Throwable t) {
+				CommonCore.throwError(t, "SerializedMap failed to parse JSON from " + json);
+
+				return null;
+			}
+		}
+
+		return of0(language, object);
 	}
 
 	/*
 	 * Parses the given object into Serialized map
 	 */
-	private static SerializedMap of(@NonNull Object object, Language mode) {
+	private static SerializedMap of0(Language language, @NonNull Object object) {
 
 		if (object instanceof SerializedMap) {
-			((SerializedMap) object).language = mode;
+			((SerializedMap) object).language = language;
 
 			return (SerializedMap) object;
 		}
 
-		if (object instanceof String && object.toString().equals("{}"))
-			return new SerializedMap(mode);
+		if (object instanceof String && ("".equals(object.toString()) || "{}".equals(object.toString()) || "{}".equals(object.toString())))
+			return new SerializedMap(language);
 
-		if (object instanceof MemorySection)
-			return of(((MemorySection) object).getValues(false));
+		if (object instanceof ConfigSection)
+			return of0(language, ((ConfigSection) object).getValues(false));
 
 		if (object instanceof Map) {
 			final Map<String, Object> copyOf = new LinkedHashMap<>();
@@ -1100,7 +1132,7 @@ public final class SerializedMap implements Iterable<Map.Entry<String, Object>> 
 				}
 			}
 
-			final SerializedMap serialized = new SerializedMap(mode);
+			final SerializedMap serialized = new SerializedMap(language);
 			serialized.map.putAll(copyOf);
 
 			return serialized;
@@ -1108,35 +1140,9 @@ public final class SerializedMap implements Iterable<Map.Entry<String, Object>> 
 
 		// Exception since some config sections are stored like this when they are empty
 		if (object instanceof List && ((List<?>) object).isEmpty())
-			return new SerializedMap(mode);
+			return new SerializedMap(language);
 
-		throw new FoException("Cannot instantiate SerializedMap in mode " + mode + " from (" + object.getClass().getSimpleName() + ") '" + object + "'");
-	}
-
-	/**
-	 * Attempts to parse the given JSON into a serialized map
-	 * <p>
-	 * Values are not deserialized right away, they are converted
-	 * when you call get() functions
-	 *
-	 * @param json
-	 * @return
-	 */
-	public static SerializedMap fromJson(@NonNull final String json) {
-		if (json.isEmpty() || "[]".equals(json) || "{}".equals(json))
-			return new SerializedMap(Language.JSON);
-
-		try {
-			final JsonObject parsed = RemainCore.GSON.fromJson(json, JsonObject.class);
-			final Map<String, Object> converted = toValueMap(parsed);
-
-			return of(converted, Language.JSON);
-
-		} catch (final Throwable t) {
-			CommonCore.throwError(t, "SerializedMap failed to parse JSON from " + json);
-
-			return null;
-		}
+		throw new FoException("Cannot instantiate SerializedMap in mode " + language + " from (" + object.getClass().getSimpleName() + ") '" + object + "'");
 	}
 
 	private static Map<String, Object> toValueMap(JsonObject json) {

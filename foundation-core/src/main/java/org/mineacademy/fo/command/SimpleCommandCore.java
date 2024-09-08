@@ -42,7 +42,7 @@ public abstract class SimpleCommandCore {
 	 * You can set the cooldown time before executing the command again. This map
 	 * stores the player uuid and his last execution of the command.
 	 */
-	private final ExpiringMap<FoundationPlayer, Long> cooldownMap = ExpiringMap.builder().expiration(30, TimeUnit.MINUTES).build();
+	private final ExpiringMap<String, Long> cooldownMapByName = ExpiringMap.builder().expiration(30, TimeUnit.MINUTES).build();
 
 	/**
 	 * The command label, eg. boss for /boss
@@ -101,8 +101,7 @@ public abstract class SimpleCommandCore {
 
 	/**
 	 * A custom message when the player attempts to run this command
-	 * within {@link #cooldownSeconds}. By default we use the one found in
-	 * {@link SimpleLocalization.Commands#COOLDOWN_WAIT}
+	 * within {@link #cooldownSeconds}.
 	 * <p>
 	 * TIP: Use {duration} to replace the remaining time till next run
 	 */
@@ -116,8 +115,7 @@ public abstract class SimpleCommandCore {
 	private String permission = null;
 
 	/**
-	 * The permission message to send when the player does not have the permission,
-	 * defaults to SimpleLocalization.Commands.NO_PERMISSION
+	 * The permission message to send when the player does not have the permission
 	 */
 	private SimpleComponent permissionMessage = null;
 
@@ -132,12 +130,12 @@ public abstract class SimpleCommandCore {
 	// ----------------------------------------------------------------------
 
 	/**
-	 * The command sender, or null if does not exist
+	 * The source of this command, or null if does not exist
 	 * <p>
 	 * This variable is updated dynamically when the command is run with the
 	 * last known sender
 	 */
-	protected FoundationPlayer sender;
+	protected FoundationPlayer audience;
 
 	/**
 	 * The arguments used when the command was last executed
@@ -299,16 +297,16 @@ public abstract class SimpleCommandCore {
 	 * @deprecated internal use only
 	 */
 	@Deprecated
-	public final boolean delegateExecute(final FoundationPlayer sender, final String label, final String[] args) {
+	public final boolean delegateExecute(final FoundationPlayer audience, final String label, final String[] args) {
 
 		if (!Platform.getPlugin().isEnabled()) {
-			sender.sendMessage(Lang.componentVars("command-cannot-use-while-null", "state", Lang.legacy("command-disabled")));
+			audience.sendMessage(Lang.componentVars("command-cannot-use-while-null", "state", Lang.legacy("command-disabled")));
 
 			return true;
 		}
 
 		// Set variables to re-use later
-		this.sender = sender;
+		this.audience = audience;
 		this.args = args;
 
 		try {
@@ -344,11 +342,11 @@ public abstract class SimpleCommandCore {
 
 						if (legacyUsage != null)
 							for (final String legacyLine : legacyUsage)
-								this.replacePlaceholders(SimpleComponent.fromMini(this.colorizeUsage(legacyLine))).send(this.sender);
+								this.replacePlaceholders(SimpleComponent.fromMini(this.colorizeUsage(legacyLine))).send(audience);
 
 						else if (newUsage != null)
 							for (final SimpleComponent newLine : newUsage)
-								this.replacePlaceholders(newLine).send(this.sender);
+								this.replacePlaceholders(newLine).send(audience);
 
 						this.tellNoPrefix("<dark_gray>" + CommonCore.chatLineSmooth());
 					}
@@ -365,7 +363,7 @@ public abstract class SimpleCommandCore {
 					"help_command", SimpleComponent.fromPlain(this.getEffectiveCommand() + " ?").onHover("Click to execute.").onClickRunCmd(this.getEffectiveCommand() + " ?")));
 
 		} catch (final CommandException ex) {
-			ex.sendErrorMessage(this.sender);
+			ex.sendErrorMessage(audience);
 
 		} catch (final Throwable t) {
 			this.tellError(Lang.component("command-error"));
@@ -391,10 +389,10 @@ public abstract class SimpleCommandCore {
 		if (this.cooldownBypassPermission != null && this.hasPerm(this.cooldownBypassPermission))
 			return;
 
-		if (!this.isCooldownApplied(this.sender))
+		if (!this.isCooldownApplied(this.audience))
 			return;
 
-		final long lastRun = this.cooldownMap.getOrDefault(this.sender, 0L);
+		final long lastRun = this.cooldownMapByName.getOrDefault(this.audience.getName(), 0L);
 		final long difference = (System.currentTimeMillis() - lastRun) / 1000;
 
 		// Check if the command was run earlier within the wait threshold
@@ -402,7 +400,7 @@ public abstract class SimpleCommandCore {
 			this.checkBoolean(difference > this.cooldownSeconds, CommonCore.getOrDefault(this.cooldownMessage, Lang.component("command-cooldown-wait")).replaceBracket("duration", String.valueOf(this.cooldownSeconds - difference + 1)));
 
 		// Update the last try with the current time
-		this.cooldownMap.put(this.sender, System.currentTimeMillis());
+		this.cooldownMapByName.put(this.audience.getName(), System.currentTimeMillis());
 	}
 
 	/**
@@ -452,7 +450,7 @@ public abstract class SimpleCommandCore {
 	 * @throws CommandException
 	 */
 	public final void checkPerm(@NonNull final FoundationPlayer sender, @NonNull final String permission) throws CommandException {
-		if (!this.hasPerm(sender, permission))
+		if (!sender.hasPermission(permission))
 			throw new CommandException(this.getPermissionMessage().replaceBracket("permission", permission));
 	}
 
@@ -478,14 +476,6 @@ public abstract class SimpleCommandCore {
 		if (this.args.length < minimumLength)
 			this.returnTell(falseMessage);
 	}
-
-	/**
-	 * Convenience method for returning the command with the
-	 * message for player if the condition does not meet
-	 */
-	/*public final void checkArgs(final boolean condition) {
-		this.checkBoolean(condition, SimpleLocalization.Commands.INVALID_ARGUMENT);
-	}*/
 
 	/**
 	 * Checks if the given boolean is true
@@ -554,7 +544,7 @@ public abstract class SimpleCommandCore {
 	 */
 	protected final SimpleTime findTime(final String raw) {
 		try {
-			return SimpleTime.from(raw);
+			return SimpleTime.fromString(raw);
 
 		} catch (final IllegalArgumentException ex) {
 			this.returnTell(Lang.componentVars("command-invalid-time", "input", raw));
@@ -574,7 +564,7 @@ public abstract class SimpleCommandCore {
 	 * @throws CommandException
 	 */
 	protected final <T extends Enum<T>> T findEnum(final Class<T> enumType, final String enumValue) throws CommandException {
-		return this.findEnum(enumType, enumValue, null);
+		return this.findEnum(enumType, enumValue, null, Lang.component("command-invalid-type"));
 	}
 
 	/**
@@ -588,27 +578,88 @@ public abstract class SimpleCommandCore {
 	 * @param enumType
 	 * @param enumValue
 	 * @param condition
-	
+	 * @param falseMessage
+	 *
+	 * @return
+	 * @throws CommandException
+	 */
+	protected final <T extends Enum<T>> T findEnum(final Class<T> enumType, final String enumValue, final SimpleComponent falseMessage) throws CommandException {
+		return this.findEnum(enumType, enumValue, null, falseMessage);
+	}
+
+	/**
+	 * Finds an enumeration of a certain type, if it fails it prints a false message to the player
+	 * You can use the {enum} variable in the false message for the name parameter
+	 *
+	 * You can also use the condition to filter certain enums and act as if they did not existed
+	 * if your function returns false for such
+	 *
+	 * @param <T>
+	 * @param enumType
+	 * @param enumValue
+	 * @param condition
+	 * @param falseMessage
+	 *
+	 * @return
+	 * @throws CommandException
+	 */
+	protected final <T extends Enum<T>> T findEnum(final Class<T> enumType, final String enumValue, final String falseMessage) throws CommandException {
+		return this.findEnum(enumType, enumValue, null, SimpleComponent.fromMini(falseMessage));
+	}
+
+	/**
+	 * Finds an enumeration of a certain type, if it fails it prints a false message to the player
+	 * You can use the {enum} variable in the false message for the name parameter
+	 *
+	 * You can also use the condition to filter certain enums and act as if they did not existed
+	 * if your function returns false for such
+	 *
+	 * @param <T>
+	 * @param enumType
+	 * @param enumValue
+	 * @param condition
+	 *
 	 * @return
 	 * @throws CommandException
 	 */
 	protected final <T extends Enum<T>> T findEnum(final Class<T> enumType, final String enumValue, final Function<T, Boolean> condition) throws CommandException {
+		return this.findEnum(enumType, enumValue, condition, Lang.component("command-invalid-type"));
+	}
+
+	/**
+	 * Finds an enumeration of a certain type, if it fails it prints a false message to the player
+	 * You can use the {enum} variable in the false message for the name parameter
+	 *
+	 * You can also use the condition to filter certain enums and act as if they did not existed
+	 * if your function returns false for such
+	 *
+	 * @param <T>
+	 * @param enumType
+	 * @param enumValue
+	 * @param condition
+	 * @param falseMessage
+	 *
+	 * @return
+	 * @throws CommandException
+	 */
+	protected final <T extends Enum<T>> T findEnum(final Class<T> enumType, final String enumValue, final Function<T, Boolean> condition, final SimpleComponent falseMessage) throws CommandException {
 		T found = null;
 
 		try {
 			found = ReflectionUtilCore.lookupEnum(enumType, enumValue);
 
-			if (!condition.apply(found))
-				found = null;
+			if (condition != null)
+				if (!condition.apply(found))
+					found = null;
 
 		} catch (final Throwable t) {
 			// Not found, pass through below to error out
 		}
 
-		this.checkNotNull(found, Lang.componentVars("command-invalid-enum",
-				"type", enumType.getSimpleName().replaceAll("([a-z])([A-Z]+)", "$1 $2").toLowerCase(),
-				"value", enumValue,
-				"available", CommonCore.join(enumType.getEnumConstants(), constant -> constant.name().toLowerCase())));
+		this.checkNotNull(found, falseMessage
+				.replaceBracket("type", enumType.getSimpleName().replaceAll("([a-z])([A-Z]+)", "$1 $2").toLowerCase())
+				.replaceBracket("value", enumValue)
+				.replaceBracket("available", CommonCore.join(enumType.getEnumConstants(), constant -> constant.name().toLowerCase())));
 
 		return found;
 	}
@@ -701,7 +752,7 @@ public abstract class SimpleCommandCore {
 				e.printStackTrace();
 		}
 
-		throw new CommandException(this.replacePlaceholders(falseMessage.replaceBracket("number", this.args[index])));
+		throw new CommandException(this.replacePlaceholders(falseMessage.replaceBracket("value", this.args[index])));
 	}
 
 	/**
@@ -750,22 +801,7 @@ public abstract class SimpleCommandCore {
 	 * @return
 	 */
 	protected final boolean hasPerm(final String permission) {
-		return this.hasPerm(this.sender, permission);
-	}
-
-	/**
-	 * A convenience check for quickly determining if the sender has a given
-	 * permission.
-	 *
-	 * TIP: For a more complete check use {@link #checkPerm(String)} that
-	 * will automatically return your command if they lack the permission.
-	 *
-	 * @param sender
-	 * @param permission
-	 * @return
-	 */
-	protected final boolean hasPerm(final FoundationPlayer sender, final String permission) {
-		return permission == null || sender.hasPermission(permission);
+		return permission == null || this.audience.hasPermission(permission);
 	}
 
 	// ----------------------------------------------------------------------
@@ -906,7 +942,7 @@ public abstract class SimpleCommandCore {
 			return;
 
 		component = this.replacePlaceholders(component);
-		this.sender.sendMessage(this.tellPrefix != null ? this.tellPrefix.append(component) : component);
+		this.audience.sendMessage(this.tellPrefix != null ? this.tellPrefix.append(component) : component);
 	}
 
 	/**
@@ -925,7 +961,7 @@ public abstract class SimpleCommandCore {
 	 */
 	protected final void tellSuccess(SimpleComponent component) {
 		if (component != null)
-			MessengerCore.success(this.sender, this.replacePlaceholders(component));
+			MessengerCore.success(this.audience, this.replacePlaceholders(component));
 	}
 
 	/**
@@ -944,7 +980,7 @@ public abstract class SimpleCommandCore {
 	 */
 	protected final void tellInfo(SimpleComponent message) {
 		if (message != null)
-			MessengerCore.info(this.sender, this.replacePlaceholders(message));
+			MessengerCore.info(this.audience, this.replacePlaceholders(message));
 	}
 
 	/**
@@ -963,7 +999,7 @@ public abstract class SimpleCommandCore {
 	 */
 	protected final void tellWarn(SimpleComponent message) {
 		if (message != null)
-			MessengerCore.warn(this.sender, this.replacePlaceholders(message));
+			MessengerCore.warn(this.audience, this.replacePlaceholders(message));
 	}
 
 	/**
@@ -982,7 +1018,7 @@ public abstract class SimpleCommandCore {
 	 */
 	protected final void tellError(SimpleComponent message) {
 		if (message != null)
-			MessengerCore.error(this.sender, this.replacePlaceholders(message));
+			MessengerCore.error(this.audience, this.replacePlaceholders(message));
 	}
 
 	/**
@@ -1001,7 +1037,7 @@ public abstract class SimpleCommandCore {
 	 */
 	protected final void tellQuestion(SimpleComponent message) {
 		if (message != null)
-			MessengerCore.question(this.sender, this.replacePlaceholders(message));
+			MessengerCore.question(this.audience, this.replacePlaceholders(message));
 	}
 
 	/**
@@ -1199,7 +1235,7 @@ public abstract class SimpleCommandCore {
 	 * <p>
 	 * Tab completion is only shown if the sender has {@link #getPermission()}
 	 *
-	 * @param sender
+	 * @param audience
 	 * @param label
 	 * @param args
 	 *
@@ -1207,8 +1243,8 @@ public abstract class SimpleCommandCore {
 	 * @return
 	 */
 	@Deprecated
-	public final List<String> delegateTabComplete(final FoundationPlayer sender, final String label, final String[] args) {
-		this.sender = sender;
+	public final List<String> delegateTabComplete(final FoundationPlayer audience, final String label, final String[] args) {
+		this.audience = audience;
 		this.args = args;
 
 		if (this.hasPerm(this.getPermission())) {
@@ -1301,12 +1337,12 @@ public abstract class SimpleCommandCore {
 		return TabUtil.complete(this.getLastArg(), list.toArray());
 	}
 
-	/*
+	/**
 	 * Convenience method for returning the last word in arguments
 	 *
 	 * @return
 	 */
-	private final String getLastArg() {
+	protected final String getLastArg() {
 		return this.args.length > 0 ? this.args[this.args.length - 1] : "";
 	}
 
@@ -1402,7 +1438,7 @@ public abstract class SimpleCommandCore {
 	}
 
 	/**
-	 * Set a custom cooldown message, by default we use the one found in {@link SimpleLocalization.Commands#COOLDOWN_WAIT}
+	 * Set a custom cooldown message
 	 * <p>
 	 * Use {duration} to dynamically replace the remaining time
 	 *
@@ -1413,7 +1449,7 @@ public abstract class SimpleCommandCore {
 	}
 
 	/**
-	 * Set a custom cooldown message, by default we use the one found in {@link SimpleLocalization.Commands#COOLDOWN_WAIT}
+	 * Set a custom cooldown message
 	 * <p>
 	 * Use {duration} to dynamically replace the remaining time
 	 *
@@ -1464,10 +1500,10 @@ public abstract class SimpleCommandCore {
 	 *
 	 * @return
 	 */
-	public final FoundationPlayer getSender() {
-		ValidCore.checkNotNull(this.sender, "Sender cannot be null");
+	public final FoundationPlayer getAudience() {
+		ValidCore.checkNotNull(this.audience, "Sender cannot be null");
 
-		return this.sender;
+		return this.audience;
 	}
 
 	/**
@@ -1660,10 +1696,10 @@ public abstract class SimpleCommandCore {
 			runnable.run();
 
 		} catch (final CommandException ex) {
-			ex.sendErrorMessage(this.sender);
+			ex.sendErrorMessage(this.audience);
 
 		} catch (final Throwable t) {
-			MessengerCore.error(this.sender, Lang.component("command-error"));
+			MessengerCore.error(this.audience, Lang.component("command-error"));
 
 			throw t;
 		}

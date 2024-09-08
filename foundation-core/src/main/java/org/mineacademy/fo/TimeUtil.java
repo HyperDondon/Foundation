@@ -9,7 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.mineacademy.fo.settings.Lang;
-import org.mineacademy.fo.settings.SimpleSettings;
+import org.mineacademy.fo.settings.Lang.Default;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -72,7 +72,7 @@ public final class TimeUtil {
 	// ------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Return the current time formatted as per {@link SimpleSettings#DATE_FORMAT}
+	 * Return the current time formatted as per {@link Default#getDateFormat()}
 	 * Defaults to DAY.MONTH.YEAR HOUR:MINUTES:SECONDS
 	 *
 	 * @return
@@ -82,18 +82,18 @@ public final class TimeUtil {
 	}
 
 	/**
-	 * Return the given timestamp in millis formatted as per {@link SimpleSettings#DATE_FORMAT}
+	 * Return the given timestamp in millis formatted as per {@link Default#getDateFormat()}
 	 * Defaults to DAY.MONTH.YEAR HOUR:MINUTES:SECONDS
 	 *
 	 * @param time
 	 * @return
 	 */
 	public static String getFormattedDate(final long time) {
-		return SimpleSettings.DATE_FORMAT.format(time);
+		return Lang.Default.getDateFormat().format(time);
 	}
 
 	/**
-	 * Return the current time formatted as per {@link SimpleSettings#DATE_FORMAT_SHORT}
+	 * Return the current time formatted as per {@link Default#getDateFormatShort()}
 	 * Defaults to DAY.MONTH.YEAR HOUR:MINUTES
 	 *
 	 * @return
@@ -103,18 +103,18 @@ public final class TimeUtil {
 	}
 
 	/**
-	 * Return the given date in millis formatted as per {@link SimpleSettings#DATE_FORMAT_SHORT}
+	 * Return the given date in millis formatted as per {@link Default#getDateFormatShort()}
 	 * Defaults to DAY.MONTH.YEAR HOUR:MINUTES
 	 *
 	 * @param time
 	 * @return
 	 */
 	public static String getFormattedDateShort(final long time) {
-		return SimpleSettings.DATE_FORMAT_SHORT.format(time);
+		return Lang.Default.getDateFormatShort().format(time);
 	}
 
 	/**
-	 * Return the current time formatted as per {@link SimpleSettings#DATE_FORMAT_MONTH}
+	 * Return the current time formatted as per {@link Default#getDateFormatMonth()}
 	 * Defaults to DAY.MONTH HOUR:MINUTES
 	 *
 	 * @return
@@ -124,14 +124,14 @@ public final class TimeUtil {
 	}
 
 	/**
-	 * Return the given date in millis formatted as per {@link SimpleSettings#DATE_FORMAT_MONTH}
+	 * Return the given date in millis formatted as per {@link Default#getDateFormatMonth()}
 	 * Defaults to DAY.MONTH HOUR:MINUTES
 	 *
 	 * @param time
 	 * @return
 	 */
 	public static String getFormattedDateMonth(final long time) {
-		return SimpleSettings.DATE_FORMAT_MONTH.format(time);
+		return Lang.Default.getDateFormatMonth().format(time);
 	}
 
 	// ------------------------------------------------------------------------------------------------------------
@@ -222,10 +222,10 @@ public final class TimeUtil {
 			final long hour = seconds / 60 / 60;
 			minute %= 60;
 
-			hourMsg = Lang.formattedNumber("case-hour", hour) + " ";
+			hourMsg = Lang.numberFormat("case-hour", hour) + " ";
 		}
 
-		return hourMsg + (minute != 0 ? Lang.formattedNumber("case-minute", minute) + " " : "") + Lang.formattedNumber("case-second", second);
+		return hourMsg + (minute != 0 ? Lang.numberFormat("case-minute", minute) + " " : "") + Lang.numberFormat("case-second", second);
 	}
 
 	/**
@@ -239,10 +239,10 @@ public final class TimeUtil {
 		final long hours = minutes / 60;
 		final long days = hours / 24;
 
-		return (days != 0 ? Lang.formattedNumber("case-day", days) + " " : "")
-				+ (hours % 24 != 0 ? Lang.formattedNumber("case-hour", hours % 24) + " " : "")
-				+ (minutes % 60 != 0 ? Lang.formattedNumber("case-minute", minutes % 60) + " " : "")
-				+ Lang.formattedNumber("case-second", seconds % 60);
+		return (days != 0 ? Lang.numberFormat("case-day", days) + " " : "")
+				+ (hours % 24 != 0 ? Lang.numberFormat("case-hour", hours % 24) + " " : "")
+				+ (minutes % 60 != 0 ? Lang.numberFormat("case-minute", minutes % 60) + " " : "")
+				+ Lang.numberFormat("case-second", seconds % 60);
 	}
 
 	/**
