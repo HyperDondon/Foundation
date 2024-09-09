@@ -25,6 +25,7 @@ import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.permissions.Permissible;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -1145,22 +1146,22 @@ public final class HookManager {
 	/**
 	 * Use ItemsAdder to replace font images in the message.
 	 *
-	 * @param message the message.
+	 * @param component the message.
 	 * @return
 	 */
-	public static String replaceFontImages(final String message) {
-		return replaceFontImages(null, message);
+	public static SimpleComponent replaceFontImages(final SimpleComponent component) {
+		return replaceFontImages(null, component);
 	}
 
 	/**
 	 * Use ItemsAdder to replace font images in the message based on the player's permission
 	 *
 	 * @param player  the player to use.
-	 * @param message the message.
+	 * @param component the message.
 	 * @return
 	 */
-	public static String replaceFontImages(@Nullable Player player, final String message) {
-		return isItemsAdderLoaded() ? itemsAdderHook.replaceFontImages(player, message) : message;
+	public static SimpleComponent replaceFontImages(@Nullable Player player, SimpleComponent component) {
+		return isItemsAdderLoaded() ? itemsAdderHook.replaceFontImages(player, component) : component;
 	}
 
 	// ------------------------------------------------------------------------------------------------------------
@@ -3894,23 +3895,57 @@ class LiteBansHook {
 
 class ItemsAdderHook {
 
-	private final Class<?> itemsAdder;
-	private final Method replaceFontImagesMethod;
-	private final Method replaceFontImagesMethodNoPlayer;
+	private Class<?> itemsAdder;
+	private Method replaceFontImages;
+	private Method replaceFontImagesNoPlayer;
+	private Method replaceFontImagesAdventure;
+	private Method replaceFontImagesAdventureNoPlayer;
+	private boolean failed = false;
 
 	ItemsAdderHook() {
-		this.itemsAdder = ReflectionUtil.lookupClass("dev.lone.itemsadder.api.FontImages.FontImageWrapper");
-		this.replaceFontImagesMethod = ReflectionUtil.getDeclaredMethod(this.itemsAdder, "replaceFontImages", Player.class, String.class);
-		this.replaceFontImagesMethodNoPlayer = ReflectionUtil.getDeclaredMethod(this.itemsAdder, "replaceFontImages", String.class);
 	}
 
-	/*
-	 * Return true if the given player is muted.
-	 */
-	String replaceFontImages(@Nullable final Player player, final String message) {
-		if (player == null)
-			return ReflectionUtil.invokeStatic(this.replaceFontImagesMethodNoPlayer, message);
+	SimpleComponent replaceFontImages(@Nullable final Player player, final SimpleComponent component) {
 
-		return ReflectionUtil.invokeStatic(this.replaceFontImagesMethod, player, message);
+		if (this.replaceFontImages == null) {
+
+			// integration failed, do not spam
+			if (this.failed)
+				return component;
+
+			try {
+				this.itemsAdder = ReflectionUtil.lookupClass("dev.lone.itemsadder.api.FontImages.FontImageWrapper");
+
+				this.replaceFontImages = ReflectionUtil.getDeclaredMethod(this.itemsAdder, "replaceFontImages", Permissible.class, String.class);
+				this.replaceFontImagesNoPlayer = ReflectionUtil.getDeclaredMethod(this.itemsAdder, "replaceFontImages", String.class);
+
+				this.replaceFontImagesAdventure = ReflectionUtil.getDeclaredMethod(this.itemsAdder, "replaceFontImages", Permissible.class, Component.class);
+				this.replaceFontImagesAdventureNoPlayer = ReflectionUtil.getDeclaredMethod(this.itemsAdder, "replaceFontImages", Component.class);
+
+			} catch (final Throwable original) {
+				try {
+					this.replaceFontImages = ReflectionUtil.getDeclaredMethod(this.itemsAdder, "replaceFontImages", Player.class, String.class);
+					this.replaceFontImagesNoPlayer = ReflectionUtil.getDeclaredMethod(this.itemsAdder, "replaceFontImages", String.class);
+
+				} catch (final Throwable tt) {
+					Common.warning("Unable to resolve ItemsAdder API. The plugin will continue to function, but no font images will be replaced. Is the integration outdated?");
+
+					original.printStackTrace();
+					this.failed = true;
+				}
+			}
+		}
+
+		if (player == null) {
+			if (replaceFontImagesAdventureNoPlayer != null)
+				return ReflectionUtil.invokeStatic(this.replaceFontImagesAdventureNoPlayer, component.toAdventure());
+			else
+				return ReflectionUtil.invokeStatic(this.replaceFontImagesNoPlayer, component.toLegacy());
+		}
+
+		if (replaceFontImagesAdventure != null)
+			return SimpleComponent.fromAdventure(ReflectionUtil.invokeStatic(this.replaceFontImagesAdventure, player, component.toAdventure()));
+		else
+			return SimpleComponent.fromSection(ReflectionUtil.invokeStatic(this.replaceFontImages, player, component.toLegacy()));
 	}
 }
