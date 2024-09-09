@@ -54,8 +54,8 @@ public abstract class SimpleCommandGroup {
 	 * The temporary sender that is currently about to see the command group, mostly used in
 	 * compiling info messages such as in {@link #getNoParamsHeader()}
 	 */
-	//@Getter
-	//protected FoundationPlayer sender;
+	@Getter
+	private FoundationPlayer audience;
 
 	/**
 	 * Create a new simple command group using {@link SimpleSettings#MAIN_COMMAND_ALIASES}
@@ -306,7 +306,7 @@ public abstract class SimpleCommandGroup {
 		protected void onCommand() {
 
 			// Pass through sender to the command group itself
-			//SimpleCommandGroup.this.sender = this.sender;
+			SimpleCommandGroup.this.audience = this.audience;
 
 			// Print a special message on no arguments
 			if (this.args.length == 0) {
