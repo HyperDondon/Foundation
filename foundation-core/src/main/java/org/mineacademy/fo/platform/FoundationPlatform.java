@@ -4,9 +4,12 @@ import java.io.File;
 import java.util.List;
 import java.util.UUID;
 
+import org.mineacademy.fo.MessengerCore;
+import org.mineacademy.fo.ValidCore;
 import org.mineacademy.fo.command.SimpleCommandCore;
 import org.mineacademy.fo.model.Task;
 import org.mineacademy.fo.model.Tuple;
+import org.mineacademy.fo.remain.CompChatColor;
 
 import net.kyori.adventure.text.event.HoverEventSource;
 
@@ -59,7 +62,68 @@ public abstract class FoundationPlatform {
 
 	public abstract HoverEventSource<?> convertItemStackToHoverEvent(Object itemStack);
 
-	public abstract void dispatchConsoleCommand(String command);
+	/**
+	 * Runs the given command (without /) as the console, replacing {player} with sender
+	 *
+	 * You can prefix the command with @(announce|warn|error|info|question|success) to send a formatted
+	 * message to playerReplacement directly.
+	 *
+	 * @param playerReplacement
+	 * @param command
+	 */
+	public final void dispatchConsoleCommand(FoundationPlayer playerReplacement, String command) {
+		if (command.isEmpty() || command.equalsIgnoreCase("none"))
+			return;
+
+		if (command.startsWith("@announce ")) {
+			ValidCore.checkNotNull(playerReplacement, "Cannot use @announce without a player in: " + command);
+
+			MessengerCore.announce(playerReplacement, command.replace("@announce ", ""));
+		}
+
+		else if (command.startsWith("@warn ")) {
+			ValidCore.checkNotNull(playerReplacement, "Cannot use @warn without a player in: " + command);
+
+			MessengerCore.warn(playerReplacement, command.replace("@warn ", ""));
+		}
+
+		else if (command.startsWith("@error ")) {
+			ValidCore.checkNotNull(playerReplacement, "Cannot use @error without a player in: " + command);
+
+			MessengerCore.error(playerReplacement, command.replace("@error ", ""));
+		}
+
+		else if (command.startsWith("@info ")) {
+			ValidCore.checkNotNull(playerReplacement, "Cannot use @info without a player in: " + command);
+
+			MessengerCore.info(playerReplacement, command.replace("@info ", ""));
+		}
+
+		else if (command.startsWith("@question ")) {
+			ValidCore.checkNotNull(playerReplacement, "Cannot use @question without a player in: " + command);
+
+			MessengerCore.question(playerReplacement, command.replace("@question ", ""));
+		}
+
+		else if (command.startsWith("@success ")) {
+			ValidCore.checkNotNull(playerReplacement, "Cannot use @success without a player in: " + command);
+
+			MessengerCore.success(playerReplacement, command.replace("@success ", ""));
+		}
+
+		else {
+			command = command.startsWith("/") && !command.startsWith("//") ? command.substring(1) : command;
+			command = command.replace("{player}", playerReplacement == null ? "" : playerReplacement.getName());
+
+			// Workaround for JSON in tellraw getting HEX colors replaced
+			if (!command.startsWith("tellraw"))
+				command = CompChatColor.translateColorCodes(command);
+
+			this.dispatchConsoleCommand0(command);
+		}
+	}
+
+	protected abstract void dispatchConsoleCommand0(String command);
 
 	public abstract List<FoundationPlayer> getOnlinePlayers();
 

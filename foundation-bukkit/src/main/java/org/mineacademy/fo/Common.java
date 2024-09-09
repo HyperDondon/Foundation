@@ -100,36 +100,6 @@ public final class Common extends CommonCore {
 	}
 
 	/**
-	 * Sends a message to the audience. Supports {plugin_prefix} and {player} variable.
-	 * Supports \<actionbar\>, \<toast\>, \<title\>, \<bossbar\> and \<center\>.
-	 * Properly sends the message to the player if he is conversing with the server.
-	 *
-	 * @param sender
-	 * @param messages
-	 */
-	/*public static void tell(@NonNull final CommandSender sender, String... messages) {
-		final FoundationPlayer foundationSender = Platform.toPlayer(sender);
-	
-		for (final String message : messages)
-			foundationSender.sendMessage(message);
-	}*/
-
-	/**
-	 * Sends a message to the audience. Supports {plugin_prefix} and {player} variable.
-	 * Supports \<actionbar\>, \<toast\>, \<title\>, \<bossbar\> and \<center\>.
-	 * Properly sends the message to the player if he is conversing with the server.
-	 *
-	 * @param sender
-	 * @param messages
-	 */
-	/*public static void tellNoPrefix(@NonNull final CommandSender sender, String... messages) {
-		final FoundationPlayer audience = Platform.toPlayer(sender);
-	
-		for (final String message : messages)
-			CommonCore.tellNoPrefix(audience, message);
-	}*/
-
-	/**
 	 * Replace some common classes such as entity to name automatically
 	 *
 	 * @param arg
@@ -285,56 +255,6 @@ public final class Common extends CommonCore {
 		return null;
 	}
 
-	/**
-	 * Resolves the inner Map in a Bukkit's {@link MemorySection}
-	 *
-	 * @param mapOrSection
-	 * @return
-	 */
-	/*public static Map<String, Object> getMapFromSection(@NonNull Object mapOrSection) {
-		mapOrSection = Remain.getRootOfSectionPathData(mapOrSection);
-	
-		final Map<String, Object> map = mapOrSection instanceof ConfigSection ? ((ConfigSection) mapOrSection).getValues(false)
-				: mapOrSection instanceof Map ? (Map<String, Object>) mapOrSection
-						: mapOrSection instanceof MemorySection ? ReflectionUtil.getFieldContent(mapOrSection, "map") : null;
-	
-		Valid.checkNotNull(map, "Unexpected " + mapOrSection.getClass().getSimpleName() + " '" + mapOrSection + "'. Must be Map or MemorySection! (Do not just send config name here, but the actual section with get('section'))");
-	
-		final Map<String, Object> copy = new LinkedHashMap<>();
-	
-		for (final Map.Entry<String, Object> entry : map.entrySet()) {
-			final String key = entry.getKey();
-			final Object value = entry.getValue();
-	
-			copy.put(key, Remain.getRootOfSectionPathData(value));
-		}
-	
-		return copy;
-	}*/
-
-	/**
-	 * Runs the given command (without /) as the console, replacing {player} with sender
-	 *
-	 * You can prefix the command with @(announce|warn|error|info|question|success) to send a formatted
-	 * message to playerReplacement directly.
-	 *
-	 * @param playerReplacement
-	 * @param command
-	 */
-	/*public static void dispatchCommand(CommandSender playerReplacement, @NonNull String command) {
-		CommonCore.dispatchCommand(Platform.toFoundationPlayer(playerReplacement), command);
-	}*/
-
-	/**
-	 * Runs the given command (without /) as if the sender would type it, replacing {player} with his name
-	 *
-	 * @param sender
-	 * @param command
-	 */
-	/*public static void dispatchCommandAsPlayer(@NonNull final CommandSender sender, @NonNull String command) {
-		CommonCore.dispatchCommandAsPlayer(Platform.toFoundationPlayer(sender), command);
-	}*/
-
 	// ------------------------------------------------------------------------------------------------------------
 	// Scheduling
 	// ------------------------------------------------------------------------------------------------------------
@@ -428,11 +348,4 @@ public final class Common extends CommonCore {
 	public static Task runTimerAsync(final int delayTicks, final int repeatTicks, Runnable runnable) {
 		return Remain.runTimerAsync(delayTicks, repeatTicks, runnable);
 	}
-
-	/**
-	 * Attempts to cancel all tasks of this plugin
-	 */
-	/*public static void cancelTasks() {
-		Remain.cancelTasks();
-	}*/
 }

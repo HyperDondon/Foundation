@@ -440,8 +440,11 @@ public class BukkitPlatform extends FoundationPlatform {
 	}
 
 	@Override
-	public void dispatchConsoleCommand(String command) {
-		Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+	protected void dispatchConsoleCommand0(String command) {
+		if (Bukkit.isPrimaryThread())
+			Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+		else
+			Platform.runTask(0, () -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command));
 	}
 
 	@Override

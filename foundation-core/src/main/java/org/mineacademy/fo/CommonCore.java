@@ -26,6 +26,7 @@ import java.util.zip.Inflater;
 import org.mineacademy.fo.collection.SerializedMap;
 import org.mineacademy.fo.debug.Debugger;
 import org.mineacademy.fo.exception.FoException;
+import org.mineacademy.fo.model.ConfigStringSerializable;
 import org.mineacademy.fo.model.SimpleComponent;
 import org.mineacademy.fo.platform.FoundationPlayer;
 import org.mineacademy.fo.platform.Platform;
@@ -166,7 +167,10 @@ public abstract class CommonCore {
 	}
 
 	/**
-	 * Sends a message to the player
+	 * 
+	 * Sends a message to the audience. Supports {prefix_plugin} and {player} variable.
+	 * Supports \<actionbar\>, \<toast\>, \<title\>, \<bossbar\> and \<center\>.
+	 * Properly sends the message to the player if he is conversing with the server.
 	 *
 	 * @param audience
 	 * @param messages
@@ -582,73 +586,6 @@ public abstract class CommonCore {
 		final int length = text.length();
 
 		return maxLength >= length ? text : text.substring(0, maxLength) + "...";
-	}
-
-	// ------------------------------------------------------------------------------------------------------------
-	// Running commands
-	// ------------------------------------------------------------------------------------------------------------
-
-	/**
-	 * Runs the given command (without /) as the console, replacing {player} with sender
-	 *
-	 * You can prefix the command with @(announce|warn|error|info|question|success) to send a formatted
-	 * message to playerReplacement directly.
-	 *
-	 * @param playerReplacement
-	 * @param command
-	 */
-	public static void dispatchCommand(FoundationPlayer playerReplacement, @NonNull String command) {
-		if (command.isEmpty() || command.equalsIgnoreCase("none"))
-			return;
-
-		if (command.startsWith("@announce ")) {
-			ValidCore.checkNotNull(playerReplacement, "Cannot use @announce without a player in: " + command);
-
-			MessengerCore.announce(playerReplacement, command.replace("@announce ", ""));
-		}
-
-		else if (command.startsWith("@warn ")) {
-			ValidCore.checkNotNull(playerReplacement, "Cannot use @warn without a player in: " + command);
-
-			MessengerCore.warn(playerReplacement, command.replace("@warn ", ""));
-		}
-
-		else if (command.startsWith("@error ")) {
-			ValidCore.checkNotNull(playerReplacement, "Cannot use @error without a player in: " + command);
-
-			MessengerCore.error(playerReplacement, command.replace("@error ", ""));
-		}
-
-		else if (command.startsWith("@info ")) {
-			ValidCore.checkNotNull(playerReplacement, "Cannot use @info without a player in: " + command);
-
-			MessengerCore.info(playerReplacement, command.replace("@info ", ""));
-		}
-
-		else if (command.startsWith("@question ")) {
-			ValidCore.checkNotNull(playerReplacement, "Cannot use @question without a player in: " + command);
-
-			MessengerCore.question(playerReplacement, command.replace("@question ", ""));
-		}
-
-		else if (command.startsWith("@success ")) {
-			ValidCore.checkNotNull(playerReplacement, "Cannot use @success without a player in: " + command);
-
-			MessengerCore.success(playerReplacement, command.replace("@success ", ""));
-		}
-
-		else {
-			command = command.startsWith("/") && !command.startsWith("//") ? command.substring(1) : command;
-			command = command.replace("{player}", playerReplacement == null ? "" : playerReplacement.getName());
-
-			// Workaround for JSON in tellraw getting HEX colors replaced
-			if (!command.startsWith("tellraw"))
-				command = CompChatColor.translateColorCodes(command);
-
-			final String finalCommand = command;
-
-			Platform.runTask(0, () -> Platform.dispatchConsoleCommand(finalCommand));
-		}
 	}
 
 	// ------------------------------------------------------------------------------------------------------------
@@ -1167,6 +1104,9 @@ public abstract class CommonCore {
 
 		else if (arg instanceof Enum)
 			return ((Enum<?>) arg).toString().toLowerCase();
+
+		else if (arg instanceof ConfigStringSerializable)
+			return ((ConfigStringSerializable) arg).serialize();
 
 		return arg.toString();
 	}

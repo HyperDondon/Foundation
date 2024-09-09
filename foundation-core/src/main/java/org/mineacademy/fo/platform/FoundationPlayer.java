@@ -4,9 +4,11 @@ import java.net.InetSocketAddress;
 
 import org.mineacademy.fo.ChatUtil;
 import org.mineacademy.fo.CommonCore;
+import org.mineacademy.fo.MessengerCore;
 import org.mineacademy.fo.exception.FoException;
 import org.mineacademy.fo.model.CompToastStyle;
 import org.mineacademy.fo.model.SimpleComponent;
+import org.mineacademy.fo.remain.CompChatColor;
 import org.mineacademy.fo.settings.Lang;
 
 import net.kyori.adventure.bossbar.BossBar;
@@ -53,18 +55,43 @@ public abstract class FoundationPlayer {
 		if (command.isEmpty() || command.equalsIgnoreCase("none"))
 			return;
 
-		// Remove trailing /
-		if (command.startsWith("/") && !command.startsWith("//"))
-			command = command.substring(1);
+		if (command.startsWith("@announce ")) {
+			MessengerCore.announce(this, command.replace("@announce ", ""));
+		}
 
-		final String replacedCommand = command.replace("{player}", this.getName());
+		else if (command.startsWith("@warn ")) {
+			MessengerCore.warn(this, command.replace("@warn ", ""));
+		}
 
-		Platform.runTask(0, () -> {
+		else if (command.startsWith("@error ")) {
+			MessengerCore.error(this, command.replace("@error ", ""));
+		}
+
+		else if (command.startsWith("@info ")) {
+			MessengerCore.info(this, command.replace("@info ", ""));
+		}
+
+		else if (command.startsWith("@question ")) {
+			MessengerCore.question(this, command.replace("@question ", ""));
+		}
+
+		else if (command.startsWith("@success ")) {
+			MessengerCore.success(this, command.replace("@success ", ""));
+		}
+
+		else {
+			command = command.startsWith("/") && !command.startsWith("//") ? command.substring(1) : command;
+			command = command.replace("{player}", this.getName());
+
+			// Workaround for JSON in tellraw getting HEX colors replaced
+			if (!command.startsWith("tellraw"))
+				command = CompChatColor.translateColorCodes(command);
+
 			if (this.isPlayer())
-				this.performPlayerCommand0(replacedCommand);
+				this.performPlayerCommand0(command);
 			else
-				Platform.dispatchConsoleCommand(replacedCommand);
-		});
+				Platform.getPlatform().dispatchConsoleCommand(this, command);
+		}
 	}
 
 	public abstract void setTempMetadata(String key, Object value);

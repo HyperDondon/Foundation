@@ -18,22 +18,22 @@ public final class Platform {
 	private static FoundationPlatform instance;
 
 	public static boolean callEvent(Object event) {
-		return getInstance().callEvent(event);
+		return getPlatform().callEvent(event);
 	}
 
 	public static void checkCommandUse(SimpleCommandCore command) {
-		getInstance().checkCommandUse(command);
+		getPlatform().checkCommandUse(command);
 	}
 
 	public static HoverEventSource<?> convertItemStackToHoverEvent(Object itemStack) {
-		return getInstance().convertItemStackToHoverEvent(itemStack);
+		return getPlatform().convertItemStackToHoverEvent(itemStack);
 	}
 
-	public static void dispatchConsoleCommand(String command) {
-		getInstance().dispatchConsoleCommand(command);
+	public static void dispatchConsoleCommand(FoundationPlayer playerReplacement, String command) {
+		getPlatform().dispatchConsoleCommand(playerReplacement, command);
 	}
 
-	private static FoundationPlatform getInstance() {
+	public static FoundationPlatform getPlatform() {
 		// Do not throw FoException to prevent race condition
 		if (instance == null)
 			throw new NullPointerException("Foundation instance not set yet.");
@@ -42,75 +42,75 @@ public final class Platform {
 	}
 
 	public static List<FoundationPlayer> getOnlinePlayers() {
-		return getInstance().getOnlinePlayers();
+		return getPlatform().getOnlinePlayers();
 	}
 
 	public static File getPluginFile(String pluginName) {
-		return getInstance().getPluginFile(pluginName);
+		return getPlatform().getPluginFile(pluginName);
 	}
 
 	public static String getCustomServerName() {
-		return getInstance().getCustomServerName();
+		return getPlatform().getCustomServerName();
 	}
 
 	public static boolean hasCustomServerName() {
-		return getInstance().hasCustomServerName();
+		return getPlatform().hasCustomServerName();
 	}
 
 	public static void setCustomServerName(String serverName) {
-		getInstance().setCustomServerName(serverName);
+		getPlatform().setCustomServerName(serverName);
 	}
 
 	public static List<Tuple<String, String>> getServerPlugins() {
-		return getInstance().getServerPlugins();
+		return getPlatform().getServerPlugins();
 	}
 
 	public static String getPlatformVersion() {
-		return getInstance().getPlatformVersion();
+		return getPlatform().getPlatformVersion();
 	}
 
 	public static String getPlatformName() {
-		return getInstance().getPlatformName();
+		return getPlatform().getPlatformName();
 	}
 
 	public static boolean hasHexColorSupport() {
-		return getInstance().hasHexColorSupport();
+		return getPlatform().hasHexColorSupport();
 	}
 
 	public static boolean isAsync() {
-		return getInstance().isAsync();
+		return getPlatform().isAsync();
 	}
 
 	public static boolean isPlaceholderAPIHooked() {
-		return getInstance().isPlaceholderAPIHooked();
+		return getPlatform().isPlaceholderAPIHooked();
 	}
 
 	public static boolean isPluginInstalled(String name) {
-		return getInstance().isPluginInstalled(name);
+		return getPlatform().isPluginInstalled(name);
 	}
 
 	public static void logToConsole(String message) {
-		getInstance().logToConsole(message);
+		getPlatform().logToConsole(message);
 	}
 
 	public static void registerCommand(SimpleCommandCore command, boolean unregisterOldCommand, boolean unregisterOldAliases) {
-		getInstance().registerCommand(command, unregisterOldCommand, unregisterOldAliases);
+		getPlatform().registerCommand(command, unregisterOldCommand, unregisterOldAliases);
 	}
 
 	public static void registerEvents(Object listener) {
-		getInstance().registerEvents(listener);
+		getPlatform().registerEvents(listener);
 	}
 
 	public static Task runTask(int delayTicks, Runnable runnable) {
-		return getInstance().runTask(delayTicks, runnable);
+		return getPlatform().runTask(delayTicks, runnable);
 	}
 
 	public static Task runTaskAsync(int delayTicks, Runnable runnable) {
-		return getInstance().runTaskAsync(delayTicks, runnable);
+		return getPlatform().runTaskAsync(delayTicks, runnable);
 	}
 
 	public static void sendPluginMessage(UUID senderUid, String channel, byte[] message) {
-		getInstance().sendPluginMessage(senderUid, channel, message);
+		getPlatform().sendPluginMessage(senderUid, channel, message);
 	}
 
 	public static void setInstance(FoundationPlatform instance) {
@@ -118,18 +118,18 @@ public final class Platform {
 	}
 
 	public static void unregisterCommand(SimpleCommandCore command) {
-		getInstance().unregisterCommand(command);
+		getPlatform().unregisterCommand(command);
 	}
 
 	public static FoundationPlugin getPlugin() {
-		return getInstance().getPlugin();
+		return getPlatform().getPlugin();
 	}
 
 	public static String getNMSVersion() {
-		return getInstance().getNMSVersion();
+		return getPlatform().getNMSVersion();
 	}
 
 	public static FoundationPlayer toPlayer(Object player) {
-		return getInstance().toPlayer(player);
+		return getPlatform().toPlayer(player);
 	}
 }
